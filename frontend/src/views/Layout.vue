@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="fb-layout">
     <div v-if="uploadStore.totalBytes" class="progress">
       <div
         v-bind:style="{

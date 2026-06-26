@@ -1,16 +1,14 @@
 header {
-  z-index: 1000;
-  background: var(--surfacePrimary);
-  border-bottom: 1px solid var(--divider);
-  box-shadow: 0 0 5px var(--borderPrimary);
-  position: fixed;
+  z-index: 100;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-panel);
+  position: sticky;
   top: 0;
-  left: 0;
-  height: 4em;
+  height: 60px;
   width: 100%;
-  padding: 0;
+  padding: 0 1em;
   display: flex;
-  padding: 0.5em 0.5em 0.5em 1em;
   align-items: center;
 }
 

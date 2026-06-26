@@ -1,6 +1,5 @@
 body {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  padding-top: 4em;
   background: var(--bg);
   color: var(--text);
 }
@@ -43,24 +42,42 @@ i.spin {
   animation: 1s spin linear infinite;
 }
 
-#app {
-  transition: 0.2s ease padding;
+/* Chain all wrappers to full height so the flex layout reaches the actual shell */
+html, body {
+  height: 100%;
 }
 
-#app.multiple {
-  padding-bottom: 4em;
+#app,
+#app > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+}
+
+/* App shell — flex row: sidebar | main-column */
+#fb-layout {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 nav {
-  width: 16em;
-  position: fixed;
-  top: 4em;
-  left: 0;
+  width: 256px;
+  flex-shrink: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
 }
 
 html[dir="rtl"] nav {
-  left: initial;
-  right: 0;
+  border-right: none;
+  border-left: 1px solid var(--border);
 }
 
 nav .action {
@@ -79,26 +96,30 @@ html[dir="rtl"] nav .action {
 }
 
 nav > div {
-  border-top: 1px solid var(--divider);
+  border-top: 1px solid var(--border);
 }
 
 nav .action > * {
   vertical-align: middle;
 }
 
+/* Main column — takes remaining width, scrolls independently */
 main {
-  min-height: 1em;
-  margin: 0 1em 1em auto;
-  width: calc(100% - 19em);
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .breadcrumbs {
   height: 3em;
-  background: var(--background);
-  border-bottom: 1px solid var(--divider);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
   position: sticky;
-  z-index: 1000;
-  top: 4em;
+  z-index: 100;
+  top: 60px;
 }
 
 .breadcrumbs span,

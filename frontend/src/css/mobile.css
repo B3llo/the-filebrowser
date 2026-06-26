@@ -1,18 +1,37 @@
 @media (max-width: 1024px) {
   nav {
-    width: 10em;
-  }
-}
-
-@media (max-width: 1024px) {
-  main {
-    width: calc(100% - 13em);
+    width: 200px;
   }
 }
 
 @media (max-width: 736px) {
+  /* Restore block layout and fixed header/nav on mobile */
+  #app,
+  #app > div,
+  #fb-layout {
+    display: block;
+    flex-direction: unset;
+    height: auto;
+    overflow: visible;
+  }
+
   body {
+    padding-top: 60px;
     padding-bottom: 5em;
+  }
+
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+
+  main {
+    width: 100%;
+    height: auto;
+    overflow: visible;
   }
   #listing.list .item:not(.header) .size {
     display: none;
@@ -110,19 +129,20 @@
     display: none;
   }
   nav {
+    position: fixed;
     top: 0;
     z-index: 99999;
-    background: var(--surfaceSecondary);
     height: 100%;
-    width: 16em;
-    box-shadow: 0 0 5px var(--borderPrimary);
-    transition: 0.1s ease left;
-    left: -17em;
+    width: 256px;
+    box-shadow: var(--shadow-menu);
+    transition: 0.15s ease left;
+    left: -272px;
+    overflow-y: auto;
   }
 
   html[dir="rtl"] nav {
     left: unset;
-    right: -17em;
+    right: -272px;
   }
   nav.active {
     left: 0;
@@ -164,10 +184,6 @@
     margin-right: unset;
   }
 
-  main {
-    margin: 0 1em;
-    width: calc(100% - 2em);
-  }
   #search {
     display: none;
   }
