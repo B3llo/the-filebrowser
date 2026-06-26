@@ -153,6 +153,50 @@ header > * {
   background: var(--hover);
 }
 
+.fb-sort-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-menu);
+  min-width: 180px;
+  padding: 6px;
+  z-index: 1000;
+  animation: fbpop 0.12s ease;
+}
+
+.fb-sort-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13.5px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+  gap: 12px;
+}
+
+.fb-sort-item:hover {
+  background: var(--hover);
+}
+
+.fb-sort-item--active {
+  color: var(--accent);
+}
+
+.fb-sort-arrow {
+  font-size: 13px;
+  color: var(--accent);
+}
+
 /* Inline search input — 280px, border, rounded */
 .fb-search-wrap {
   position: relative;

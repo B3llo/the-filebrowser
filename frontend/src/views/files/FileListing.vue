@@ -48,17 +48,39 @@
           </button>
         </div>
 
-        <!-- Sort button — 38×38, bordered, accent icon -->
-        <button
-          class="fb-tbtn fb-tbtn--bordered"
-          :title="t('files.sort', 'Sort')"
-          @click="cycleSortMode"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px" aria-hidden="true">
-            <path d="M7 4v16"/><path d="M3 8l4-4 4 4"/>
-            <path d="M17 20V4"/><path d="M21 16l-4 4-4-4"/>
-          </svg>
-        </button>
+        <!-- Sort button — 38×38, bordered, opens dropdown -->
+        <div style="position:relative">
+          <button
+            class="fb-tbtn fb-tbtn--bordered"
+            :title="t('files.sort', 'Sort')"
+            @click="toggleSortMenu"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px" aria-hidden="true">
+              <path d="M7 4v16"/><path d="M3 8l4-4 4 4"/>
+              <path d="M17 20V4"/><path d="M21 16l-4 4-4-4"/>
+            </svg>
+          </button>
+          <div v-show="sortMenuOpen" class="fb-sort-menu" @click.self="closeSortMenu">
+            <button class="fb-sort-item" :class="{ 'fb-sort-item--active': currentSortBy === 'name' }" @click="handleSortMenuClick('name')">
+              <span>{{ t('files.name') }}</span>
+              <span v-if="currentSortBy === 'name'" class="fb-sort-arrow">
+                {{ currentSortAsc ? '↑' : '↓' }}
+              </span>
+            </button>
+            <button class="fb-sort-item" :class="{ 'fb-sort-item--active': currentSortBy === 'modified' }" @click="handleSortMenuClick('modified')">
+              <span>{{ t('files.lastModified') }}</span>
+              <span v-if="currentSortBy === 'modified'" class="fb-sort-arrow">
+                {{ currentSortAsc ? '↑' : '↓' }}
+              </span>
+            </button>
+            <button class="fb-sort-item" :class="{ 'fb-sort-item--active': currentSortBy === 'size' }" @click="handleSortMenuClick('size')">
+              <span>{{ t('files.size') }}</span>
+              <span v-if="currentSortBy === 'size'" class="fb-sort-arrow">
+                {{ currentSortAsc ? '↑' : '↓' }}
+              </span>
+            </button>
+          </div>
+        </div>
 
         <!-- Details panel toggle — split-panel icon -->
         <button
@@ -207,7 +229,7 @@
         @click="handleEmptyAreaClick"
       >
         <div>
-          <div class="item header">
+          <div class="fb-col-header">
             <div>
               <p
                 :class="{ active: nameSorted }"
@@ -424,6 +446,7 @@ const itemWeight = ref<number>(0);
 const isContextMenuVisible = ref<boolean>(false);
 const contextMenuPos = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 const newMenuOpen = ref<boolean>(false);
+const sortMenuOpen = ref<boolean>(false);
 
 const $showError = inject<IToastError>("$showError")!;
 
@@ -459,6 +482,9 @@ const modifiedSorted = computed(() =>
 const ascOrdered = computed(() =>
   fileStore.req ? fileStore.req.sorting.asc : false
 );
+
+const currentSortBy = computed(() => fileStore.req?.sorting.by ?? "name");
+const currentSortAsc = computed(() => fileStore.req?.sorting.asc ?? true);
 
 const dirs = computed(() => items.value.dirs.slice(0, showLimit.value));
 
@@ -958,10 +984,12 @@ const resetOpacity = () => {
   });
 };
 
-const sort = async (by: string) => {
+const sort = async (by: string, explicitAsc?: boolean) => {
   let asc = false;
 
-  if (by === "name") {
+  if (explicitAsc !== undefined) {
+    asc = explicitAsc;
+  } else if (by === "name") {
     if (nameIcon.value === "arrow-up") {
       asc = true;
     }
@@ -1048,20 +1076,20 @@ const setView = async (mode: ViewModeType) => {
   fillWindow();
 };
 
-const cycleSortMode = async () => {
-  if (!fileStore.req) return;
-  const order: { by: string; asc: boolean }[] = [
-    { by: "name", asc: true },
-    { by: "name", asc: false },
-    { by: "modified", asc: false },
-    { by: "modified", asc: true },
-    { by: "size", asc: false },
-    { by: "size", asc: true },
-  ];
-  const cur = fileStore.req.sorting;
-  const idx = order.findIndex((o) => o.by === cur.by && o.asc === cur.asc);
-  const next = order[(idx + 1) % order.length];
-  await sort(next.by);
+const toggleSortMenu = () => {
+  sortMenuOpen.value = !sortMenuOpen.value;
+};
+
+const closeSortMenu = () => {
+  sortMenuOpen.value = false;
+};
+
+const handleSortMenuClick = async (by: string) => {
+  const cur = fileStore.req?.sorting;
+  if (!cur) return;
+  const asc = cur.by === by ? !cur.asc : true;
+  sortMenuOpen.value = false;
+  await sort(by, asc);
 };
 
 const showHoverAndClose = (prompt: string) => {

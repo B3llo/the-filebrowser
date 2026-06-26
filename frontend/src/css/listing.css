@@ -124,7 +124,7 @@ html[dir="rtl"] #listing {
 }
 
 /* The list-view header is irrelevant in mosaic */
-#listing.mosaic .header {
+#listing.mosaic .fb-col-header {
   display: none;
 }
 
@@ -458,7 +458,7 @@ html[dir="rtl"] #listing {
 }
 
 /* ---- Column header ---- */
-#listing.list .item.header {
+#listing.list .fb-col-header {
   display: flex;
   align-items: center;
   gap: 13px;
@@ -471,12 +471,12 @@ html[dir="rtl"] #listing {
   background: transparent;
 }
 /* Spacer matching the 34px icon column so columns align with rows */
-#listing.list .item.header::before {
+#listing.list .fb-col-header::before {
   content: "";
   flex: 0 0 34px;
   width: 34px;
 }
-#listing.list .item.header > div {
+#listing.list .fb-col-header > div {
   flex: 1;
   min-width: 0;
   display: grid;
@@ -489,28 +489,28 @@ html[dir="rtl"] #listing {
   text-transform: uppercase;
   color: var(--faint);
 }
-#listing.list .item.header p {
+#listing.list .fb-col-header p {
   display: flex;
   align-items: center;
   gap: 4px;
   margin: 0;
   cursor: pointer;
 }
-#listing.list .item.header .size {
+#listing.list .fb-col-header .size {
   justify-content: flex-end;
   color: var(--faint);
 }
-#listing.list .item.header .name,
-#listing.list .item.header .modified {
+#listing.list .fb-col-header .name,
+#listing.list .fb-col-header .modified {
   color: var(--faint);
 }
 /* Sort arrows are subtle: hidden until the column is hovered or active */
-#listing.list .item.header .fb-icon {
+#listing.list .fb-col-header .fb-icon {
   opacity: 0;
   transition: opacity 0.1s ease;
 }
-#listing.list .item.header p:hover .fb-icon,
-#listing.list .item.header p.active .fb-icon {
+#listing.list .fb-col-header p:hover .fb-icon,
+#listing.list .fb-col-header p.active .fb-icon {
   opacity: 1;
 }
 
