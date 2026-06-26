@@ -1,8 +1,8 @@
 body {
-  font-family: "Roboto", sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   padding-top: 4em;
-  background: var(--background);
-  color: var(--textSecondary);
+  background: var(--bg);
+  color: var(--text);
 }
 
 * {
