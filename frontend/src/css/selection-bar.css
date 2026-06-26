@@ -9,8 +9,9 @@
   background: var(--surface);
   animation: fbfade 0.14s ease-out;
   position: sticky;
-  top: 0;
+  top: 60px;
   z-index: 99;
+  flex-shrink: 0;
 }
 
 .fb-sel-clear {
