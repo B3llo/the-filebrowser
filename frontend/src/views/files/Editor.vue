@@ -69,7 +69,7 @@
       <div
         v-show="isPreview && isMarkdownFile"
         id="preview-container"
-        class="md_preview"
+        class="md_preview markdown-body"
         v-html="previewContent"
       ></div>
       <form v-show="!isPreview || !isMarkdownFile" id="editor"></form>
@@ -114,7 +114,10 @@ const router = useRouter();
 const editor = ref<Ace.Editor | null>(null);
 const fontSize = ref(parseInt(localStorage.getItem("editorFontSize") || "14"));
 
-const isPreview = ref(false);
+const isPreview = ref(
+  fileStore.req?.name.endsWith(".md") ||
+    fileStore.req?.name.endsWith(".markdown")
+);
 const previewContent = ref("");
 const isMarkdownFile =
   fileStore.req?.name.endsWith(".md") ||
@@ -164,7 +167,8 @@ onMounted(() => {
     if (isMarkdownFile && isPreview.value) {
       const new_value = editor.value?.getValue() || "";
       try {
-        previewContent.value = DOMPurify.sanitize(await marked(new_value));
+        const stripped = new_value.replace(/^---\n[\s\S]*?\n---\n?/, "");
+        previewContent.value = DOMPurify.sanitize(await marked(stripped));
       } catch (error) {
         console.error("Failed to convert content to HTML:", error);
         previewContent.value = "";

@@ -195,15 +195,42 @@
       />
     </div>
 
-    <div v-if="layoutStore.loading">
-      <h2 class="message delayed">
-        <div class="spinner">
-          <div class="bounce1"></div>
-          <div class="bounce2"></div>
-          <div class="bounce3"></div>
+    <div v-if="layoutStore.loading" :class="currentViewMode">
+      <!-- Mosaic skeleton -->
+      <div v-if="currentViewMode === 'mosaic'" class="fb-skeleton-wrap">
+        <div class="fb-skeleton fb-skeleton-label"></div>
+        <div class="fb-skeleton-folders">
+          <div v-for="i in 4" :key="'folder-'+i" class="fb-skeleton-folder">
+            <div class="fb-skeleton fb-skeleton-folder-icon"></div>
+            <div class="fb-skeleton fb-skeleton-folder-name"></div>
+          </div>
         </div>
-        <span>{{ t("files.loading") }}</span>
-      </h2>
+        <div class="fb-skeleton fb-skeleton-label"></div>
+        <div class="fb-skeleton-files">
+          <div v-for="i in 8" :key="'file-'+i" class="fb-skeleton-file">
+            <div class="fb-skeleton-file-thumb"></div>
+            <div class="fb-skeleton-file-info">
+              <div class="fb-skeleton fb-skeleton-file-name"></div>
+              <div class="fb-skeleton fb-skeleton-file-meta"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- List skeleton -->
+      <div v-else class="fb-skeleton-wrap">
+        <div class="fb-skeleton-col-header">
+          <div class="fb-skeleton fb-skeleton-col-label"></div>
+          <div class="fb-skeleton fb-skeleton-col-label"></div>
+          <div class="fb-skeleton fb-skeleton-col-label"></div>
+          <div class="fb-skeleton fb-skeleton-col-label"></div>
+        </div>
+        <div v-for="i in 10" :key="'row-'+i" class="fb-skeleton-row">
+          <div class="fb-skeleton fb-skeleton-row-icon"></div>
+          <div class="fb-skeleton fb-skeleton-row-name"></div>
+          <div class="fb-skeleton fb-skeleton-row-size"></div>
+          <div class="fb-skeleton fb-skeleton-row-modified"></div>
+        </div>
+      </div>
     </div>
     <template v-else>
       <div

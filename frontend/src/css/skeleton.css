@@ -1,0 +1,196 @@
+/* Skeleton shimmer animation */
+@keyframes fbshimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Base skeleton element */
+.fb-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--hover) 0%,
+    var(--border) 50%,
+    var(--hover) 100%
+  );
+  background-size: 200% 100%;
+  animation: fbshimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* Mosaic view skeleton */
+#listing.mosaic .fb-skeleton-wrap {
+  padding: var(--gpad);
+  padding-top: calc(var(--gpad) - 6px);
+}
+
+#listing.mosaic .fb-skeleton-folders {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(216px, 1fr));
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+#listing.mosaic .fb-skeleton-files {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--gap);
+}
+
+/* Section label skeleton */
+#listing.mosaic .fb-skeleton-label {
+  width: 60px;
+  height: 12px;
+  margin: 0 0 13px 2px;
+}
+
+/* Folder chip skeleton */
+#listing.mosaic .fb-skeleton-folder {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  min-height: 44px;
+}
+
+#listing.mosaic .fb-skeleton-folder-icon {
+  width: 21px;
+  height: 21px;
+  border-radius: 4px;
+}
+
+#listing.mosaic .fb-skeleton-folder-name {
+  flex: 1;
+  height: 14px;
+  max-width: 120px;
+}
+
+/* File card skeleton */
+#listing.mosaic .fb-skeleton-file {
+  display: flex;
+  flex-direction: column;
+  border-radius: 13px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+#listing.mosaic .fb-skeleton-file-thumb {
+  height: 128px;
+  background: var(--hover);
+}
+
+#listing.mosaic .fb-skeleton-file-info {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#listing.mosaic .fb-skeleton-file-name {
+  height: 13px;
+  width: 80%;
+}
+
+#listing.mosaic .fb-skeleton-file-meta {
+  height: 11px;
+  width: 50%;
+}
+
+/* List view skeleton */
+#listing.list .fb-skeleton-wrap {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Column header skeleton */
+#listing.list .fb-skeleton-col-header {
+  display: grid;
+  grid-template-columns: 34px 1fr 120px 168px;
+  gap: 13px;
+  padding: 0 14px;
+  min-height: var(--rowh);
+  align-items: center;
+}
+
+#listing.list .fb-skeleton-col-label {
+  height: 12px;
+  border-radius: 4px;
+}
+
+#listing.list .fb-skeleton-col-label:nth-child(1) { width: 34px; }
+#listing.list .fb-skeleton-col-label:nth-child(2) { width: 100px; }
+#listing.list .fb-skeleton-col-label:nth-child(3) { width: 60px; }
+#listing.list .fb-skeleton-col-label:nth-child(4) { width: 90px; }
+
+/* Row skeleton */
+#listing.list .fb-skeleton-row {
+  display: grid;
+  grid-template-columns: 34px 1fr 120px 168px;
+  gap: 13px;
+  padding: 0 14px;
+  min-height: var(--rowh);
+  align-items: center;
+}
+
+#listing.list .fb-skeleton-row-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+#listing.list .fb-skeleton-row-name {
+  height: 13px;
+  width: 70%;
+  max-width: 300px;
+}
+
+#listing.list .fb-skeleton-row-size {
+  height: 13px;
+  width: 50px;
+  justify-self: end;
+}
+
+#listing.list .fb-skeleton-row-modified {
+  height: 13px;
+  width: 90px;
+  justify-self: end;
+}
+
+/* Mobile responsive */
+@media (max-width: 736px) {
+  #listing.mosaic .fb-skeleton-folders {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  #listing.mosaic .fb-skeleton-files {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  #listing.list .fb-skeleton-col-header,
+  #listing.list .fb-skeleton-row {
+    grid-template-columns: 34px 1fr 168px;
+  }
+
+  #listing.list .fb-skeleton-col-label:nth-child(3),
+  #listing.list .fb-skeleton-row-size {
+    display: none;
+  }
+}
+
+@media (max-width: 450px) {
+  #listing.list .fb-skeleton-col-header,
+  #listing.list .fb-skeleton-row {
+    grid-template-columns: 34px 1fr;
+  }
+
+  #listing.list .fb-skeleton-col-label:nth-child(3),
+  #listing.list .fb-skeleton-col-label:nth-child(4),
+  #listing.list .fb-skeleton-row-size,
+  #listing.list .fb-skeleton-row-modified {
+    display: none;
+  }
+}

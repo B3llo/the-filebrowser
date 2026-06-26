@@ -20,6 +20,7 @@
 @import "./details-panel.css";
 @import "./selection-bar.css";
 @import "./empty-states.css";
+@import "./skeleton.css";
 
 /* For testing only
  :focus {
