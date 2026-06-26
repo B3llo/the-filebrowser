@@ -80,28 +80,6 @@ html[dir="rtl"] nav {
   border-left: 1px solid var(--border);
 }
 
-nav .action {
-  width: 100%;
-  display: block;
-  border-radius: 0;
-  font-size: 1.1em;
-  padding: 0.5em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-html[dir="rtl"] nav .action {
-  text-align: right;
-}
-
-nav > div {
-  border-top: 1px solid var(--border);
-}
-
-nav .action > * {
-  vertical-align: middle;
-}
 
 /* Main column — takes remaining width, scrolls independently */
 main {

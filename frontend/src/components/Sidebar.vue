@@ -1,116 +1,143 @@
 <template>
-  <div v-show="active" @click="closeHovers" class="overlay"></div>
-  <nav :class="{ active }">
-    <template v-if="isLoggedIn">
-      <button @click="toAccountSettings" class="action">
-        <i class="material-icons">person</i>
-        <span>{{ user.username }}</span>
-      </button>
-      <button
-        class="action"
-        @click="toRoot"
-        :aria-label="$t('sidebar.myFiles')"
-        :title="$t('sidebar.myFiles')"
-      >
-        <i class="material-icons">folder</i>
-        <span>{{ $t("sidebar.myFiles") }}</span>
-      </button>
-
-      <div v-if="user.perm.create">
-        <button
-          @click="showHover('newDir')"
-          class="action"
-          :aria-label="$t('sidebar.newFolder')"
-          :title="$t('sidebar.newFolder')"
-        >
-          <i class="material-icons">create_new_folder</i>
-          <span>{{ $t("sidebar.newFolder") }}</span>
-        </button>
-
-        <button
-          @click="showHover('newFile')"
-          class="action"
-          :aria-label="$t('sidebar.newFile')"
-          :title="$t('sidebar.newFile')"
-        >
-          <i class="material-icons">note_add</i>
-          <span>{{ $t("sidebar.newFile") }}</span>
-        </button>
+  <div
+    v-show="isMobileActive"
+    class="fb-sidebar-backdrop"
+    @click="closeHovers"
+  />
+  <nav class="fb-sidebar" :class="{ active: isMobileActive }">
+    <!-- Logo header -->
+    <div class="fb-sidebar-header">
+      <div class="fb-sidebar-logo-chip">
+        <img :src="logoURL" alt="" aria-hidden="true" />
       </div>
+      <span class="fb-sidebar-wordmark">FileBrowser</span>
+    </div>
 
-      <div v-if="user.perm.admin">
+    <!-- Navigation destinations -->
+    <ul class="fb-sidebar-nav" v-if="isLoggedIn" role="list">
+      <li>
         <button
-          class="action"
+          class="fb-nav-item"
+          :class="{ 'is-active': isMyFiles }"
+          @click="toRoot"
+          :aria-label="$t('sidebar.myFiles')"
+        >
+          <fb-icon name="folder" size="18px" />
+          <span>{{ $t("sidebar.myFiles") }}</span>
+        </button>
+      </li>
+      <li>
+        <span
+          class="fb-nav-item fb-nav-item--placeholder"
+          aria-disabled="true"
+          :title="$t('sidebar.comingSoon', 'Coming soon')"
+        >
+          <fb-icon name="clock" size="18px" />
+          <span>{{ $t("sidebar.recent", "Recent") }}</span>
+        </span>
+      </li>
+      <li>
+        <span
+          class="fb-nav-item fb-nav-item--placeholder"
+          aria-disabled="true"
+          :title="$t('sidebar.comingSoon', 'Coming soon')"
+        >
+          <fb-icon name="star" size="18px" />
+          <span>{{ $t("sidebar.starred", "Starred") }}</span>
+        </span>
+      </li>
+      <li>
+        <button
+          class="fb-nav-item"
+          @click="toShares"
+          :aria-label="$t('sidebar.shares', 'Shares')"
+        >
+          <fb-icon name="users" size="18px" />
+          <span>{{ $t("sidebar.shares", "Shares") }}</span>
+        </button>
+      </li>
+      <li>
+        <span
+          class="fb-nav-item fb-nav-item--placeholder"
+          aria-disabled="true"
+          :title="$t('sidebar.comingSoon', 'Coming soon')"
+        >
+          <fb-icon name="trash" size="18px" />
+          <span>{{ $t("sidebar.trash", "Trash") }}</span>
+        </span>
+      </li>
+    </ul>
+
+    <!-- Unauthenticated state -->
+    <ul class="fb-sidebar-nav" v-else role="list">
+      <li v-if="!hideLoginButton">
+        <router-link class="fb-nav-item" to="/login">
+          <fb-icon name="logout" size="18px" />
+          <span>{{ $t("sidebar.login") }}</span>
+        </router-link>
+      </li>
+      <li v-if="signup">
+        <router-link class="fb-nav-item" to="/login">
+          <fb-icon name="person" size="18px" />
+          <span>{{ $t("sidebar.signup") }}</span>
+        </router-link>
+      </li>
+    </ul>
+
+    <!-- Storage meter -->
+    <div
+      v-if="isLoggedIn && isFiles && !disableUsedPercentage"
+      class="fb-sidebar-storage"
+    >
+      <div class="fb-sidebar-storage-header">
+        <span class="fb-sidebar-storage-label">Storage</span>
+        <span class="fb-sidebar-storage-pct">{{ usage.usedPercentage }}%</span>
+      </div>
+      <progress-bar :val="usage.usedPercentage" size="small" />
+      <div class="fb-sidebar-storage-detail">
+        {{ $t("sidebar.diskUsed", { used: usage.used, total: usage.total }) }}
+      </div>
+    </div>
+
+    <!-- User footer -->
+    <div v-if="isLoggedIn" class="fb-sidebar-footer">
+      <div class="fb-sidebar-avatar" aria-hidden="true">
+        {{ userInitial }}
+      </div>
+      <div class="fb-sidebar-user-info">
+        <span class="fb-sidebar-username">{{ user.username }}</span>
+        <span v-if="user.perm.admin" class="fb-sidebar-role">Admin</span>
+      </div>
+      <div class="fb-sidebar-footer-actions">
+        <button
+          v-if="user.perm.admin"
+          class="fb-icon-btn"
           @click="toGlobalSettings"
           :aria-label="$t('sidebar.settings')"
           :title="$t('sidebar.settings')"
         >
-          <i class="material-icons">settings_applications</i>
-          <span>{{ $t("sidebar.settings") }}</span>
+          <fb-icon name="settings" size="16px" />
+        </button>
+        <button
+          v-else
+          class="fb-icon-btn"
+          @click="toAccountSettings"
+          :aria-label="$t('sidebar.settings')"
+          :title="$t('sidebar.settings')"
+        >
+          <fb-icon name="settings" size="16px" />
+        </button>
+        <button
+          v-if="canLogout"
+          class="fb-icon-btn"
+          @click="logout"
+          :aria-label="$t('sidebar.logout')"
+          :title="$t('sidebar.logout')"
+        >
+          <fb-icon name="logout" size="16px" />
         </button>
       </div>
-      <button
-        v-if="canLogout"
-        @click="logout"
-        class="action"
-        id="logout"
-        :aria-label="$t('sidebar.logout')"
-        :title="$t('sidebar.logout')"
-      >
-        <i class="material-icons">exit_to_app</i>
-        <span>{{ $t("sidebar.logout") }}</span>
-      </button>
-    </template>
-    <template v-else>
-      <router-link
-        v-if="!hideLoginButton"
-        class="action"
-        to="/login"
-        :aria-label="$t('sidebar.login')"
-        :title="$t('sidebar.login')"
-      >
-        <i class="material-icons">exit_to_app</i>
-        <span>{{ $t("sidebar.login") }}</span>
-      </router-link>
-
-      <router-link
-        v-if="signup"
-        class="action"
-        to="/login"
-        :aria-label="$t('sidebar.signup')"
-        :title="$t('sidebar.signup')"
-      >
-        <i class="material-icons">person_add</i>
-        <span>{{ $t("sidebar.signup") }}</span>
-      </router-link>
-    </template>
-
-    <div
-      class="credits"
-      v-if="isFiles && !disableUsedPercentage"
-      style="width: 90%; margin: 2em 2.5em 3em 2.5em"
-    >
-      <progress-bar :val="usage.usedPercentage" size="small"></progress-bar>
-      <br />
-      {{ $t("sidebar.diskUsed", { used: usage.used, total: usage.total }) }}
     </div>
-
-    <p class="credits">
-      <span>
-        <span v-if="disableExternal">File Browser</span>
-        <a
-          v-else
-          rel="noopener noreferrer"
-          target="_blank"
-          href="https://github.com/filebrowser/filebrowser"
-          >File Browser</a
-        >
-        <span> {{ " " }} {{ version }}</span>
-      </span>
-      <span>
-        <a @click="help">{{ $t("sidebar.help") }}</a>
-      </span>
-    </p>
   </nav>
 </template>
 
@@ -131,10 +158,13 @@ import {
   noAuth,
   logoutPage,
   loginPage,
+  logoURL,
 } from "@/utils/constants";
 import { files as api } from "@/api";
 import ProgressBar from "@/components/ProgressBar.vue";
+import FbIcon from "@/components/FbIcon.vue";
 import prettyBytes from "pretty-bytes";
+import { useRoute } from "vue-router";
 
 const USAGE_DEFAULT = { used: "0 B", total: "0 B", usedPercentage: 0 };
 
@@ -146,20 +176,28 @@ export default {
   },
   components: {
     ProgressBar,
+    FbIcon,
   },
   inject: ["$showError"],
   computed: {
     ...mapState(useAuthStore, ["user", "isLoggedIn"]),
     ...mapState(useFileStore, ["isFiles", "reload"]),
     ...mapState(useLayoutStore, ["currentPromptName"]),
-    active() {
+    isMobileActive() {
       return this.currentPromptName === "sidebar";
+    },
+    isMyFiles() {
+      return this.$route.path.startsWith("/files");
+    },
+    userInitial() {
+      return this.user?.username?.[0]?.toUpperCase() ?? "?";
     },
     signup: () => signup,
     hideLoginButton: () => hideLoginButton,
     version: () => version,
     disableExternal: () => disableExternal,
     disableUsedPercentage: () => disableUsedPercentage,
+    logoURL: () => logoURL,
     canLogout: () => !noAuth && (loginPage || logoutPage !== "/login"),
   },
   methods: {
@@ -178,7 +216,10 @@ export default {
       try {
         this.abortOngoingFetchUsage();
         this.usageAbortController = new AbortController();
-        const usage = await api.usage(path, this.usageAbortController.signal);
+        const usage = await api.usage(
+          path,
+          this.usageAbortController.signal
+        );
         usageStats = {
           used: prettyBytes(usage.used, { binary: true }),
           total: prettyBytes(usage.total, { binary: true }),
@@ -200,8 +241,9 @@ export default {
       this.$router.push({ path: "/settings/global" });
       this.closeHovers();
     },
-    help() {
-      this.showHover("help");
+    toShares() {
+      this.$router.push({ path: "/settings/shares" });
+      this.closeHovers();
     },
     logout: auth.logout,
   },
@@ -211,6 +253,7 @@ export default {
         if (to.path.includes("/files")) {
           this.fetchUsage();
         }
+        this.closeHovers();
       },
       immediate: true,
     },
@@ -220,3 +263,228 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+/* Backdrop (mobile only — hidden on desktop via CSS) */
+.fb-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 99998;
+  animation: fbfade 0.15s ease;
+}
+
+@media (max-width: 736px) {
+  .fb-sidebar-backdrop {
+    display: block;
+  }
+}
+
+/* Sidebar shell */
+.fb-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 256px;
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  padding: 0 0 12px;
+}
+
+/* Logo header */
+.fb-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 16px 14px;
+  flex-shrink: 0;
+}
+
+.fb-sidebar-logo-chip {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.fb-sidebar-logo-chip img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.fb-sidebar-wordmark {
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.3px;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* Nav list */
+.fb-sidebar-nav {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
+.fb-sidebar-nav li {
+  margin: 1px 0;
+}
+
+/* Nav item — shared base for button, router-link, and placeholder */
+.fb-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--dim);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+  transition: background 0.1s, color 0.1s;
+  line-height: 1.3;
+}
+
+.fb-nav-item:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.fb-nav-item.is-active,
+.router-link-active.fb-nav-item {
+  background: var(--sel);
+  color: var(--accent);
+}
+
+/* Placeholder items (Coming soon) */
+.fb-nav-item--placeholder {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Storage meter */
+.fb-sidebar-storage {
+  margin: auto 12px 0;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.fb-sidebar-storage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.fb-sidebar-storage-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.fb-sidebar-storage-pct {
+  font-size: 11px;
+  color: var(--dim);
+}
+
+.fb-sidebar-storage-detail {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--dim);
+}
+
+/* User footer */
+.fb-sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 4px;
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.fb-sidebar-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.fb-sidebar-user-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fb-sidebar-username {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fb-sidebar-role {
+  font-size: 11px;
+  color: var(--dim);
+}
+
+.fb-sidebar-footer-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.fb-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+  padding: 0;
+}
+
+.fb-icon-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+</style>
