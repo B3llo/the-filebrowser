@@ -84,73 +84,249 @@ html[dir="rtl"] #listing {
   display: block;
 }
 
+/* ============================================================
+   Mosaic view (Step 8 — design-spec faithful)
+   Two layouts per item kind:
+     · folders → horizontal "chip" (icon + name)
+     · files   → vertical "card" (tinted 128px thumb area + footer)
+   Gallery variant keeps an oversized thumb with an overlaid name.
+   ============================================================ */
+
 #listing.mosaic {
-  padding-top: 1em;
-  margin: 0 -0.5em;
+  padding: var(--gpad);
+  padding-top: calc(var(--gpad) - 6px);
 }
 
-#listing.mosaic .item {
-  width: calc(33% - 1em);
-  margin: 0.5em;
-  padding: 0.5em;
-  border-radius: 0.2em;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.06),
-    0 1px 2px rgba(0, 0, 0, 0.12);
+/* Container grids — folders vs files have different min column widths */
+#listing.mosaic .fb-items--folders {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(216px, 1fr));
+  gap: 12px;
+}
+#listing.mosaic .fb-items--files {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--gap);
+}
+/* Folder section is followed by the files section with breathing room */
+#listing.mosaic .fb-items--folders {
+  margin-bottom: 30px;
 }
 
-#listing.mosaic .item:hover {
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.12),
-    0 1px 2px rgba(0, 0, 0, 0.24) !important;
+/* Section labels — uppercase, faint */
+#listing.mosaic h2 {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0 0 13px 2px;
 }
 
+/* The list-view header is irrelevant in mosaic */
 #listing.mosaic .header {
   display: none;
 }
 
-#listing.mosaic .item div:first-of-type {
-  width: 5em;
+/* ---- Shared item reset ---- */
+#listing.mosaic .item {
+  width: auto;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  transition: box-shadow 0.14s ease, border-color 0.14s ease,
+    background 0.1s ease;
 }
 
-#listing.mosaic .item div:last-of-type {
-  width: calc(100% - 5vw);
+/* ---- Folder chip ---- */
+#listing.mosaic .item[data-dir="true"] {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 11px;
+  min-height: 0;
 }
-
-#listing.mosaic.gallery .item div:first-of-type {
-  width: 100%;
-  height: 12em;
+#listing.mosaic .item[data-dir="true"]:hover {
+  border-color: var(--border-strong);
+  background: var(--hover);
 }
-
-#listing.mosaic.gallery .item div:last-of-type {
-  position: absolute;
-  bottom: 0.5em;
-  padding: 1em;
-  width: calc(100% - 1em);
-  text-align: center;
+#listing.mosaic .item[data-dir="true"] > div:first-of-type {
+  width: auto;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-
-#listing.mosaic.gallery .item[data-type="image"] div:last-of-type {
-  color: white;
-  background: linear-gradient(#0000, #0009);
-}
-
-#listing.mosaic.gallery .item i {
-  width: 100%;
+#listing.mosaic .item[data-dir="true"] > div:first-of-type i {
+  font-size: 21px;
   margin-right: 0;
-  font-size: 8em;
-  text-align: center;
+  color: var(--accent);
 }
-
-#listing.mosaic.gallery .item img {
-  width: 100%;
-  height: 100%;
+#listing.mosaic .item[data-dir="true"] > div:last-of-type {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
-
-#listing.gallery .size,
-#listing.gallery .modified {
+#listing.mosaic .item[data-dir="true"] .name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#listing.mosaic .item[data-dir="true"] .size,
+#listing.mosaic .item[data-dir="true"] .modified {
   display: none;
 }
+
+/* ---- File card ---- */
+#listing.mosaic .item:not([data-dir="true"]) {
+  display: flex;
+  flex-direction: column;
+  border-radius: 13px;
+  overflow: hidden;
+}
+#listing.mosaic .item:not([data-dir="true"]):hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-panel);
+}
+
+/* Thumbnail area (128px, tinted by kind) */
+#listing.mosaic .item:not([data-dir="true"]) > div:first-of-type {
+  width: 100%;
+  height: 128px;
+  flex: 0 0 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: var(--kind-default-soft);
+}
+#listing.mosaic .item:not([data-dir="true"])[data-kind="image"] > div:first-of-type { background: var(--kind-image-soft); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="video"] > div:first-of-type { background: var(--kind-video-soft); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="audio"] > div:first-of-type { background: var(--kind-audio-soft); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="pdf"] > div:first-of-type { background: var(--kind-pdf-soft); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="doc"] > div:first-of-type { background: var(--kind-doc-soft); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="sheet"] > div:first-of-type { background: var(--kind-sheet-soft); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="slide"] > div:first-of-type { background: var(--kind-slide-soft); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="archive"] > div:first-of-type { background: var(--kind-archive-soft); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="code"] > div:first-of-type { background: var(--kind-code-soft); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="vector"] > div:first-of-type { background: var(--kind-vector-soft); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="text"] > div:first-of-type { background: var(--kind-text-soft); }
+
+/* Real image thumbnails fill the area; material icon is hidden */
+#listing.mosaic .item:not([data-dir="true"]) > div:first-of-type img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  margin: 0;
+}
+#listing.mosaic .item:not([data-dir="true"]) > div:first-of-type > i.material-icons {
+  display: none;
+}
+
+/* Document outline shape for non-thumb files */
+.fb-card-doc {
+  display: none;
+  position: relative;
+  width: 56px;
+  height: 70px;
+}
+#listing.mosaic .item:not([data-dir="true"]):not([data-thumb="true"]) .fb-card-doc {
+  display: block;
+}
+.fb-card-doc svg {
+  width: 56px;
+  height: 70px;
+  display: block;
+}
+.fb-card-doc-ext {
+  position: absolute;
+  bottom: 14px;
+  left: 0;
+  right: 2px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--kind-default-tint);
+}
+#listing.mosaic .item:not([data-dir="true"])[data-kind="image"] .fb-card-doc-ext { color: var(--kind-image-tint); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="video"] .fb-card-doc-ext { color: var(--kind-video-tint); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="audio"] .fb-card-doc-ext { color: var(--kind-audio-tint); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="pdf"] .fb-card-doc-ext { color: var(--kind-pdf-tint); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="doc"] .fb-card-doc-ext { color: var(--kind-doc-tint); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="sheet"] .fb-card-doc-ext { color: var(--kind-sheet-tint); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="slide"] .fb-card-doc-ext { color: var(--kind-slide-tint); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="archive"] .fb-card-doc-ext { color: var(--kind-archive-tint); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="code"] .fb-card-doc-ext { color: var(--kind-code-tint); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="vector"] .fb-card-doc-ext { color: var(--kind-vector-tint); }
+#listing.mosaic .item:not([data-dir="true"])[data-kind="text"] .fb-card-doc-ext { color: var(--kind-text-tint); }
+
+/* Footer — name on top, "size · modified" meta line below */
+#listing.mosaic .item:not([data-dir="true"]) > div:last-of-type {
+  width: 100%;
+  padding: 10px 11px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 0;
+  text-align: left;
+}
+#listing.mosaic .item:not([data-dir="true"]) .name {
+  flex: 0 0 100%;
+  width: 100%;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#listing.mosaic .item:not([data-dir="true"]) .size {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  font-weight: normal;
+  color: var(--faint);
+}
+#listing.mosaic .item:not([data-dir="true"]) .size::after {
+  content: " · ";
+  color: var(--faint);
+}
+#listing.mosaic .item:not([data-dir="true"]) .modified {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  font-weight: normal;
+  color: var(--faint);
+}
+
+/* ---- Selection (overrides legacy blue rule below) ---- */
+#listing.mosaic .item[data-dir="true"][aria-selected="true"] {
+  background: var(--sel);
+  border-color: var(--sel-border);
+  color: var(--text);
+}
+#listing.mosaic .item:not([data-dir="true"])[aria-selected="true"] {
+  background: var(--sel);
+  border-color: var(--sel-border);
+  box-shadow: none;
+  color: var(--text);
+}
+#listing.mosaic .item[aria-selected="true"] .name {
+  color: var(--text);
+}
+
+/* ============================================================
+   List view (Step 9 — design-spec faithful)
+   Row = [34px icon column] [grid: 1fr name | 120px size | 168px modified]
+   Header mirrors the same structure so Size/Modified columns align.
+   ============================================================ */
 
 #listing.list {
   flex-direction: column;
@@ -159,105 +335,183 @@ html[dir="rtl"] #listing {
   margin: 0;
 }
 
-#listing.list .item {
-  width: 100%;
-  margin: 0;
-  border: 1px solid var(--borderPrimary);
-  padding: 1em;
-  border-top: 0;
-}
-
+/* List view has no Folders/Files section headers (single flat list) */
 #listing.list h2 {
   display: none;
 }
 
-#listing .item[aria-selected="true"] {
-  background: var(--blue) !important;
-  color: var(--iconSecondary) !important;
-}
-
-#listing.list .item div:first-of-type {
-  width: 3em;
-}
-
-#listing.list .item div:first-of-type i {
-  font-size: 2em;
-}
-
-#listing.list .item div:first-of-type img {
-  width: 2em;
-  height: 2em;
-}
-
-#listing.list .item div:last-of-type {
-  width: calc(100% - 3em);
+/* ---- Rows ---- */
+#listing.list .item {
   display: flex;
   align-items: center;
-}
-
-#listing.list .item .name {
-  width: 50%;
-}
-
-#listing.list .item .size {
-  width: 25%;
-}
-
-#listing .item.header {
-  display: none !important;
-  background-color: var(--iconTertiary);
-}
-
-#listing.list .header i {
-  font-size: 1.5em;
-  vertical-align: middle;
-  margin-left: 0.2em;
-}
-
-#listing.list .item.header {
-  display: flex !important;
-  background: var(--background);
-  z-index: 999;
-  padding: 0.85em;
-  border: 0;
-  border-bottom: 1px solid var(--borderPrimary);
-}
-
-#listing.list .item.header > div {
+  gap: 13px;
   width: 100%;
+  min-height: var(--rowh);
+  margin: 0;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s ease;
+}
+#listing.list .item:hover {
+  background: var(--hover);
 }
 
-#listing.list .item.header .name {
-  margin-right: 3em;
+/* Icon column — fixed width so folder rows and file rows stay aligned */
+#listing.list .item > div:first-of-type {
+  flex: 0 0 34px;
+  width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+#listing.list .item > div:first-of-type > img {
+  display: none;
+}
+#listing.list .item > div:first-of-type .fb-card-doc {
+  display: none;
+}
+/* Folder icon */
+#listing.list .item[data-dir="true"] > div:first-of-type > i.material-icons {
+  font-size: 20px;
+  margin: 0;
+  color: var(--accent);
+}
+/* Files hide the material icon in favor of the extension pill */
+#listing.list .item:not([data-dir="true"]) > div:first-of-type > i.material-icons {
+  display: none;
 }
 
-#listing.list .header a {
-  color: inherit;
+/* Extension pill badge for files */
+.fb-list-pill {
+  display: none;
+}
+#listing.list .item:not([data-dir="true"]) .fb-list-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: var(--kind-default-soft);
+  color: var(--kind-default-tint);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+#listing.list .item:not([data-dir="true"])[data-kind="image"] .fb-list-pill { background: var(--kind-image-soft); color: var(--kind-image-tint); }
+#listing.list .item:not([data-dir="true"])[data-kind="video"] .fb-list-pill { background: var(--kind-video-soft); color: var(--kind-video-tint); }
+#listing.list .item:not([data-dir="true"])[data-kind="audio"] .fb-list-pill { background: var(--kind-audio-soft); color: var(--kind-audio-tint); }
+#listing.list .item:not([data-dir="true"])[data-kind="pdf"] .fb-list-pill { background: var(--kind-pdf-soft); color: var(--kind-pdf-tint); }
+#listing.list .item:not([data-dir="true"])[data-kind="doc"] .fb-list-pill { background: var(--kind-doc-soft); color: var(--kind-doc-tint); }
+#listing.list .item:not([data-dir="true"])[data-kind="sheet"] .fb-list-pill { background: var(--kind-sheet-soft); color: var(--kind-sheet-tint); }
+#listing.list .item:not([data-dir="true"])[data-kind="slide"] .fb-list-pill { background: var(--kind-slide-soft); color: var(--kind-slide-tint); }
+#listing.list .item:not([data-dir="true"])[data-kind="archive"] .fb-list-pill { background: var(--kind-archive-soft); color: var(--kind-archive-tint); }
+#listing.list .item:not([data-dir="true"])[data-kind="code"] .fb-list-pill { background: var(--kind-code-soft); color: var(--kind-code-tint); }
+#listing.list .item:not([data-dir="true"])[data-kind="vector"] .fb-list-pill { background: var(--kind-vector-soft); color: var(--kind-vector-tint); }
+#listing.list .item:not([data-dir="true"])[data-kind="text"] .fb-list-pill { background: var(--kind-text-soft); color: var(--kind-text-tint); }
+
+/* Text columns — name | size (right) | modified */
+#listing.list .item > div:last-of-type {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 120px 168px;
+  gap: 14px;
+  align-items: center;
+}
+#listing.list .item .name {
+  font-size: 13.5px;
+  font-weight: 450;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#listing.list .item .size {
+  font-size: 13px;
+  color: var(--dim);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+#listing.list .item .modified {
+  font-size: 13px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-#listing.list .name {
-  font-weight: normal;
-  word-wrap: break-word;
-  word-break: break-all;
-  white-space: pre-wrap;
+/* ---- Selection (base for all views) ---- */
+#listing .item[aria-selected="true"] {
+  background: var(--sel);
+}
+#listing.list .item[aria-selected="true"],
+#listing.list .item[aria-selected="true"]:hover {
+  background: var(--sel);
 }
 
-#listing.list .header span {
-  vertical-align: middle;
+/* ---- Column header ---- */
+#listing.list .item.header {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-height: 0;
+  padding: 0 14px 9px;
+  margin: 0 0 6px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
 }
-
-#listing.list .header i {
+/* Spacer matching the 34px icon column so columns align with rows */
+#listing.list .item.header::before {
+  content: "";
+  flex: 0 0 34px;
+  width: 34px;
+}
+#listing.list .item.header > div {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 120px 168px;
+  gap: 14px;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+#listing.list .item.header p {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  cursor: pointer;
+}
+#listing.list .item.header .size {
+  justify-content: flex-end;
+  color: var(--faint);
+}
+#listing.list .item.header .name,
+#listing.list .item.header .modified {
+  color: var(--faint);
+}
+/* Sort arrows are subtle: hidden until the column is hovered or active */
+#listing.list .item.header .fb-icon {
   opacity: 0;
-  transition: 0.1s ease all;
+  transition: opacity 0.1s ease;
 }
-
-#listing.list .header p:hover i,
-#listing.list .header .active i {
+#listing.list .item.header p:hover .fb-icon,
+#listing.list .item.header p.active .fb-icon {
   opacity: 1;
-}
-
-#listing.list .item.header .active {
-  font-weight: bold;
 }
 
 #listing #multiple-selection {

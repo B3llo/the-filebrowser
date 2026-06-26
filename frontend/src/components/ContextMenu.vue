@@ -1,5 +1,11 @@
 <template>
   <div
+    class="context-menu-backdrop"
+    v-show="show"
+    @click.self="hideContextMenu"
+    @contextmenu.prevent="hideContextMenu"
+  />
+  <div
     class="context-menu"
     ref="contextMenu"
     v-show="show"

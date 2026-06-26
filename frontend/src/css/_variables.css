@@ -37,25 +37,33 @@
   --gpad: 26px;
   --gap:  18px;
 
-  /* --- File type tints (icon color + soft background) --- */
+  /* --- File type tints (icon color + soft background) ---
+     Backgrounds are visible pastels (L≈0.92) so each type reads as a
+     distinct color on the white surface; hues match the design palette. */
   --kind-folder-tint: oklch(0.58 0.1  70);
-  --kind-folder-soft: oklch(0.97 0.025 80);
+  --kind-folder-soft: oklch(0.93 0.04  80);
   --kind-image-tint:  oklch(0.56 0.1  165);
-  --kind-image-soft:  oklch(0.96 0.025 165);
+  --kind-image-soft:  oklch(0.92 0.06  165);
   --kind-video-tint:  oklch(0.57 0.11  28);
-  --kind-video-soft:  oklch(0.96 0.03   28);
+  --kind-video-soft:  oklch(0.92 0.065 28);
   --kind-pdf-tint:    oklch(0.56 0.14  28);
-  --kind-pdf-soft:    oklch(0.96 0.035  28);
+  --kind-pdf-soft:    oklch(0.92 0.07  28);
   --kind-doc-tint:    oklch(0.52 0.12 255);
-  --kind-doc-soft:    oklch(0.96 0.03  255);
+  --kind-doc-soft:    oklch(0.92 0.065 255);
   --kind-sheet-tint:  oklch(0.5  0.11 150);
-  --kind-sheet-soft:  oklch(0.96 0.03  150);
+  --kind-sheet-soft:  oklch(0.92 0.065 150);
   --kind-code-tint:   oklch(0.54 0.09 265);
-  --kind-code-soft:   oklch(0.96 0.025 265);
+  --kind-code-soft:   oklch(0.92 0.06  265);
   --kind-archive-tint: oklch(0.56 0.08  80);
-  --kind-archive-soft: oklch(0.96 0.03   80);
-  --kind-audio-tint:  oklch(0.55 0.1  310);
-  --kind-audio-soft:  oklch(0.96 0.025 310);
+  --kind-archive-soft: oklch(0.92 0.055 80);
+  --kind-audio-tint:  oklch(0.55 0.11 300);
+  --kind-audio-soft:  oklch(0.92 0.065 300);
+  --kind-slide-tint:  oklch(0.6  0.12  55);
+  --kind-slide-soft:  oklch(0.93 0.075 55);
+  --kind-vector-tint: oklch(0.55 0.11  315);
+  --kind-vector-soft: oklch(0.92 0.065 315);
+  --kind-text-tint:   oklch(0.5  0.02  260);
+  --kind-text-soft:   oklch(0.93 0.015 260);
   --kind-default-tint: var(--dim);
   --kind-default-soft: var(--hover);
 
@@ -148,4 +156,18 @@
   --input-green:      oklch(0.27 0.1 145);
   --dividerPrimary:   rgba(30, 30, 30, 0.4);
   --dividerSecondary: rgba(30, 30, 30, 0.6);
+
+  /* Dark soft backgrounds for file-type tints (visible dark pastels) */
+  --kind-image-soft:   oklch(0.3 0.07  165);
+  --kind-video-soft:   oklch(0.3 0.08  28);
+  --kind-audio-soft:   oklch(0.3 0.08  300);
+  --kind-pdf-soft:     oklch(0.3 0.09  28);
+  --kind-doc-soft:     oklch(0.32 0.08 255);
+  --kind-sheet-soft:   oklch(0.3 0.08  150);
+  --kind-slide-soft:   oklch(0.32 0.09  55);
+  --kind-archive-soft: oklch(0.32 0.07  80);
+  --kind-code-soft:    oklch(0.31 0.07  265);
+  --kind-vector-soft:  oklch(0.31 0.08  315);
+  --kind-text-soft:    oklch(0.32 0.02  260);
+  --kind-default-soft: var(--hover);
 }

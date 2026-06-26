@@ -46,17 +46,6 @@
               <path d="M14 14h7v7h-7z"/><path d="M3 14h7v7H3z"/>
             </svg>
           </button>
-          <button
-            class="fb-tbtn"
-            :class="{ 'fb-tbtn--active': currentViewMode === 'mosaic gallery' }"
-            :aria-label="t('buttons.galleryView', 'Gallery view')"
-            @click="setView('mosaic gallery')"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true">
-              <path d="M3 3h8v11H3z"/><path d="M13 3h8v5h-8z"/>
-              <path d="M13 12h8v9h-8z"/><path d="M3 18h8v3H3z"/>
-            </svg>
-          </button>
         </div>
 
         <!-- Sort button — 38×38, bordered, accent icon -->
@@ -214,7 +203,7 @@
         ref="listing"
         class="file-icons"
         data-clear-on-click="true"
-        :class="authStore.user?.viewMode ?? ''"
+        :class="currentViewMode"
         @click="handleEmptyAreaClick"
       >
         <div>
@@ -266,6 +255,7 @@
         </h2>
         <div
           v-if="fileStore.req?.numDirs ?? false"
+          class="fb-items fb-items--folders"
           data-clear-on-click="true"
           @contextmenu="showContextMenu"
         >
@@ -289,6 +279,7 @@
         </h2>
         <div
           v-if="fileStore.req?.numFiles ?? false"
+          class="fb-items fb-items--files"
           data-clear-on-click="true"
           @contextmenu="showContextMenu"
         >
@@ -313,45 +304,50 @@
         >
           <action
             v-if="headerButtons.share"
-            icon="share"
+            :fbIcon="'share'"
             :label="t('buttons.share')"
             show="share"
           />
           <action
+            v-if="headerButtons.download"
+            :fbIcon="'download'"
+            :label="t('buttons.download')"
+            @action="download"
+            :counter="fileStore.selectedCount"
+          />
+          <hr class="fb-menu-divider" />
+          <action
             v-if="headerButtons.rename"
-            icon="mode_edit"
+            :fbIcon="'rename'"
             :label="t('buttons.rename')"
             show="rename"
           />
           <action
             v-if="headerButtons.copy"
-            id="copy-button"
-            icon="content_copy"
+            :fbIcon="'copy'"
             :label="t('buttons.copyFile')"
             show="copy"
           />
           <action
             v-if="headerButtons.move"
-            id="move-button"
-            icon="forward"
+            :fbIcon="'move'"
             :label="t('buttons.moveFile')"
             show="move"
           />
+          <hr class="fb-menu-divider" />
+          <action
+            :fbIcon="'info'"
+            :label="t('buttons.info')"
+            show="info"
+          />
+          <hr class="fb-menu-divider" />
           <action
             v-if="headerButtons.delete"
-            id="delete-button"
-            icon="delete"
+            :fbIcon="'delete'"
             :label="t('buttons.delete')"
             show="delete"
+            :danger="true"
           />
-          <action
-            v-if="headerButtons.download"
-            icon="file_download"
-            :label="t('buttons.download')"
-            @action="download"
-            :counter="fileStore.selectedCount"
-          />
-          <action icon="info" :label="t('buttons.info')" show="info" />
         </context-menu>
 
         <input
@@ -397,7 +393,6 @@ import { useLayoutStore } from "@/stores/layout";
 import { users, files as api } from "@/api";
 import { enableExec } from "@/utils/constants";
 import * as upload from "@/utils/upload";
-import css from "@/utils/css";
 import { throttle } from "lodash-es";
 import { Base64 } from "js-base64";
 
@@ -423,7 +418,6 @@ import { storeToRefs } from "pinia";
 import { removePrefix } from "@/api/utils";
 
 const showLimit = ref<number>(50);
-const columnWidth = ref<number>(280);
 const dragCounter = ref<number>(0);
 const width = ref<number>(window.innerWidth);
 const itemWeight = ref<number>(0);
@@ -503,7 +497,12 @@ const modifiedIcon = computed((): IconName => {
   return modifiedSorted.value && ascOrdered.value ? "arrow-down" : "arrow-up";
 });
 
-const currentViewMode = computed(() => authStore.user?.viewMode ?? "list");
+const currentViewMode = computed(() => {
+  const mode = authStore.user?.viewMode ?? "list";
+  // Gallery view was removed from the UI; fall back to plain mosaic so any
+  // persisted "mosaic gallery" preference still renders cleanly.
+  return mode === "mosaic gallery" ? "mosaic" : mode;
+});
 
 const headerButtons = computed(() => {
   return {
@@ -774,15 +773,8 @@ const paste = async (event: Event) => {
 };
 
 const columnsResize = () => {
-  // Update the columns size based on the window width.
-  const items_ = css(["#listing.mosaic .item", ".mosaic#listing .item"]);
-  if (items_ === null) return;
-
-  let columns = Math.floor(
-    (document.querySelector("main")?.offsetWidth ?? 0) / columnWidth.value
-  );
-  if (columns === 0) columns = 1;
-  items_.style.width = `calc(${100 / columns}% - 1em)`;
+  // No-op: mosaic view now uses CSS Grid (auto-fill / minmax) for column
+  // sizing, so per-item inline widths are no longer required.
 };
 
 const scrollEvent = throttle((e?: Event) => {
@@ -970,15 +962,15 @@ const sort = async (by: string) => {
   let asc = false;
 
   if (by === "name") {
-    if (nameIcon.value === "arrow_upward") {
+    if (nameIcon.value === "arrow-up") {
       asc = true;
     }
   } else if (by === "size") {
-    if (sizeIcon.value === "arrow_upward") {
+    if (sizeIcon.value === "arrow-up") {
       asc = true;
     }
   } else if (by === "modified") {
-    if (modifiedIcon.value === "arrow_upward") {
+    if (modifiedIcon.value === "arrow-up") {
       asc = true;
     }
   }
@@ -1044,29 +1036,6 @@ const download = () => {
       api.download(format, ...files);
     },
   });
-};
-
-const switchView = async () => {
-  layoutStore.closeHovers();
-
-  const modes = {
-    list: "mosaic",
-    mosaic: "mosaic gallery",
-    "mosaic gallery": "list",
-  };
-
-  const data = {
-    id: authStore.user?.id,
-    viewMode: (modes[authStore.user?.viewMode ?? "list"] ||
-      "list") as ViewModeType,
-  };
-
-  users.update(data, ["viewMode"]).catch($showError);
-
-  authStore.updateUser(data);
-
-  setItemWeight();
-  fillWindow();
 };
 
 const setView = async (mode: ViewModeType) => {

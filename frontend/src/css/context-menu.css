@@ -1,21 +1,67 @@
 .context-menu {
   position: absolute;
-  background: var(--surfacePrimary);
-  min-width: 180px;
-  max-width: 220px;
-  border: 1px solid var(--borderSecondary);
-  box-shadow: 0 2px 4px var(--borderPrimary);
-  z-index: 999;
+  min-width: 214px;
+  background: var(--surface, oklch(1 0 0));
+  border: 1px solid var(--border, oklch(0.87 0.01 100));
+  border-radius: 12px;
+  box-shadow: var(--shadow-menu, 0 4px 24px oklch(0 0 0 / 0.12));
+  padding: 6px;
+  z-index: 61;
+  animation: fbpop 0.12s ease-out;
+  transform-origin: top left;
 }
 
 .context-menu .action {
-  display: block;
-  width: 100%;
-  border-radius: 0;
   display: flex;
   align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  font-size: 13.5px;
+  color: var(--text, oklch(0.15 0.01 100));
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.08s;
+  font-family: inherit;
+  text-align: left;
+}
+
+.context-menu .action:hover {
+  background: var(--hover, oklch(0.92 0.01 100));
+}
+
+.context-menu .action[data-danger="true"] {
+  color: oklch(0.55 0.2 25);
+}
+
+.context-menu .action[data-danger="true"]:hover {
+  background: oklch(0.95 0.05 25);
+}
+
+.context-menu .action .material-icons,
+.context-menu .action .fb-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .context-menu .action .counter {
   left: 1.75em;
+}
+
+.fb-menu-divider {
+  height: 1px;
+  background: var(--border, oklch(0.87 0.01 100));
+  margin: 6px;
+  border: 0;
+}
+
+.context-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
 }

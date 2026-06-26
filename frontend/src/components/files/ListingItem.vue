@@ -17,6 +17,8 @@
     @touchmove="handleTouchMove"
     :data-dir="isDir"
     :data-type="type"
+    :data-kind="kind"
+    :data-thumb="hasImageThumb ? 'true' : 'false'"
     :aria-label="name"
     :aria-selected="isSelected"
     :data-ext="getExtension(name).toLowerCase()"
@@ -28,6 +30,28 @@
         v-lazy="thumbnailUrl"
       />
       <i v-else class="material-icons"></i>
+
+      <!-- Mosaic card: document outline + extension label for non-thumb files -->
+      <div class="fb-card-doc" aria-hidden="true">
+        <svg viewBox="0 0 56 70">
+          <path
+            d="M5 3h28l18 18v44a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
+            fill="var(--surface)"
+            stroke="var(--border-strong)"
+            stroke-width="2"
+          />
+          <path
+            d="M33 3v16a2 2 0 0 0 2 2h16"
+            fill="none"
+            stroke="var(--border-strong)"
+            stroke-width="2"
+          />
+        </svg>
+        <span class="fb-card-doc-ext">{{ extLabelText }}</span>
+      </div>
+
+      <!-- List view: extension pill badge (colored by kind) -->
+      <span class="fb-list-pill" aria-hidden="true">{{ extLabelText }}</span>
     </div>
 
     <div>
@@ -50,6 +74,7 @@ import { useLayoutStore } from "@/stores/layout";
 
 import { enableThumbs } from "@/utils/constants";
 import { filesize } from "@/utils";
+import { fileKind, extLabel } from "@/utils/fileKind";
 import dayjs from "dayjs";
 import { files as api } from "@/api";
 import * as upload from "@/utils/upload";
@@ -117,6 +142,16 @@ const thumbnailUrl = computed(() => {
 const isThumbsEnabled = computed(() => {
   return enableThumbs;
 });
+
+const kind = computed(() =>
+  fileKind({ isDir: props.isDir, type: props.type, name: props.name })
+);
+
+const hasImageThumb = computed(
+  () => !props.readOnly && props.type === "image" && isThumbsEnabled.value
+);
+
+const extLabelText = computed(() => extLabel(props.name));
 
 const humanSize = () => {
   return props.type == "invalid_link" ? "invalid link" : filesize(props.size);
