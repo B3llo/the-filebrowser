@@ -3,10 +3,9 @@
     <header-bar
       v-if="error || fileStore.req?.type === undefined"
       showMenu
-      showLogo
+      showBreadcrumb
+      base="/files"
     />
-
-    <breadcrumbs base="/files" />
     <errors v-if="error" :errorCode="error.status" />
     <component v-else-if="currentView" :is="currentView"></component>
     <div v-else>
@@ -38,7 +37,6 @@ import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
-import Breadcrumbs from "@/components/Breadcrumbs.vue";
 import Errors from "@/views/Errors.vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";

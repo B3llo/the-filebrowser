@@ -1,78 +1,144 @@
 <template>
   <div>
-    <header-bar showMenu showLogo>
-      <search />
-      <title />
-      <action
-        class="search-button"
-        icon="search"
-        :label="t('buttons.search')"
-        @action="openSearch()"
-      />
-
+    <header-bar showMenu showBreadcrumb base="/files">
       <template #actions>
-        <template v-if="!isMobile">
-          <action
-            v-if="headerButtons.share"
-            icon="share"
-            :label="t('buttons.share')"
-            show="share"
+        <!-- Inline search — 280px, opens full search on mobile -->
+        <div class="fb-search-wrap">
+          <svg class="fb-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true">
+            <path d="M21 21l-4.34-4.34"/>
+            <path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/>
+          </svg>
+          <input
+            class="fb-search"
+            type="text"
+            :placeholder="t('search.search')"
+            :aria-label="t('search.search')"
+            @click="openSearch"
+            @keydown.enter="openSearch"
+            readonly
           />
-          <action
-            v-if="headerButtons.rename"
-            icon="mode_edit"
-            :label="t('buttons.rename')"
-            show="rename"
-          />
-          <action
-            v-if="headerButtons.copy"
-            id="copy-button"
-            icon="content_copy"
-            :label="t('buttons.copyFile')"
-            show="copy"
-          />
-          <action
-            v-if="headerButtons.move"
-            id="move-button"
-            icon="forward"
-            :label="t('buttons.moveFile')"
-            show="move"
-          />
-          <action
-            v-if="headerButtons.delete"
-            id="delete-button"
-            icon="delete"
-            :label="t('buttons.delete')"
-            show="delete"
-          />
-        </template>
+        </div>
 
+        <!-- Mobile: icon-only search trigger -->
+        <button
+          class="fb-tbtn fb-search-btn"
+          :aria-label="t('buttons.search')"
+          @click="openSearch"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px" aria-hidden="true">
+            <path d="M21 21l-4.34-4.34"/>
+            <path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/>
+          </svg>
+        </button>
+
+        <!-- Shell toggle -->
         <action
           v-if="headerButtons.shell"
           icon="code"
           :label="t('buttons.shell')"
           @action="layoutStore.toggleShell"
         />
-        <action
-          :icon="viewIcon"
-          :label="t('buttons.switchView')"
-          @action="switchView"
-        />
-        <action
-          v-if="headerButtons.download"
-          icon="file_download"
-          :label="t('buttons.download')"
-          @action="download"
-          :counter="fileStore.selectedCount"
-        />
-        <action
-          v-if="headerButtons.upload"
-          icon="file_upload"
-          id="upload-button"
-          :label="t('buttons.upload')"
-          @action="uploadFunc"
-        />
-        <action icon="info" :label="t('buttons.info')" show="info" />
+
+        <!-- 3-way view toggle segmented control -->
+        <div class="fb-view-toggle" :title="t('buttons.switchView')">
+          <button
+            class="fb-tbtn"
+            :class="{ 'fb-tbtn--active': currentViewMode === 'list' }"
+            :aria-label="t('buttons.listView', 'List view')"
+            @click="setView('list')"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px" aria-hidden="true">
+              <path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/>
+              <path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>
+            </svg>
+          </button>
+          <button
+            class="fb-tbtn"
+            :class="{ 'fb-tbtn--active': currentViewMode === 'mosaic' }"
+            :aria-label="t('buttons.gridView', 'Grid view')"
+            @click="setView('mosaic')"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true">
+              <path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/>
+              <path d="M14 14h7v7h-7z"/><path d="M3 14h7v7H3z"/>
+            </svg>
+          </button>
+          <button
+            class="fb-tbtn"
+            :class="{ 'fb-tbtn--active': currentViewMode === 'mosaic gallery' }"
+            :aria-label="t('buttons.galleryView', 'Gallery view')"
+            @click="setView('mosaic gallery')"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true">
+              <path d="M3 3h8v11H3z"/><path d="M13 3h8v5h-8z"/>
+              <path d="M13 12h8v9h-8z"/><path d="M3 18h8v3H3z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Sort button — 38×38, bordered, accent icon -->
+        <button
+          class="fb-tbtn fb-tbtn--bordered"
+          :title="t('files.sort', 'Sort')"
+          @click="cycleSortMode"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px" aria-hidden="true">
+            <path d="M7 4v16"/><path d="M3 8l4-4 4 4"/>
+            <path d="M17 20V4"/><path d="M21 16l-4 4-4-4"/>
+          </svg>
+        </button>
+
+        <!-- Details panel toggle — split-panel icon -->
+        <button
+          class="fb-tbtn fb-tbtn--bordered"
+          :class="{ 'fb-tbtn--active': layoutStore.showDetails }"
+          :title="t('buttons.info')"
+          @click="layoutStore.toggleDetails()"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px" aria-hidden="true">
+            <path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <path d="M15 3v18"/>
+          </svg>
+        </button>
+
+        <!-- New button dropdown -->
+        <div class="fb-new-btn-wrap" v-if="headerButtons.upload || authStore.user?.perm.create">
+          <button
+            class="fb-tbtn fb-tbtn--accent"
+            :title="t('buttons.new', 'New')"
+            @click="newMenuOpen = !newMenuOpen"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px" aria-hidden="true">
+              <path d="M12 5v14"/><path d="M5 12h14"/>
+            </svg>
+            <span>{{ t('buttons.new', 'New') }}</span>
+          </button>
+          <div v-show="newMenuOpen" class="fb-new-menu" @click="newMenuOpen = false">
+            <button v-if="authStore.user?.perm.create" @click.stop="showHoverAndClose('newDir')" class="fb-new-menu-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true">
+                <path d="M20 19a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-7.6a1 1 0 0 1-.8-.4L10.3 6.9a1 1 0 0 0-.8-.4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2Z"/>
+                <path d="M12 11v5"/><path d="M9.5 13.5h5"/>
+              </svg>
+              <span>{{ t('sidebar.newFolder') }}</span>
+            </button>
+            <button v-if="authStore.user?.perm.create" @click.stop="showHoverAndClose('newFile')" class="fb-new-menu-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <path d="M14 2v6h6"/><path d="M12 12v6"/><path d="M9 15h6"/>
+              </svg>
+              <span>{{ t('sidebar.newFile') }}</span>
+            </button>
+            <button v-if="headerButtons.upload" @click.stop="uploadAndClose()" class="fb-new-menu-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/>
+              </svg>
+              <span>{{ t('buttons.upload') }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mobile: select multiple -->
         <action
           icon="check_circle"
           :label="t('buttons.selectMultiple')"
@@ -354,7 +420,6 @@ import { Base64 } from "js-base64";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import Action from "@/components/header/Action.vue";
-import Search from "@/components/Search.vue";
 import Item from "@/components/files/ListingItem.vue";
 import ContextMenu from "@/components/ContextMenu.vue";
 import {
@@ -378,6 +443,7 @@ const width = ref<number>(window.innerWidth);
 const itemWeight = ref<number>(0);
 const isContextMenuVisible = ref<boolean>(false);
 const contextMenuPos = ref<{ x: number; y: number }>({ x: 0, y: 0 });
+const newMenuOpen = ref<boolean>(false);
 
 const $showError = inject<IToastError>("$showError")!;
 
@@ -473,6 +539,17 @@ const viewIcon = computed(() => {
     : icons[authStore.user.viewMode];
 });
 
+const currentViewMode = computed(() => authStore.user?.viewMode ?? "list");
+
+const sortIcon = computed(() => {
+  if (!fileStore.req) return "sort";
+  const { by, asc } = fileStore.req.sorting;
+  if (by === "name") return asc ? "arrow_upward" : "arrow_downward";
+  if (by === "size") return asc ? "storage" : "storage";
+  if (by === "modified") return asc ? "schedule" : "update";
+  return "sort";
+});
+
 const headerButtons = computed(() => {
   return {
     upload: authStore.user?.perm.create,
@@ -525,8 +602,9 @@ onMounted(() => {
 
   // Add the needed event listeners to the window and document.
   window.addEventListener("keydown", keyEvent);
-  window.addEventListener("scroll", scrollEvent);
+  window.addEventListener("scroll", scrollEvent, true);
   window.addEventListener("resize", windowsResize);
+  document.addEventListener("click", closeNewMenu);
 
   if (!authStore.user?.perm.create) return;
   document.addEventListener("dragover", preventDefault);
@@ -538,8 +616,9 @@ onMounted(() => {
 onBeforeUnmount(() => {
   // Remove event listeners before destroying this page.
   window.removeEventListener("keydown", keyEvent);
-  window.removeEventListener("scroll", scrollEvent);
+  window.removeEventListener("scroll", scrollEvent, true);
   window.removeEventListener("resize", windowsResize);
+  document.removeEventListener("click", closeNewMenu);
 
   if (authStore.user && !authStore.user?.perm.create) return;
   document.removeEventListener("dragover", preventDefault);
@@ -549,6 +628,13 @@ onBeforeUnmount(() => {
 });
 
 const base64 = (name: string) => Base64.encodeURI(name);
+
+const closeNewMenu = (e: MouseEvent) => {
+  const wrap = document.querySelector(".fb-new-btn-wrap");
+  if (wrap && !wrap.contains(e.target as Node)) {
+    newMenuOpen.value = false;
+  }
+};
 
 const keyEvent = (event: KeyboardEvent) => {
   // No prompts are shown
@@ -744,23 +830,27 @@ const columnsResize = () => {
   items_.style.width = `calc(${100 / columns}% - 1em)`;
 };
 
-const scrollEvent = throttle(() => {
+const scrollEvent = throttle((e?: Event) => {
   const totalItems =
     (fileStore.req?.numDirs ?? 0) + (fileStore.req?.numFiles ?? 0);
 
   // All items are displayed
   if (showLimit.value >= totalItems) return;
 
-  const currentPos = window.innerHeight + window.scrollY;
+  // Support both window scroll (mobile) and container scroll (desktop)
+  const scroller =
+    (e?.target instanceof HTMLElement && e.target.id !== "fb-layout"
+      ? e.target
+      : document.querySelector("main")) ?? document.documentElement;
 
-  // Trigger at the 75% of the window height
-  const triggerPos = document.body.offsetHeight - window.innerHeight * 0.25;
+  const scrollTop = scroller.scrollTop ?? window.scrollY;
+  const scrollHeight = scroller.scrollHeight ?? document.body.offsetHeight;
+  const clientHeight = scroller.clientHeight ?? window.innerHeight;
+  const currentPos = scrollTop + clientHeight;
+  const triggerPos = scrollHeight - clientHeight * 0.25;
 
   if (currentPos > triggerPos) {
-    // Quantity of items needed to fill 2x of the window height
-    const showQuantity = Math.ceil((window.innerHeight * 2) / itemWeight.value);
-
-    // Increase the number of displayed items
+    const showQuantity = Math.ceil((clientHeight * 2) / itemWeight.value);
     showLimit.value += showQuantity;
   }
 }, 100);
@@ -1028,6 +1118,42 @@ const switchView = async () => {
   fillWindow();
 };
 
+const setView = async (mode: ViewModeType) => {
+  if (authStore.user?.viewMode === mode) return;
+  layoutStore.closeHovers();
+  const data = { id: authStore.user?.id, viewMode: mode };
+  users.update(data, ["viewMode"]).catch($showError);
+  authStore.updateUser(data);
+  setItemWeight();
+  fillWindow();
+};
+
+const cycleSortMode = async () => {
+  if (!fileStore.req) return;
+  const order: { by: string; asc: boolean }[] = [
+    { by: "name", asc: true },
+    { by: "name", asc: false },
+    { by: "modified", asc: false },
+    { by: "modified", asc: true },
+    { by: "size", asc: false },
+    { by: "size", asc: true },
+  ];
+  const cur = fileStore.req.sorting;
+  const idx = order.findIndex((o) => o.by === cur.by && o.asc === cur.asc);
+  const next = order[(idx + 1) % order.length];
+  await sort(next.by);
+};
+
+const showHoverAndClose = (prompt: string) => {
+  newMenuOpen.value = false;
+  layoutStore.showHover(prompt);
+};
+
+const uploadAndClose = () => {
+  newMenuOpen.value = false;
+  uploadFunc();
+};
+
 const uploadFunc = () => {
   if (
     typeof window.DataTransferItem !== "undefined" &&
@@ -1058,12 +1184,16 @@ const fillWindow = (fit = false) => {
   // More items are displayed than the total
   if (showLimit.value >= totalItems && !fit) return;
 
-  const windowHeight = window.innerHeight;
+  const container = document.querySelector("main") ?? document.documentElement;
+  const viewHeight = container.clientHeight || window.innerHeight;
 
-  // Quantity of items needed to fill 2x of the window height
-  const showQuantity = Math.ceil(
-    (windowHeight + windowHeight * 2) / itemWeight.value
-  );
+  if (itemWeight.value <= 0) {
+    showLimit.value = Math.max(50, totalItems);
+    return;
+  }
+
+  // Quantity of items needed to fill 2x of the viewport height
+  const showQuantity = Math.ceil((viewHeight + viewHeight * 2) / itemWeight.value);
 
   // Less items to display than current
   if (showLimit.value > showQuantity && !fit) return;

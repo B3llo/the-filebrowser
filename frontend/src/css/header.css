@@ -2,18 +2,219 @@ header {
   z-index: 100;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow-panel);
   position: sticky;
   top: 0;
   height: 60px;
+  flex: 0 0 auto;
   width: 100%;
-  padding: 0 1em;
+  padding: 0 22px;
   display: flex;
   align-items: center;
+  gap: 14px;
 }
 
 header > * {
   flex: 0 0 auto;
+}
+
+/* Toolbar utility classes used across views */
+.fb-tbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: background 0.1s, color 0.1s;
+}
+
+.fb-tbtn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.fb-tbtn--active {
+  background: var(--sel);
+  color: var(--accent);
+}
+
+.fb-tbtn--bordered {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 10px;
+}
+
+.fb-tbtn--bordered:hover {
+  background: var(--hover);
+  border-color: var(--border-strong);
+}
+
+.fb-tbtn--bordered.fb-tbtn--active {
+  background: var(--sel);
+  color: var(--accent);
+  border-color: var(--sel-border);
+}
+
+.fb-tbtn--accent {
+  height: 38px;
+  padding: 0 15px 0 13px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  gap: 7px;
+}
+
+.fb-tbtn--accent:hover {
+  background: var(--accent-press);
+  color: var(--on-accent);
+}
+
+.fb-tbtn-label {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+/* Segmented view toggle — matches design: bg:var(--hover), border-radius:10px, padding:3px */
+.fb-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: var(--hover);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.fb-view-toggle .fb-tbtn {
+  width: 34px;
+  height: 30px;
+  min-width: 34px;
+  padding: 0;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+}
+
+.fb-view-toggle .fb-tbtn.fb-tbtn--active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-panel);
+}
+
+/* New button dropdown */
+.fb-new-btn-wrap {
+  position: relative;
+}
+
+.fb-new-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-menu);
+  min-width: 180px;
+  padding: 6px;
+  z-index: 1000;
+  animation: fbpop 0.15s ease;
+}
+
+.fb-new-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13.5px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.fb-new-menu-item:hover {
+  background: var(--hover);
+}
+
+/* Inline search input — 280px, border, rounded */
+.fb-search-wrap {
+  position: relative;
+  width: 280px;
+  max-width: 30vw;
+  flex: 0 0 auto;
+}
+
+.fb-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--faint);
+}
+
+input.fb-search {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px 0 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13.5px;
+  font-family: inherit;
+  transition: border-color 0.12s, box-shadow 0.12s;
+  outline: none;
+}
+
+input.fb-search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--sel);
+}
+
+input.fb-search::placeholder {
+  color: var(--faint);
+}
+
+/* Mobile: hide inline search, show icon button */
+.fb-search-btn {
+  display: none;
+}
+
+@media (max-width: 736px) {
+  .fb-search-wrap {
+    display: none;
+  }
+
+  .fb-search-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--dim);
+    cursor: pointer;
+  }
 }
 
 header title {
