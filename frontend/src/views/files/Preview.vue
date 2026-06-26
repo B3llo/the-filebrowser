@@ -6,7 +6,7 @@
     @mousemove="toggleNavigation"
     @touchstart="toggleNavigation"
   >
-    <header-bar v-if="isPdf || isEpub || isCsv || showNav">
+    <header-bar v-if="isPdf || isEpub || isCsv || isMarkdown || showNav">
       <action icon="close" :label="$t('buttons.close')" @action="close()" />
       <title>{{ name }}</title>
       <action
@@ -104,6 +104,11 @@
           </div>
         </div>
         <CsvViewer v-else-if="isCsv" :content="csvContent" :error="csvError" />
+        <div
+          v-else-if="isMarkdown"
+          class="md_preview markdown-body"
+          v-html="markdownContent"
+        ></div>
         <ExtendedImage
           v-else-if="fileStore.req?.type == 'image'"
           :src="previewUrl"
@@ -200,6 +205,8 @@ import { useRoute, useRouter } from "vue-router";
 import type { Rendition } from "epubjs";
 import { getTheme } from "@/utils/theme";
 import { useI18n } from "vue-i18n";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 
 // CSV file size limit for preview (5MB)
 // Prevents browser memory issues with large files
@@ -264,6 +271,7 @@ const previousRaw = ref<string>("");
 const nextRaw = ref<string>("");
 const csvContent = ref<ArrayBuffer | string>("");
 const csvError = ref<string>("");
+const markdownContent = ref<string>("");
 
 const player = ref<HTMLVideoElement | HTMLAudioElement | null>(null);
 
@@ -315,6 +323,11 @@ const isCsv = computed(
     fileStore.req?.extension.toLowerCase() == ".csv" &&
     fileStore.req.size <= CSV_MAX_SIZE
 );
+const isMarkdown = computed(
+  () =>
+    fileStore.req?.extension.toLowerCase() == ".md" ||
+    fileStore.req?.extension.toLowerCase() == ".markdown"
+);
 
 const isResizeEnabled = computed(() => resizePreview);
 
@@ -355,16 +368,7 @@ const deleteFile = () => {
       const index = listing.value.findIndex((item) => item.name == name.value);
       listing.value.splice(index, 1);
 
-      if (hasNext.value) {
-        next();
-      } else if (!hasPrevious.value && !hasNext.value) {
-        const nearbyItem = listing.value[Math.max(0, index - 1)];
-        fileStore.preselect = nearbyItem?.path;
-
-        close();
-      } else {
-        prev();
-      }
+      close();
     },
   });
 };
@@ -423,6 +427,24 @@ const updatePreview = async () => {
       } else {
         csvContent.value = fileStore.req.content ?? "";
       }
+    }
+  }
+
+  // Load markdown content if it's a markdown file
+  if (isMarkdown.value && fileStore.req) {
+    markdownContent.value = "";
+    const raw =
+      fileStore.req.rawContent != null
+        ? typeof fileStore.req.rawContent === "string"
+          ? fileStore.req.rawContent
+          : new TextDecoder().decode(fileStore.req.rawContent)
+        : (fileStore.req.content ?? "");
+    try {
+      const stripped = raw.replace(/^---\n[\s\S]*?\n---\n?/, "");
+      markdownContent.value = DOMPurify.sanitize(await marked(stripped));
+    } catch (e) {
+      console.error("Failed to render markdown:", e);
+      markdownContent.value = "";
     }
   }
 

@@ -207,14 +207,14 @@
     </div>
     <template v-else>
       <div
-        v-if="
-          (fileStore.req?.numDirs ?? 0) + (fileStore.req?.numFiles ?? 0) == 0
-        "
+        v-if="isEmpty"
+        class="fb-empty"
       >
-        <h2 class="message">
-          <FbIcon name="frown" size="32px" />
-          <span>{{ t("files.lonely") }}</span>
-        </h2>
+        <div class="fb-empty-icon">
+          <FbIcon :name="emptyIconName" size="40px" />
+        </div>
+        <p class="fb-empty-title">{{ emptyTitle }}</p>
+        <p class="fb-empty-sub">{{ emptySub }}</p>
         <input
           style="display: none"
           type="file"
@@ -535,6 +535,16 @@ const sizeIcon = computed((): IconName => {
 const modifiedIcon = computed((): IconName => {
   return modifiedSorted.value && ascOrdered.value ? "arrow-down" : "arrow-up";
 });
+
+const isEmpty = computed(
+  () => ((fileStore.req?.numDirs ?? 0) + (fileStore.req?.numFiles ?? 0)) === 0
+);
+
+const emptyIconName = computed<IconName>(() => "empty-folder");
+
+const emptyTitle = computed(() => t("files.emptyFolderTitle"));
+
+const emptySub = computed(() => t("files.emptyFolderSub"));
 
 const currentViewMode = computed(() => {
   const mode = authStore.user?.viewMode ?? "list";

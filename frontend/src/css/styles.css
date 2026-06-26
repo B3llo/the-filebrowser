@@ -19,6 +19,7 @@
 @import "./context-menu.css";
 @import "./details-panel.css";
 @import "./selection-bar.css";
+@import "./empty-states.css";
 
 /* For testing only
  :focus {

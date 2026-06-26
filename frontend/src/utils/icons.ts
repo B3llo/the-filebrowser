@@ -50,6 +50,9 @@ export type IconName =
   | "arrow-up"
   | "arrow-down"
   | "frown"
+  | "empty-folder"
+  | "empty-search"
+  | "empty-star"
   | "new-folder"
   | "new-file"
   | "shell"
@@ -102,6 +105,9 @@ export const icons: Record<IconName, string> = {
   "arrow-up": `<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>`,
   "arrow-down": `<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>`,
   frown: `<circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>`,
+  "empty-folder": `<path d="M20 19a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7.6a1 1 0 0 1-.8-.4L10.3 4.9a1 1 0 0 0-.8-.4H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"/>`,
+  "empty-search": `<path d="M21 21l-4.34-4.34"/><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/>`,
+  "empty-star": `<path d="M11.48 3.5a.6.6 0 0 1 1.04 0l2.36 4.78 5.27.77a.6.6 0 0 1 .33 1.02l-3.81 3.72.9 5.25a.6.6 0 0 1-.87.63L12 17.5l-4.71 2.47a.6.6 0 0 1-.87-.63l.9-5.25-3.81-3.72a.6.6 0 0 1 .33-1.02l5.27-.77z"/>`,
   "new-folder": `<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>`,
   "new-file": `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>`,
   shell: `<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>`,
