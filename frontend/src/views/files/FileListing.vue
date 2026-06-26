@@ -141,6 +141,18 @@
       </template>
     </header-bar>
 
+    <SelectionBar
+      v-if="!isMobile && fileStore.selectedCount > 0"
+      :header-buttons="{
+        download: headerButtons.download,
+        share: headerButtons.share,
+        move: headerButtons.move,
+        rename: headerButtons.rename,
+        delete: headerButtons.delete,
+      }"
+      :download="download"
+    />
+
     <div
       v-if="isMobile"
       id="file-selection"
@@ -422,6 +434,7 @@ import HeaderBar from "@/components/header/HeaderBar.vue";
 import Action from "@/components/header/Action.vue";
 import Item from "@/components/files/ListingItem.vue";
 import ContextMenu from "@/components/ContextMenu.vue";
+import SelectionBar from "@/components/SelectionBar.vue";
 import FbIcon from "@/components/FbIcon.vue";
 import type { IconName } from "@/utils/icons";
 import Search from "@/components/Search.vue";

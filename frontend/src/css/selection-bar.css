@@ -1,0 +1,76 @@
+/* Selection Bar — appears between header and content when items are selected */
+
+.fb-selection-bar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 22px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  animation: fbfade 0.14s ease-out;
+}
+
+.fb-sel-clear {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  color: var(--dim);
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fb-sel-label {
+  font-weight: 600;
+  font-size: 13.5px;
+  margin: 0 14px 0 6px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.fb-selection-bar .fb-act {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 11px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+  font-family: inherit;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.fb-selection-bar .fb-act:hover {
+  background: var(--hover);
+}
+
+.fb-selection-bar .fb-act[data-danger="true"] {
+  color: oklch(0.55 0.2 25);
+}
+
+.fb-selection-bar .fb-act[data-danger="true"]:hover {
+  background: oklch(0.95 0.05 25);
+}
+
+.fb-selection-bar .fb-act .fb-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.fb-sel-spacer {
+  flex: 1;
+}

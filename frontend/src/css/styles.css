@@ -18,6 +18,7 @@
 @import "./mdPreview.css";
 @import "./context-menu.css";
 @import "./details-panel.css";
+@import "./selection-bar.css";
 
 /* For testing only
  :focus {
