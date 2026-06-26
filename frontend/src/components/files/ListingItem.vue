@@ -19,6 +19,7 @@
     :data-type="type"
     :data-kind="kind"
     :data-thumb="hasImageThumb ? 'true' : 'false'"
+    :data-dotfile="isDotfile ? 'true' : 'false'"
     :aria-label="name"
     :aria-selected="isSelected"
     :data-ext="getExtension(name).toLowerCase()"
@@ -150,6 +151,11 @@ const kind = computed(() =>
 const hasImageThumb = computed(
   () => !props.readOnly && props.type === "image" && isThumbsEnabled.value
 );
+
+const isDotfile = computed(() => {
+  const n = props.name;
+  return n.length > 0 && n[0] === ".";
+});
 
 const extLabelText = computed(() => extLabel(props.name));
 

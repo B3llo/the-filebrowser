@@ -567,6 +567,16 @@ watch(req, () => {
   });
 });
 
+// Clear selection when details panel closes
+watch(
+  () => layoutStore.showDetails,
+  (isOpen, wasOpen) => {
+    if (wasOpen && !isOpen) {
+      fileStore.selected = [];
+    }
+  }
+);
+
 onMounted(() => {
   // Check the columns size for the first time.
   columnsResize();

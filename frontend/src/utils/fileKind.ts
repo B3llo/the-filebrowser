@@ -90,3 +90,189 @@ export function extLabel(name: string): string {
   const ext = i === -1 ? name : name.slice(i + 1);
   return ext.toUpperCase().slice(0, 4);
 }
+
+/**
+ * File type label for the details panel "Kind" row.
+ * Common types get readable names (e.g. "Markdown", "JSON", "YAML").
+ * Unknown types show the raw extension uppercased (e.g. "DSTOR", "XYZ").
+ * Special filenames without extensions get a readable label.
+ */
+
+// Readable labels for well-known extensions
+const EXT_LABELS: Record<string, string> = {
+  // Text / Markup
+  ".md": "Markdown",
+  ".markdown": "Markdown",
+  ".txt": "Text",
+  ".log": "Log",
+  ".csv": "CSV",
+  // Web
+  ".html": "HTML",
+  ".htm": "HTML",
+  ".css": "CSS",
+  ".scss": "SCSS",
+  ".sass": "Sass",
+  ".less": "Less",
+  ".xml": "XML",
+  // Data
+  ".json": "JSON",
+  ".yml": "YAML",
+  ".yaml": "YAML",
+  ".toml": "TOML",
+  ".ini": "INI",
+  ".env": "ENV",
+  // Code
+  ".js": "JavaScript",
+  ".mjs": "ES Module",
+  ".cjs": "CommonJS",
+  ".ts": "TypeScript",
+  ".jsx": "React JSX",
+  ".tsx": "React TSX",
+  ".vue": "Vue",
+  ".svelte": "Svelte",
+  ".py": "Python",
+  ".rb": "Ruby",
+  ".go": "Go",
+  ".rs": "Rust",
+  ".java": "Java",
+  ".kt": "Kotlin",
+  ".c": "C",
+  ".cpp": "C++",
+  ".h": "C Header",
+  ".hpp": "C++ Header",
+  ".cs": "C#",
+  ".php": "PHP",
+  ".swift": "Swift",
+  ".dart": "Dart",
+  ".lua": "Lua",
+  ".pl": "Perl",
+  ".r": "R",
+  ".scala": "Scala",
+  ".clj": "Clojure",
+  ".sh": "Shell",
+  ".bat": "Batch",
+  ".ps1": "PowerShell",
+  // Documents
+  ".pdf": "PDF",
+  ".doc": "Word",
+  ".docx": "Word",
+  ".odt": "ODT",
+  ".rtf": "RTF",
+  ".pages": "Pages",
+  // Spreadsheets
+  ".xls": "Excel",
+  ".xlsx": "Excel",
+  ".ods": "ODS",
+  ".numbers": "Numbers",
+  // Presentations
+  ".ppt": "PowerPoint",
+  ".pptx": "PowerPoint",
+  ".odp": "ODP",
+  ".key": "Keynote",
+  // Images
+  ".jpg": "JPEG",
+  ".jpeg": "JPEG",
+  ".png": "PNG",
+  ".gif": "GIF",
+  ".webp": "WebP",
+  ".bmp": "BMP",
+  ".tiff": "TIFF",
+  ".tif": "TIFF",
+  ".ico": "ICO",
+  ".svg": "SVG",
+  ".eps": "EPS",
+  ".fig": "Figma",
+  ".ai": "Illustrator",
+  ".psd": "Photoshop",
+  ".heic": "HEIC",
+  ".heif": "HEIF",
+  // Video
+  ".mp4": "MP4",
+  ".mov": "MOV",
+  ".avi": "AVI",
+  ".mkv": "MKV",
+  ".webm": "WebM",
+  ".wmv": "WMV",
+  ".flv": "FLV",
+  ".m4v": "M4V",
+  // Audio
+  ".mp3": "MP3",
+  ".wav": "WAV",
+  ".flac": "FLAC",
+  ".ogg": "OGG",
+  ".aac": "AAC",
+  ".m4a": "M4A",
+  ".wma": "WMA",
+  // Archives
+  ".zip": "ZIP",
+  ".rar": "RAR",
+  ".7z": "7-Zip",
+  ".tar": "Tar",
+  ".gz": "Gzip",
+  ".bz2": "Bzip2",
+  ".xz": "XZ",
+  ".zst": "Zstandard",
+  ".dmg": "Disk Image",
+  ".iso": "Disc Image",
+  ".deb": "Debian",
+  ".rpm": "RPM",
+  ".msi": "MSI",
+  ".apk": "APK",
+  ".cab": "Cabinet",
+  ".pkg": "Package",
+  ".tgz": "Tarball",
+  // Fonts
+  ".ttf": "TTF",
+  ".otf": "OTF",
+  ".woff": "WOFF",
+  ".woff2": "WOFF2",
+};
+
+// Special filenames (no extension) that get a readable label
+const NAME_LABELS: Record<string, string> = {
+  dockerfile: "Dockerfile",
+  "docker-compose.yml": "Docker Compose",
+  "docker-compose.yaml": "Docker Compose",
+  ".gitignore": "Git Ignore",
+  ".gitattributes": "Git Attributes",
+  ".editorconfig": "EditorConfig",
+  ".prettierrc": "Prettier",
+  ".eslintrc": "ESLint",
+  makefile: "Makefile",
+  cmake: "CMake",
+  license: "License",
+  readme: "Readme",
+  changelog: "Changelog",
+};
+
+export function fileTypeLabel(item: {
+  isDir?: boolean;
+  type?: string;
+  name?: string;
+}): string {
+  if (item.isDir) return "Folder";
+
+  const name = item.name ?? "";
+  const lowerName = name.toLowerCase();
+
+  // Check exact name matches for special files (e.g. "Dockerfile")
+  if (NAME_LABELS[lowerName]) return NAME_LABELS[lowerName];
+
+  // Check extension for known types
+  const ext = extOf(name);
+  if (EXT_LABELS[ext]) return EXT_LABELS[ext];
+
+  // Unknown extension — show raw extension uppercased
+  if (ext) return ext.slice(1).toUpperCase();
+
+  // No extension at all — fall back to backend type
+  switch (item.type) {
+    case "image": return "Image";
+    case "video": return "Video";
+    case "audio": return "Audio";
+    case "text":
+    case "textImmutable": return "Text";
+    case "pdf": return "PDF";
+    default: return "File";
+  }
+}

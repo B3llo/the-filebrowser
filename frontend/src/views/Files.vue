@@ -1,22 +1,27 @@
 <template>
-  <div>
+  <div class="fb-files-root">
     <header-bar
       v-if="error || fileStore.req?.type === undefined"
       showMenu
       showBreadcrumb
       base="/files"
     />
-    <errors v-if="error" :errorCode="error.status" />
-    <component v-else-if="currentView" :is="currentView"></component>
-    <div v-else>
-      <h2 class="message delayed">
-        <div class="spinner">
-          <div class="bounce1"></div>
-          <div class="bounce2"></div>
-          <div class="bounce3"></div>
+    <div class="fb-content-row">
+      <div class="fb-content-main">
+        <errors v-if="error" :errorCode="error.status" />
+        <component v-else-if="currentView" :is="currentView"></component>
+        <div v-else>
+          <h2 class="message delayed">
+            <div class="spinner">
+              <div class="bounce1"></div>
+              <div class="bounce2"></div>
+              <div class="bounce3"></div>
+            </div>
+            <span>{{ t("files.loading") }}</span>
+          </h2>
         </div>
-        <span>{{ t("files.loading") }}</span>
-      </h2>
+      </div>
+      <DetailsPanel v-if="layoutStore.showDetails" />
     </div>
   </div>
 </template>
@@ -37,6 +42,7 @@ import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
+import DetailsPanel from "@/components/DetailsPanel.vue";
 import Errors from "@/views/Errors.vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
@@ -180,3 +186,26 @@ const keyEvent = (event: KeyboardEvent) => {
   }
 };
 </script>
+<style>
+.fb-files-root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.fb-content-row {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fb-content-main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+</style>

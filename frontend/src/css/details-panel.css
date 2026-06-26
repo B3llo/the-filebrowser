@@ -1,0 +1,345 @@
+/* ============================================================
+   Details Panel (Step 11 — persistent right panel)
+   ============================================================ */
+
+/* --- Scrollbar styling (matches design fb-scroll) --- */
+.fb-details-panel {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+.fb-details-panel::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.fb-details-panel::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 8px;
+  border: 3px solid var(--bg);
+  background-clip: padding-box;
+}
+.fb-details-panel:hover::-webkit-scrollbar-thumb {
+  background: var(--faint);
+}
+
+/* --- Panel container --- */
+.fb-details-panel {
+  width: 344px;
+  flex: 0 0 344px;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  height: 100%;
+  animation: fbfade 0.16s ease;
+}
+
+/* --- Sticky header --- */
+.fb-details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px 12px;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.fb-details-title {
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+  margin: 0;
+}
+
+.fb-details-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--dim);
+  border-radius: 7px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.1s;
+}
+
+.fb-details-close:hover {
+  background: var(--hover);
+}
+
+/* --- Empty state --- */
+.fb-details-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+  gap: 10px;
+  min-height: 300px;
+  color: var(--faint);
+}
+
+.fb-details-empty-sub {
+  font-size: 13.5px;
+  color: var(--dim);
+  max-width: 210px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* --- Content body --- */
+.fb-details-body {
+  padding: 0 18px 24px;
+}
+
+/* --- Thumbnail (kind-tinted background) --- */
+.fb-details-thumb {
+  width: 100%;
+  height: 188px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.fb-details-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- Document outline with extension label --- */
+.fb-details-doc {
+  position: relative;
+  width: 68px;
+  height: 84px;
+}
+
+.fb-details-doc svg {
+  width: 68px;
+  height: 84px;
+  display: block;
+}
+
+.fb-details-doc-ext {
+  position: absolute;
+  bottom: 17px;
+  left: 0;
+  right: 2px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* --- File name --- */
+.fb-details-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.35;
+  word-break: break-word;
+  margin: 0;
+}
+
+/* --- Sub-line (type + size) --- */
+.fb-details-subline {
+  font-size: 13px;
+  color: var(--faint);
+  margin-top: 4px;
+}
+
+/* --- Actions row --- */
+.fb-details-actions {
+  display: flex;
+  gap: 8px;
+  margin: 18px 0 4px;
+}
+
+.fb-details-act {
+  flex: 1;
+  height: 38px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  border-radius: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 0;
+  transition: background 0.1s;
+}
+
+.fb-details-act:hover {
+  background: var(--hover);
+}
+
+/* --- Separator --- */
+.fb-details-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 20px 0;
+}
+
+/* --- Metadata rows --- */
+.fb-details-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.fb-details-meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 7px 0;
+  font-size: 13px;
+}
+
+.fb-details-meta-key {
+  color: var(--faint);
+  flex-shrink: 0;
+}
+
+.fb-details-meta-val {
+  color: var(--text);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Section title --- */
+.fb-details-section-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 11px;
+}
+
+/* --- Tags --- */
+.fb-details-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.fb-details-tag {
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--sel);
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  transition: background 0.1s;
+}
+
+.fb-details-tag:hover {
+  background: var(--hover);
+}
+
+.fb-details-tag-add {
+  font-size: 12px;
+  color: var(--dim);
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  padding: 4px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  transition: background 0.1s;
+}
+
+.fb-details-tag-add:hover {
+  background: var(--hover);
+}
+
+/* --- Who has access --- */
+.fb-details-access {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fb-details-access-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, oklch(0.6 0.1 255), oklch(0.55 0.12 290));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.fb-details-access-info {
+  flex: 1;
+  font-size: 13px;
+  color: var(--dim);
+}
+
+.fb-details-access-manage {
+  font-size: 12.5px;
+  color: var(--accent);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-family: inherit;
+  transition: background 0.1s;
+}
+
+.fb-details-access-manage:hover {
+  background: var(--hover);
+}
+
+/* --- Multi-select summary --- */
+.fb-details-multi-count {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.fb-details-multi-label {
+  font-size: 13.5px;
+  color: var(--dim);
+}
+
+/* --- Mobile: full-screen overlay --- */
+@media (max-width: 736px) {
+  .fb-details-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    width: 100%;
+    flex: none;
+    border-left: none;
+  }
+}

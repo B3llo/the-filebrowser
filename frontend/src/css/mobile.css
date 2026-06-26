@@ -32,6 +32,7 @@
     width: 100%;
     height: auto;
     overflow: visible;
+    display: block;
   }
   /* Narrow widths: drop the Size column and realign the grid so the
      remaining columns stay in their proper tracks (header + rows). */

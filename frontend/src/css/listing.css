@@ -322,6 +322,14 @@ html[dir="rtl"] #listing {
   color: var(--text);
 }
 
+/* ---- Dotfile opacity ---- */
+#listing .item[data-dotfile="true"] {
+  opacity: 0.45;
+}
+#listing .item[data-dotfile="true"]:hover {
+  opacity: 0.7;
+}
+
 /* ============================================================
    List view (Step 9 — design-spec faithful)
    Row = [34px icon column] [grid: 1fr name | 120px size | 168px modified]

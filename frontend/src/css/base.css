@@ -81,14 +81,15 @@ html[dir="rtl"] nav {
 }
 
 
-/* Main column — takes remaining width, scrolls independently */
+/* Main column — takes remaining width, holds the flex row (content + details panel) */
 main {
   flex: 1;
   min-width: 0;
   height: 100vh;
   height: 100dvh;
-  overflow-y: auto;
-  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .breadcrumbs {
