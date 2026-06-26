@@ -2,33 +2,16 @@
   <div>
     <header-bar showMenu showBreadcrumb base="/files">
       <template #actions>
-        <!-- Inline search — 280px, opens full search on mobile -->
-        <div class="fb-search-wrap">
-          <svg class="fb-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true">
-            <path d="M21 21l-4.34-4.34"/>
-            <path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/>
-          </svg>
-          <input
-            class="fb-search"
-            type="text"
-            :placeholder="t('search.search')"
-            :aria-label="t('search.search')"
-            @click="openSearch"
-            @keydown.enter="openSearch"
-            readonly
-          />
-        </div>
+        <!-- Inline search — 280px dropdown -->
+        <Search ref="searchRef" />
 
         <!-- Mobile: icon-only search trigger -->
         <button
           class="fb-tbtn fb-search-btn"
           :aria-label="t('buttons.search')"
-          @click="openSearch"
+          @click="searchRef?.focus()"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px" aria-hidden="true">
-            <path d="M21 21l-4.34-4.34"/>
-            <path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/>
-          </svg>
+          <FbIcon name="search" size="18px" />
         </button>
 
         <!-- Shell toggle -->
@@ -424,6 +407,7 @@ import Item from "@/components/files/ListingItem.vue";
 import ContextMenu from "@/components/ContextMenu.vue";
 import FbIcon from "@/components/FbIcon.vue";
 import type { IconName } from "@/utils/icons";
+import Search from "@/components/Search.vue";
 import {
   computed,
   inject,
@@ -464,6 +448,7 @@ onBeforeRouteUpdate(() => {
 const { t } = useI18n();
 
 const listing = ref<HTMLElement | null>(null);
+const searchRef = ref<InstanceType<typeof Search> | null>(null);
 
 const nameSorted = computed(() =>
   fileStore.req ? fileStore.req.sorting.by === "name" : false
@@ -641,7 +626,7 @@ const keyEvent = (event: KeyboardEvent) => {
     case "F":
       if (event.shiftKey) {
         event.preventDefault();
-        layoutStore.showHover("search");
+        searchRef.value?.focus();
       }
       break;
     case "c":
@@ -1009,10 +994,6 @@ const sort = async (by: string) => {
   }
 
   fileStore.reload = true;
-};
-
-const openSearch = () => {
-  layoutStore.showHover("search");
 };
 
 const toggleMultipleSelection = () => {

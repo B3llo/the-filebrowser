@@ -1,175 +1,133 @@
 <template>
-  <div id="search" @click="open" v-bind:class="{ active, ongoing }">
-    <div id="input">
-      <button
-        v-if="active"
-        class="action"
-        @click="close"
-        :aria-label="closeButtonTitle"
-        :title="closeButtonTitle"
-      >
-        <i v-if="ongoing" class="material-icons">stop_circle</i>
-        <i v-else class="material-icons">arrow_back</i>
-      </button>
-      <i v-else class="material-icons">search</i>
-      <input
-        type="text"
-        @keyup.exact="keyup"
-        @keyup.enter="submit"
-        ref="input"
-        :autofocus="active"
-        v-model.trim="prompt"
-        :aria-label="$t('search.search')"
-        :placeholder="$t('search.search')"
-      />
-      <i
-        v-show="ongoing"
-        class="material-icons spin"
-        style="display: inline-block"
-        >autorenew
-      </i>
-      <span style="margin-top: 5px" v-show="results.length > 0">
-        {{ results.length }}
-      </span>
-    </div>
+  <div
+    ref="wrapperEl"
+    class="fb-search-wrap"
+    :class="{ 'fb-search-wrap--open': isMobileOpen }"
+    @keydown.esc.stop="close"
+    @focusout="onFocusout"
+  >
+    <FbIcon name="search" size="16px" class="fb-search-icon" />
+    <input
+      ref="inputEl"
+      class="fb-search"
+      type="text"
+      v-model.trim="prompt"
+      :placeholder="$t('search.search')"
+      :aria-label="$t('search.search')"
+      @focus="onFocus"
+      @keyup.enter="submit"
+    />
+    <button
+      v-if="ongoing"
+      class="fb-search-end"
+      @mousedown.prevent="stopSearch"
+      :title="$t('buttons.stopSearch')"
+      :aria-label="$t('buttons.stopSearch')"
+    >
+      <FbIcon name="stop-circle" size="15px" />
+    </button>
+    <button
+      v-else-if="prompt"
+      class="fb-search-end"
+      @mousedown.prevent="clearSearch"
+    >
+      <FbIcon name="x" size="15px" />
+    </button>
 
-    <div id="result" ref="result">
-      <div>
-        <template v-if="isEmpty">
-          <p>{{ text }}</p>
-
-          <template v-if="prompt.length === 0">
-            <div class="boxes">
-              <h3>{{ $t("search.types") }}</h3>
-              <div>
-                <div
-                  tabindex="0"
-                  v-for="(v, k) in boxes"
-                  :key="k"
-                  role="button"
-                  @click="init('type:' + k)"
-                  :aria-label="$t('search.' + v.label)"
-                >
-                  <i class="material-icons">{{ v.icon }}</i>
-                  <p>{{ $t("search." + v.label) }}</p>
-                </div>
-              </div>
+    <div
+      v-show="isOpen"
+      ref="dropdownEl"
+      class="fb-search-dropdown"
+      @mousedown.prevent
+    >
+      <div v-if="isEmpty">
+        <p class="fb-search-hint">{{ text }}</p>
+        <template v-if="prompt === ''">
+          <div class="fb-search-types">
+            <h3>{{ $t("search.types") }}</h3>
+            <div class="fb-search-type-grid">
+              <button
+                v-for="(v, k) in boxes"
+                :key="k"
+                class="fb-search-type-btn"
+                @click="init('type:' + k)"
+              >
+                <FbIcon :name="v.icon" size="16px" />
+                <span>{{ $t("search." + v.label) }}</span>
+              </button>
             </div>
-          </template>
+          </div>
         </template>
-        <ul v-show="results.length > 0">
-          <li v-for="(s, k) in filteredResults" :key="k">
-            <router-link v-on:click="close" :to="s.url">
-              <i v-if="s.dir" class="material-icons">folder</i>
-              <i v-else class="material-icons">insert_drive_file</i>
-              <span>./{{ s.path }}</span>
-            </router-link>
-          </li>
-        </ul>
       </div>
+      <ul v-show="results.length > 0">
+        <li v-for="(s, k) in filteredResults" :key="k">
+          <router-link @click="close" :to="s.url">
+            <FbIcon :name="s.dir ? 'folder' : 'file'" size="15px" />
+            <span>./{{ s.path }}</span>
+          </router-link>
+        </li>
+      </ul>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useFileStore } from "@/stores/file";
-import { useLayoutStore } from "@/stores/layout";
-
+import FbIcon from "@/components/FbIcon.vue";
+import type { IconName } from "@/utils/icons";
 import url from "@/utils/url";
 import { search } from "@/api";
-import { computed, inject, onMounted, ref, watch, onUnmounted } from "vue";
+import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
-import { storeToRefs } from "pinia";
 import { StatusError } from "@/api/utils";
 
-const boxes = {
-  image: { label: "images", icon: "insert_photo" },
-  audio: { label: "music", icon: "volume_up" },
-  video: { label: "video", icon: "movie" },
-  pdf: { label: "pdf", icon: "picture_as_pdf" },
+const boxes: Record<string, { label: string; icon: IconName }> = {
+  image: { label: "images", icon: "image" },
+  audio: { label: "music", icon: "audio" },
+  video: { label: "video", icon: "video" },
+  pdf: { label: "pdf", icon: "pdf" },
 };
 
-const layoutStore = useLayoutStore();
 const fileStore = useFileStore();
 let searchAbortController = new AbortController();
 
-const { currentPromptName } = storeToRefs(layoutStore);
-
 const prompt = ref<string>("");
-const active = ref<boolean>(false);
 const ongoing = ref<boolean>(false);
 const results = ref<any[]>([]);
-const reload = ref<boolean>(false);
 const resultsCount = ref<number>(50);
+const isOpen = ref<boolean>(false);
+const isMobileOpen = ref<boolean>(false);
 
 const $showError = inject<IToastError>("$showError")!;
 
-const input = ref<HTMLInputElement | null>(null);
-const result = ref<HTMLElement | null>(null);
+const inputEl = ref<HTMLInputElement | null>(null);
+const dropdownEl = ref<HTMLElement | null>(null);
+const wrapperEl = ref<HTMLElement | null>(null);
 
 const { t } = useI18n();
-
 const route = useRoute();
-
-watch(currentPromptName, (newVal, oldVal) => {
-  active.value = newVal === "search";
-
-  if (oldVal === "search" && !active.value) {
-    if (reload.value) {
-      fileStore.reload = true;
-    }
-
-    document.body.style.overflow = "auto";
-    reset();
-    prompt.value = "";
-    active.value = false;
-    input.value?.blur();
-  } else if (active.value) {
-    reload.value = false;
-    input.value?.focus();
-    document.body.style.overflow = "hidden";
-  }
-});
 
 watch(prompt, () => {
   reset();
 });
 
-// ...mapState(useFileStore, ["isListing"]),
-// ...mapState(useLayoutStore, ["show"]),
-// ...mapWritableState(useFileStore, { sReload: "reload" }),
+const isEmpty = computed(() => results.value.length === 0);
 
-const isEmpty = computed(() => {
-  return results.value.length === 0;
-});
 const text = computed(() => {
-  if (ongoing.value) {
-    return "";
-  }
-
+  if (ongoing.value) return "";
   return prompt.value === ""
     ? t("search.typeToSearch")
     : t("search.pressToSearch");
 });
-const filteredResults = computed(() => {
-  return results.value.slice(0, resultsCount.value);
-});
 
-const closeButtonTitle = computed(() => {
-  return ongoing.value ? t("buttons.stopSearch") : t("buttons.close");
-});
+const filteredResults = computed(() => results.value.slice(0, resultsCount.value));
 
 onMounted(() => {
-  if (result.value === null) {
-    return;
-  }
-  result.value.addEventListener("scroll", (event: Event) => {
-    if (
-      (event.target as HTMLElement).offsetHeight +
-        (event.target as HTMLElement).scrollTop >=
-      (event.target as HTMLElement).scrollHeight - 100
-    ) {
+  if (!dropdownEl.value) return;
+  dropdownEl.value.addEventListener("scroll", (event: Event) => {
+    const el = event.target as HTMLElement;
+    if (el.offsetHeight + el.scrollTop >= el.scrollHeight - 100) {
       resultsCount.value += 50;
     }
   });
@@ -179,32 +137,39 @@ onUnmounted(() => {
   abortLastSearch();
 });
 
-const open = () => {
-  !active.value && layoutStore.showHover("search");
+const onFocus = () => {
+  isOpen.value = true;
 };
 
-const close = (event: Event) => {
-  if (ongoing.value) {
-    abortLastSearch();
-    ongoing.value = false;
-  } else {
-    event.stopPropagation();
-    event.preventDefault();
-    layoutStore.closeHovers();
+const onFocusout = (e: FocusEvent) => {
+  if (!wrapperEl.value?.contains(e.relatedTarget as Node)) {
+    isOpen.value = false;
+    isMobileOpen.value = false;
   }
 };
 
-const keyup = (event: KeyboardEvent) => {
-  if (event.key === "Escape") {
-    close(event);
-    return;
-  }
-  results.value.length = 0;
+const close = () => {
+  isOpen.value = false;
+  isMobileOpen.value = false;
+  prompt.value = "";
+  reset();
+  inputEl.value?.blur();
+};
+
+const stopSearch = () => {
+  abortLastSearch();
+  ongoing.value = false;
+};
+
+const clearSearch = () => {
+  prompt.value = "";
+  reset();
+  inputEl.value?.focus();
 };
 
 const init = (string: string) => {
   prompt.value = `${string} `;
-  input.value !== null ? input.value.focus() : "";
+  inputEl.value?.focus();
 };
 
 const reset = () => {
@@ -221,9 +186,7 @@ const abortLastSearch = () => {
 const submit = async (event: Event) => {
   event.preventDefault();
 
-  if (prompt.value === "") {
-    return;
-  }
+  if (prompt.value === "") return;
 
   let path = route.path;
   if (!fileStore.isListing) {
@@ -248,4 +211,11 @@ const submit = async (event: Event) => {
 
   ongoing.value = false;
 };
+
+const focus = () => {
+  isMobileOpen.value = true;
+  nextTick(() => inputEl.value?.focus());
+};
+
+defineExpose({ focus });
 </script>

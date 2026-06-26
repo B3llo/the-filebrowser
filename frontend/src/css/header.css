@@ -173,7 +173,7 @@ header > * {
 input.fb-search {
   width: 100%;
   height: 38px;
-  padding: 0 12px 0 36px;
+  padding: 0 34px 0 36px;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface);
@@ -193,6 +193,119 @@ input.fb-search::placeholder {
   color: var(--faint);
 }
 
+.fb-search-end {
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.1s, color 0.1s;
+}
+
+.fb-search-end:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.fb-search-dropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  min-width: 100%;
+  width: 320px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-menu);
+  z-index: 10;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.fb-search-hint {
+  font-size: 13px;
+  color: var(--faint);
+  padding: 6px 8px 4px;
+  margin: 0;
+}
+
+.fb-search-types h3 {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 8px 8px 6px;
+}
+
+.fb-search-type-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 4px 6px;
+}
+
+.fb-search-type-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--dim);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.fb-search-type-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.fb-search-dropdown ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.fb-search-dropdown li a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text);
+  text-decoration: none;
+  transition: background 0.1s;
+}
+
+.fb-search-dropdown li a:hover {
+  background: var(--hover);
+}
+
+.fb-search-dropdown li a span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dim);
+  font-size: 12.5px;
+}
+
 /* Mobile: hide inline search, show icon button */
 .fb-search-btn {
   display: none;
@@ -201,6 +314,13 @@ input.fb-search::placeholder {
 @media (max-width: 736px) {
   .fb-search-wrap {
     display: none;
+  }
+
+  .fb-search-wrap--open {
+    display: flex;
+    width: 100%;
+    max-width: none;
+    flex: 1;
   }
 
   .fb-search-btn {
@@ -263,216 +383,3 @@ header .menu-button {
   display: none;
 }
 
-#search {
-  position: relative;
-  height: 100%;
-  width: 100%;
-  max-width: 25em;
-}
-
-#search.active {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  z-index: 9999;
-}
-
-#search #input {
-  background: var(--surfaceSecondary);
-  border-color: var(--surfacePrimary);
-  display: flex;
-  height: 100%;
-  padding: 0em 0.75em;
-  border-radius: 0.3em;
-  transition: 0.1s ease all;
-  align-items: center;
-  z-index: 2;
-}
-
-#search #input input::placeholder {
-  color: var(--textSecondary);
-}
-
-#search.active #input {
-  border-bottom: 1px solid var(--borderPrimary);
-  box-shadow: 0 0 5px var(--borderPrimary);
-  background: var(--surfacePrimary);
-  height: 4em;
-}
-
-#search.active > div {
-  border-radius: 0 !important;
-}
-
-#search.active i,
-#search.active input {
-  color: var(--textPrimary);
-}
-
-#search #input > .action,
-#search #input > i {
-  margin-right: 0.3em;
-  user-select: none;
-}
-
-#search input {
-  width: 100%;
-  border: 0;
-  background-color: transparent;
-  padding: 0;
-}
-
-#search #result {
-  visibility: visible;
-  max-height: none;
-  background: var(--background);
-  text-align: left;
-  padding: 0;
-  color: var(--textPrimary);
-  height: 0;
-  transition:
-    0.1s ease height,
-    0.1s ease padding;
-  overflow-x: hidden;
-  overflow-y: auto;
-  z-index: 1;
-}
-
-html[dir="rtl"] #search #result {
-  direction: ltr;
-}
-
-#search #result > div > *:first-child {
-  margin-top: 0;
-}
-
-html[dir="rtl"] #search #result {
-  text-align: right;
-}
-
-/*** RTL - Keep search result LTR because it has paths (in english) ***/
-html[dir="rtl"] #search #result ul > * {
-  direction: ltr;
-  text-align: left;
-}
-
-#search.active #result {
-  padding: 0.5em;
-  height: calc(100% - 4em);
-}
-
-#search ul {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
-
-#search li {
-  margin-bottom: 0.5em;
-}
-
-#search #result > div {
-  max-width: 45em;
-  margin: 0 auto;
-}
-
-#search #result #renew {
-  width: 100%;
-  text-align: center;
-  display: none;
-  margin: 0;
-  max-width: none;
-}
-
-#search.ongoing #result #renew {
-  display: block;
-}
-
-#search.active #result i {
-  color: var(--iconTertiary);
-}
-
-#search.active #result > p > i {
-  text-align: center;
-  margin: 0 auto;
-  display: table;
-}
-
-#search.active #result ul li a {
-  display: flex;
-  align-items: center;
-  padding: 0.3em 0;
-}
-
-#search.active #result ul li a i {
-  margin-right: 0.3em;
-}
-
-/* I dont think we need these anymore */
-/* #search::-webkit-input-placeholder {
-  color: var(--textPrimary);
-}
-
-#search::-moz-placeholder {
-  opacity: 1;
-  color: var(--textPrimary);
-}
-
-#search:-ms-input-placeholder {
-  color: var(--textPrimary);
-}
-
-#search #input input::placeholder {
-  color: var(--textPrimary);
-} */
-
-#search .boxes {
-  border: 1px solid var(--borderPrimary);
-  box-shadow: 0 0 5px var(--borderPrimary);
-  background: var(--surfacePrimary);
-  margin: 1em 0;
-}
-
-#search .boxes h3 {
-  margin: 0;
-  font-weight: 500;
-  font-size: 1em;
-  color: var(--textSecondary);
-  padding: 0.5em;
-}
-
-html[dir="rtl"] #search .boxes h3 {
-  text-align: right;
-}
-
-#search .boxes > div {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-right: -1em;
-  margin-bottom: -1em;
-}
-
-#search .boxes > div > div {
-  background: var(--blue);
-  color: #fff;
-  text-align: center;
-  width: 10em;
-  padding: 1em;
-  cursor: pointer;
-  margin-bottom: 1em;
-  margin-right: 1em;
-  flex-grow: 1;
-}
-
-#search .boxes p {
-  margin: 1em 0 0;
-}
-
-#search .boxes i {
-  color: #fff !important;
-  font-size: 3.5em;
-}

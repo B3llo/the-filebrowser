@@ -184,12 +184,6 @@
     margin-right: unset;
   }
 
-  #search {
-    display: none;
-  }
-  #search.active {
-    display: block;
-  }
 }
 
 @media (max-width: 450px) {
