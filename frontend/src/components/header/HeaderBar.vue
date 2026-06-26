@@ -7,7 +7,7 @@
       :aria-label="t('buttons.toggleSidebar')"
       @click="layoutStore.showHover('sidebar')"
     >
-      <i class="material-icons">menu</i>
+      <FbIcon name="menu" size="20px" />
     </button>
 
     <!-- Logo (used by Preview/Editor which don't have a sidebar context on mobile) -->
@@ -38,7 +38,7 @@
       :aria-label="t('buttons.more')"
       @click="layoutStore.showHover('more')"
     >
-      <i class="material-icons">more_vert</i>
+      <FbIcon name="more-vertical" size="20px" />
     </button>
 
     <!-- Mobile overlay for dropdown -->
@@ -54,6 +54,7 @@
 import { useLayoutStore } from "@/stores/layout";
 import { logoURL } from "@/utils/constants";
 import Breadcrumbs from "@/components/Breadcrumbs.vue";
+import FbIcon from "@/components/FbIcon.vue";
 import { computed, useSlots } from "vue";
 import { useI18n } from "vue-i18n";
 

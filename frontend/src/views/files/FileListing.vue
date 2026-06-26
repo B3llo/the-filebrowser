@@ -206,7 +206,7 @@
         "
       >
         <h2 class="message">
-          <i class="material-icons">sentiment_dissatisfied</i>
+          <FbIcon name="frown" size="32px" />
           <span>{{ t("files.lonely") }}</span>
         </h2>
         <input
@@ -247,7 +247,7 @@
                 :aria-label="t('files.sortByName')"
               >
                 <span>{{ t("files.name") }}</span>
-                <i class="material-icons">{{ nameIcon }}</i>
+                <FbIcon :name="nameIcon" size="14px" />
               </p>
 
               <p
@@ -260,7 +260,7 @@
                 :aria-label="t('files.sortBySize')"
               >
                 <span>{{ t("files.size") }}</span>
-                <i class="material-icons">{{ sizeIcon }}</i>
+                <FbIcon :name="sizeIcon" size="14px" />
               </p>
               <p
                 :class="{ active: modifiedSorted }"
@@ -272,7 +272,7 @@
                 :aria-label="t('files.sortByLastModified')"
               >
                 <span>{{ t("files.lastModified") }}</span>
-                <i class="material-icons">{{ modifiedIcon }}</i>
+                <FbIcon :name="modifiedIcon" size="14px" />
               </p>
             </div>
           </div>
@@ -397,7 +397,7 @@
             :aria-label="t('buttons.clear')"
             class="action"
           >
-            <i class="material-icons">clear</i>
+            <FbIcon name="x" size="18px" />
           </div>
         </div>
       </div>
@@ -422,6 +422,8 @@ import HeaderBar from "@/components/header/HeaderBar.vue";
 import Action from "@/components/header/Action.vue";
 import Item from "@/components/files/ListingItem.vue";
 import ContextMenu from "@/components/ContextMenu.vue";
+import FbIcon from "@/components/FbIcon.vue";
+import type { IconName } from "@/utils/icons";
 import {
   computed,
   inject,
@@ -504,51 +506,19 @@ const files = computed((): Resource[] => {
   return items.value.files.slice(0, _showLimit);
 });
 
-const nameIcon = computed(() => {
-  if (nameSorted.value && !ascOrdered.value) {
-    return "arrow_upward";
-  }
-
-  return "arrow_downward";
+const nameIcon = computed((): IconName => {
+  return nameSorted.value && !ascOrdered.value ? "arrow-up" : "arrow-down";
 });
 
-const sizeIcon = computed(() => {
-  if (sizeSorted.value && ascOrdered.value) {
-    return "arrow_downward";
-  }
-
-  return "arrow_upward";
+const sizeIcon = computed((): IconName => {
+  return sizeSorted.value && ascOrdered.value ? "arrow-down" : "arrow-up";
 });
 
-const modifiedIcon = computed(() => {
-  if (modifiedSorted.value && ascOrdered.value) {
-    return "arrow_downward";
-  }
-
-  return "arrow_upward";
-});
-
-const viewIcon = computed(() => {
-  const icons = {
-    list: "view_module",
-    mosaic: "grid_view",
-    "mosaic gallery": "view_list",
-  };
-  return authStore.user === null
-    ? icons["list"]
-    : icons[authStore.user.viewMode];
+const modifiedIcon = computed((): IconName => {
+  return modifiedSorted.value && ascOrdered.value ? "arrow-down" : "arrow-up";
 });
 
 const currentViewMode = computed(() => authStore.user?.viewMode ?? "list");
-
-const sortIcon = computed(() => {
-  if (!fileStore.req) return "sort";
-  const { by, asc } = fileStore.req.sorting;
-  if (by === "name") return asc ? "arrow_upward" : "arrow_downward";
-  if (by === "size") return asc ? "storage" : "storage";
-  if (by === "modified") return asc ? "schedule" : "update";
-  return "sort";
-});
 
 const headerButtons = computed(() => {
   return {
