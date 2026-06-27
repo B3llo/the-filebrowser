@@ -47,6 +47,7 @@ type FileInfo struct {
 	Type       string            `json:"type"`
 	Subtitles  []string          `json:"subtitles,omitempty"`
 	Content    string            `json:"content,omitempty"`
+	Preview    string            `json:"preview,omitempty"`
 	Checksums  map[string]string `json:"checksums,omitempty"`
 	Token      string            `json:"token,omitempty"`
 	currentDir []os.FileInfo     `json:"-"`
@@ -464,6 +465,13 @@ func (i *FileInfo) readListing(checker rules.Checker, readHeader bool, calcImgRe
 				if err != nil {
 					return err
 				}
+
+				if (file.Type == "text" || file.Type == "textImmutable") && file.Size <= 1024*1024 {
+					preview := file.readPreviewSnippet(300)
+					if preview != "" {
+						file.Preview = preview
+					}
+				}
 			}
 		}
 
@@ -516,6 +524,24 @@ func readDirNames(afs afero.Fs, dirname string) ([]os.FileInfo, error) {
 	}
 
 	return dir, nil
+}
+
+// readPreviewSnippet reads the first maxBytes of a file and returns it as a string.
+// Used to provide inline previews in listing views.
+func (i *FileInfo) readPreviewSnippet(maxBytes int) string {
+	fd, err := i.Fs.Open(i.Path)
+	if err != nil {
+		return ""
+	}
+	defer fd.Close()
+
+	buf := make([]byte, maxBytes)
+	n, err := fd.Read(buf)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return ""
+	}
+
+	return string(buf[:n])
 }
 
 func lstatIfPossible(afs afero.Fs, name string) (os.FileInfo, error) {

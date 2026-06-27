@@ -53,6 +53,30 @@ import { name } from "../utils/constants";
 const Editor = defineAsyncComponent(() => import("@/views/files/Editor.vue"));
 const Preview = defineAsyncComponent(() => import("@/views/files/Preview.vue"));
 
+const previewableExtensions = new Set([
+  // Code
+  ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx",
+  ".py", ".go", ".rs", ".java", ".kt", ".c", ".cpp", ".h", ".hpp",
+  ".cs", ".php", ".rb", ".swift", ".dart", ".lua", ".pl", ".r",
+  ".scala", ".clj", ".sh", ".bat", ".ps1",
+  ".html", ".htm", ".css", ".scss", ".sass",
+  ".json", ".xml", ".yaml", ".yml", ".toml",
+  ".sql", ".graphql",
+  // Text
+  ".txt", ".log", ".ini", ".cfg", ".conf",
+  // Markdown
+  ".md", ".markdown",
+]);
+
+const isPreviewableText = (extension: string, type: string) => {
+  if (type !== "text" && type !== "textImmutable") return false;
+  // Files with known previewable extensions
+  if (previewableExtensions.has(extension.toLowerCase())) return true;
+  // Extensionless text files (LICENSE, README, Makefile, etc.)
+  if (extension === "") return true;
+  return false;
+};
+
 const layoutStore = useLayoutStore();
 const fileStore = useFileStore();
 
@@ -78,6 +102,8 @@ const currentView = computed(() => {
     if (route.query.edit === "true") {
       return Editor;
     }
+    return Preview;
+  } else if (isPreviewableText(fileStore.req.extension, fileStore.req.type)) {
     return Preview;
   } else if (
     fileStore.req.type === "text" ||
@@ -125,7 +151,9 @@ const applyPreSelection = () => {
   // Only apply explicit preselection (e.g., after rename), not automatic back-navigation selection
   if (!preselect || !fileStore.req?.isDir) return;
 
-  const index = fileStore.req.items.findIndex((item) => item.path === preselect);
+  const index = fileStore.req.items.findIndex(
+    (item) => item.path === preselect
+  );
   if (index === -1) return;
   fileStore.selected.push(index);
 };

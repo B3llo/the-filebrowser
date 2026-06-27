@@ -27,6 +27,7 @@ interface Resource extends ResourceBase {
 interface ResourceItem extends ResourceBase {
   index: number;
   subtitles?: string[];
+  preview?: string;
 }
 
 type ResourceType =

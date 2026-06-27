@@ -40,12 +40,21 @@
         stroke-linecap="round"
         stroke-linejoin="round"
       >
-        <path d="M20 19a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7.6a1 1 0 0 1-.8-.4L10.3 4.9a1 1 0 0 0-.8-.4H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z" />
+        <path
+          d="M20 19a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7.6a1 1 0 0 1-.8-.4L10.3 4.9a1 1 0 0 0-.8-.4H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"
+        />
       </svg>
       <i v-else class="material-icons"></i>
 
+      <!-- Mosaic card: inline preview for code/text files -->
+      <pre
+        v-if="hasPreview"
+        class="fb-card-preview"
+        aria-hidden="true"
+      ><code>{{ previewText }}</code></pre>
+
       <!-- Mosaic card: document outline + extension label for non-thumb files -->
-      <div class="fb-card-doc" aria-hidden="true">
+      <div v-else class="fb-card-doc" aria-hidden="true">
         <svg viewBox="0 0 56 70">
           <path
             d="M5 3h28l18 18v44a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
@@ -115,6 +124,7 @@ const props = defineProps<{
   index: number;
   readOnly?: boolean;
   path?: string;
+  preview?: string;
 }>();
 
 const authStore = useAuthStore();
@@ -170,6 +180,18 @@ const isDotfile = computed(() => {
 });
 
 const extLabelText = computed(() => extLabel(props.name));
+
+const hasPreview = computed(() => {
+  if (props.isDir) return false;
+  if (props.type !== "text" && props.type !== "textImmutable") return false;
+  return !!props.preview && props.preview.trim().length > 0;
+});
+
+const previewText = computed(() => {
+  if (!props.preview) return "";
+  const lines = props.preview.split("\n").slice(0, 12).join("\n");
+  return lines;
+});
 
 const humanSize = () => {
   return props.type == "invalid_link" ? "invalid link" : filesize(props.size);

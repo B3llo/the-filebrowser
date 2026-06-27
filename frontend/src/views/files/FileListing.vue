@@ -30,9 +30,22 @@
             :aria-label="t('buttons.listView', 'List view')"
             @click="setView('list')"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px" aria-hidden="true">
-              <path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/>
-              <path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="width: 17px; height: 17px"
+              aria-hidden="true"
+            >
+              <path d="M8 6h13" />
+              <path d="M8 12h13" />
+              <path d="M8 18h13" />
+              <path d="M3 6h.01" />
+              <path d="M3 12h.01" />
+              <path d="M3 18h.01" />
             </svg>
           </button>
           <button
@@ -41,42 +54,80 @@
             :aria-label="t('buttons.gridView', 'Grid view')"
             @click="setView('mosaic')"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true">
-              <path d="M3 3h7v7H3z"/><path d="M14 3h7v7h-7z"/>
-              <path d="M14 14h7v7h-7z"/><path d="M3 14h7v7H3z"/>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="width: 16px; height: 16px"
+              aria-hidden="true"
+            >
+              <path d="M3 3h7v7H3z" />
+              <path d="M14 3h7v7h-7z" />
+              <path d="M14 14h7v7h-7z" />
+              <path d="M3 14h7v7H3z" />
             </svg>
           </button>
         </div>
 
         <!-- Sort button — 38×38, bordered, opens dropdown -->
-        <div style="position:relative">
+        <div style="position: relative">
           <button
             class="fb-tbtn fb-tbtn--bordered"
             :title="t('files.sort', 'Sort')"
             @click="toggleSortMenu"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px" aria-hidden="true">
-              <path d="M7 4v16"/><path d="M3 8l4-4 4 4"/>
-              <path d="M17 20V4"/><path d="M21 16l-4 4-4-4"/>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="width: 17px; height: 17px"
+              aria-hidden="true"
+            >
+              <path d="M7 4v16" />
+              <path d="M3 8l4-4 4 4" />
+              <path d="M17 20V4" />
+              <path d="M21 16l-4 4-4-4" />
             </svg>
           </button>
-          <div v-show="sortMenuOpen" class="fb-sort-menu" @click.self="closeSortMenu">
-            <button class="fb-sort-item" :class="{ 'fb-sort-item--active': currentSortBy === 'name' }" @click="handleSortMenuClick('name')">
-              <span>{{ t('files.name') }}</span>
+          <div
+            v-show="sortMenuOpen"
+            class="fb-sort-menu"
+            @click.self="closeSortMenu"
+          >
+            <button
+              class="fb-sort-item"
+              :class="{ 'fb-sort-item--active': currentSortBy === 'name' }"
+              @click="handleSortMenuClick('name')"
+            >
+              <span>{{ t("files.name") }}</span>
               <span v-if="currentSortBy === 'name'" class="fb-sort-arrow">
-                {{ currentSortAsc ? '↑' : '↓' }}
+                {{ currentSortAsc ? "↑" : "↓" }}
               </span>
             </button>
-            <button class="fb-sort-item" :class="{ 'fb-sort-item--active': currentSortBy === 'modified' }" @click="handleSortMenuClick('modified')">
-              <span>{{ t('files.lastModified') }}</span>
+            <button
+              class="fb-sort-item"
+              :class="{ 'fb-sort-item--active': currentSortBy === 'modified' }"
+              @click="handleSortMenuClick('modified')"
+            >
+              <span>{{ t("files.lastModified") }}</span>
               <span v-if="currentSortBy === 'modified'" class="fb-sort-arrow">
-                {{ currentSortAsc ? '↑' : '↓' }}
+                {{ currentSortAsc ? "↑" : "↓" }}
               </span>
             </button>
-            <button class="fb-sort-item" :class="{ 'fb-sort-item--active': currentSortBy === 'size' }" @click="handleSortMenuClick('size')">
-              <span>{{ t('files.size') }}</span>
+            <button
+              class="fb-sort-item"
+              :class="{ 'fb-sort-item--active': currentSortBy === 'size' }"
+              @click="handleSortMenuClick('size')"
+            >
+              <span>{{ t("files.size") }}</span>
               <span v-if="currentSortBy === 'size'" class="fb-sort-arrow">
-                {{ currentSortAsc ? '↑' : '↓' }}
+                {{ currentSortAsc ? "↑" : "↓" }}
               </span>
             </button>
           </div>
@@ -89,9 +140,20 @@
           :title="t('buttons.info')"
           @click="layoutStore.toggleDetails()"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px" aria-hidden="true">
-            <path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-            <path d="M15 3v18"/>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            style="width: 17px; height: 17px"
+            aria-hidden="true"
+          >
+            <path
+              d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+            />
+            <path d="M15 3v18" />
           </svg>
         </button>
 
@@ -109,38 +171,102 @@
         />
 
         <!-- New button dropdown -->
-        <div class="fb-new-btn-wrap" v-if="headerButtons.upload || authStore.user?.perm.create">
+        <div
+          class="fb-new-btn-wrap"
+          v-if="headerButtons.upload || authStore.user?.perm.create"
+        >
           <button
             class="fb-tbtn fb-tbtn--accent"
             :title="t('buttons.new', 'New')"
             @click="newMenuOpen = !newMenuOpen"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px" aria-hidden="true">
-              <path d="M12 5v14"/><path d="M5 12h14"/>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="width: 17px; height: 17px"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14" />
+              <path d="M5 12h14" />
             </svg>
-            <span>{{ t('buttons.new', 'New') }}</span>
+            <span>{{ t("buttons.new", "New") }}</span>
           </button>
-          <div v-show="newMenuOpen" class="fb-new-menu" @click="newMenuOpen = false">
-            <button v-if="authStore.user?.perm.create" @click.stop="showHoverAndClose('newDir')" class="fb-new-menu-item">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true">
-                <path d="M20 19a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-7.6a1 1 0 0 1-.8-.4L10.3 6.9a1 1 0 0 0-.8-.4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2Z"/>
-                <path d="M12 11v5"/><path d="M9.5 13.5h5"/>
+          <div
+            v-show="newMenuOpen"
+            class="fb-new-menu"
+            @click="newMenuOpen = false"
+          >
+            <button
+              v-if="authStore.user?.perm.create"
+              @click.stop="showHoverAndClose('newDir')"
+              class="fb-new-menu-item"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="width: 16px; height: 16px"
+                aria-hidden="true"
+              >
+                <path
+                  d="M20 19a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-7.6a1 1 0 0 1-.8-.4L10.3 6.9a1 1 0 0 0-.8-.4H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2Z"
+                />
+                <path d="M12 11v5" />
+                <path d="M9.5 13.5h5" />
               </svg>
-              <span>{{ t('sidebar.newFolder') }}</span>
+              <span>{{ t("sidebar.newFolder") }}</span>
             </button>
-            <button v-if="authStore.user?.perm.create" @click.stop="showHoverAndClose('newFile')" class="fb-new-menu-item">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <path d="M14 2v6h6"/><path d="M12 12v6"/><path d="M9 15h6"/>
+            <button
+              v-if="authStore.user?.perm.create"
+              @click.stop="showHoverAndClose('newFile')"
+              class="fb-new-menu-item"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="width: 16px; height: 16px"
+                aria-hidden="true"
+              >
+                <path
+                  d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                />
+                <path d="M14 2v6h6" />
+                <path d="M12 12v6" />
+                <path d="M9 15h6" />
               </svg>
-              <span>{{ t('sidebar.newFile') }}</span>
+              <span>{{ t("sidebar.newFile") }}</span>
             </button>
-            <button v-if="headerButtons.upload" @click.stop="uploadAndClose()" class="fb-new-menu-item">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/>
+            <button
+              v-if="headerButtons.upload"
+              @click.stop="uploadAndClose()"
+              class="fb-new-menu-item"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="width: 16px; height: 16px"
+                aria-hidden="true"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="M17 8l-5-5-5 5" />
+                <path d="M12 3v12" />
               </svg>
-              <span>{{ t('buttons.upload') }}</span>
+              <span>{{ t("buttons.upload") }}</span>
             </button>
           </div>
         </div>
@@ -201,14 +327,14 @@
       <div v-if="currentViewMode === 'mosaic'" class="fb-skeleton-wrap">
         <div class="fb-skeleton fb-skeleton-label"></div>
         <div class="fb-skeleton-folders">
-          <div v-for="i in 4" :key="'folder-'+i" class="fb-skeleton-folder">
+          <div v-for="i in 4" :key="'folder-' + i" class="fb-skeleton-folder">
             <div class="fb-skeleton fb-skeleton-folder-icon"></div>
             <div class="fb-skeleton fb-skeleton-folder-name"></div>
           </div>
         </div>
         <div class="fb-skeleton fb-skeleton-label"></div>
         <div class="fb-skeleton-files">
-          <div v-for="i in 8" :key="'file-'+i" class="fb-skeleton-file">
+          <div v-for="i in 8" :key="'file-' + i" class="fb-skeleton-file">
             <div class="fb-skeleton-file-thumb"></div>
             <div class="fb-skeleton-file-info">
               <div class="fb-skeleton fb-skeleton-file-name"></div>
@@ -225,7 +351,7 @@
           <div class="fb-skeleton fb-skeleton-col-label"></div>
           <div class="fb-skeleton fb-skeleton-col-label"></div>
         </div>
-        <div v-for="i in 10" :key="'row-'+i" class="fb-skeleton-row">
+        <div v-for="i in 10" :key="'row-' + i" class="fb-skeleton-row">
           <div class="fb-skeleton fb-skeleton-row-icon"></div>
           <div class="fb-skeleton fb-skeleton-row-name"></div>
           <div class="fb-skeleton fb-skeleton-row-size"></div>
@@ -234,10 +360,7 @@
       </div>
     </div>
     <template v-else>
-      <div
-        v-if="isEmpty"
-        class="fb-empty"
-      >
+      <div v-if="isEmpty" class="fb-empty">
         <div class="fb-empty-icon">
           <FbIcon :name="emptyIconName" size="40px" />
         </div>
@@ -356,6 +479,7 @@
             v-bind:type="item.type"
             v-bind:size="item.size"
             v-bind:path="item.path"
+            v-bind:preview="item.preview"
           >
           </item>
         </div>
@@ -530,8 +654,8 @@ const currentSortAsc = computed(() => fileStore.req?.sorting.asc ?? true);
 const dirs = computed(() => items.value.dirs.slice(0, showLimit.value));
 
 const items = computed(() => {
-  const dirs: any[] = [];
-  const files: any[] = [];
+  const dirs: ResourceItem[] = [];
+  const files: ResourceItem[] = [];
 
   fileStore.req?.items.forEach((item) => {
     if (item.isDir) {
@@ -544,7 +668,7 @@ const items = computed(() => {
   return { dirs, files };
 });
 
-const files = computed((): Resource[] => {
+const files = computed((): ResourceItem[] => {
   let _showLimit = showLimit.value - items.value.dirs.length;
 
   if (_showLimit < 0) _showLimit = 0;
@@ -565,7 +689,7 @@ const modifiedIcon = computed((): IconName => {
 });
 
 const isEmpty = computed(
-  () => ((fileStore.req?.numDirs ?? 0) + (fileStore.req?.numFiles ?? 0)) === 0
+  () => (fileStore.req?.numDirs ?? 0) + (fileStore.req?.numFiles ?? 0) === 0
 );
 
 const emptyIconName = computed<IconName>(() => "empty-folder");
@@ -1202,7 +1326,9 @@ const fillWindow = (fit = false) => {
   }
 
   // Quantity of items needed to fill 2x of the viewport height
-  const showQuantity = Math.ceil((viewHeight + viewHeight * 2) / itemWeight.value);
+  const showQuantity = Math.ceil(
+    (viewHeight + viewHeight * 2) / itemWeight.value
+  );
 
   // Less items to display than current
   if (showLimit.value > showQuantity && !fit) return;

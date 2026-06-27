@@ -6,7 +6,11 @@
     @mousemove="toggleNavigation"
     @touchstart="toggleNavigation"
   >
-    <header-bar v-if="isPdf || isEpub || isCsv || isMarkdown || showNav">
+    <header-bar
+      v-if="
+        isPdf || isEpub || isCsv || isMarkdown || isCode || isText || showNav
+      "
+    >
       <action icon="close" :label="$t('buttons.close')" @action="close()" />
       <title>{{ name }}</title>
       <action
@@ -129,7 +133,23 @@
           :options="videoOptions"
         >
         </VideoPlayer>
-        <object v-else-if="isPdf" class="pdf" :data="previewUrl"></object>
+        <PdfPreview
+          v-else-if="isPdf"
+          :src="previewUrl"
+          :filename="name"
+          :download-url="downloadUrl"
+        />
+        <CodePreview
+          v-else-if="isCode"
+          :content="codeContent"
+          :language="codeLanguage"
+          :filename="name"
+        />
+        <TextPreview
+          v-else-if="isText"
+          :content="textContent"
+          :filename="name"
+        />
         <div v-else-if="fileStore.req?.type == 'blob'" class="info">
           <div class="title">
             <i class="material-icons">feedback</i>
@@ -199,6 +219,9 @@ import Action from "@/components/header/Action.vue";
 import ExtendedImage from "@/components/files/ExtendedImage.vue";
 import VideoPlayer from "@/components/files/VideoPlayer.vue";
 import CsvViewer from "@/components/files/CsvViewer.vue";
+import CodePreview from "@/components/files/CodePreview.vue";
+import TextPreview from "@/components/files/TextPreview.vue";
+import PdfPreview from "@/components/files/PdfPreview.vue";
 import { VueReader } from "vue-reader";
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -329,6 +352,113 @@ const isMarkdown = computed(
     fileStore.req?.extension.toLowerCase() == ".markdown"
 );
 
+// Code file extensions
+const codeExtensions = new Set([
+  ".js",
+  ".mjs",
+  ".cjs",
+  ".ts",
+  ".tsx",
+  ".jsx",
+  ".py",
+  ".go",
+  ".rs",
+  ".java",
+  ".kt",
+  ".c",
+  ".cpp",
+  ".h",
+  ".hpp",
+  ".cs",
+  ".php",
+  ".rb",
+  ".swift",
+  ".dart",
+  ".lua",
+  ".pl",
+  ".r",
+  ".scala",
+  ".clj",
+  ".sh",
+  ".bat",
+  ".ps1",
+  ".html",
+  ".htm",
+  ".css",
+  ".scss",
+  ".sass",
+  ".json",
+  ".xml",
+  ".yaml",
+  ".yml",
+  ".toml",
+  ".sql",
+  ".graphql",
+]);
+
+// Text file extensions
+const textExtensions = new Set([".txt", ".log", ".ini", ".cfg", ".conf"]);
+
+const isCode = computed(() => {
+  const ext = fileStore.req?.extension.toLowerCase() || "";
+  return codeExtensions.has(ext);
+});
+
+const isText = computed(() => {
+  const ext = fileStore.req?.extension.toLowerCase() || "";
+  return textExtensions.has(ext);
+});
+
+const codeLanguage = computed(() => {
+  const ext = fileStore.req?.extension.toLowerCase() || "";
+  const langMap: Record<string, string> = {
+    ".js": "javascript",
+    ".mjs": "javascript",
+    ".cjs": "javascript",
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".jsx": "javascript",
+    ".py": "python",
+    ".go": "go",
+    ".rs": "rust",
+    ".java": "java",
+    ".kt": "kotlin",
+    ".c": "c",
+    ".cpp": "cpp",
+    ".h": "c",
+    ".hpp": "cpp",
+    ".cs": "csharp",
+    ".php": "php",
+    ".rb": "ruby",
+    ".swift": "swift",
+    ".dart": "dart",
+    ".lua": "lua",
+    ".pl": "perl",
+    ".r": "r",
+    ".scala": "scala",
+    ".clj": "clojure",
+    ".sh": "bash",
+    ".bat": "batch",
+    ".ps1": "powershell",
+    ".html": "html",
+    ".htm": "html",
+    ".css": "css",
+    ".scss": "scss",
+    ".sass": "sass",
+    ".json": "json",
+    ".xml": "xml",
+    ".yaml": "yaml",
+    ".yml": "yaml",
+    ".toml": "toml",
+    ".sql": "sql",
+    ".graphql": "graphql",
+  };
+  return langMap[ext] || "text";
+});
+
+const codeContent = ref<string>("");
+const textContent = ref<string>("");
+
 const isResizeEnabled = computed(() => resizePreview);
 
 const subtitles = computed(() => {
@@ -446,6 +576,30 @@ const updatePreview = async () => {
       console.error("Failed to render markdown:", e);
       markdownContent.value = "";
     }
+  }
+
+  // Load code content if it's a code file
+  if (isCode.value && fileStore.req) {
+    codeContent.value = "";
+    const raw =
+      fileStore.req.rawContent != null
+        ? typeof fileStore.req.rawContent === "string"
+          ? fileStore.req.rawContent
+          : new TextDecoder().decode(fileStore.req.rawContent)
+        : (fileStore.req.content ?? "");
+    codeContent.value = raw;
+  }
+
+  // Load text content if it's a text file
+  if (isText.value && fileStore.req) {
+    textContent.value = "";
+    const raw =
+      fileStore.req.rawContent != null
+        ? typeof fileStore.req.rawContent === "string"
+          ? fileStore.req.rawContent
+          : new TextDecoder().decode(fileStore.req.rawContent)
+        : (fileStore.req.content ?? "");
+    textContent.value = raw;
   }
 
   if (!listing.value) {
