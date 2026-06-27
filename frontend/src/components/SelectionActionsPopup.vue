@@ -216,11 +216,21 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 };
 
+// Close (don't try to reposition) when the viewport changes while open — a
+// position:fixed menu would otherwise float at stale coordinates.
+const handleViewportChange = () => {
+  if (isOpen.value) closePopup();
+};
+
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
+  window.addEventListener("resize", handleViewportChange);
+  window.addEventListener("scroll", handleViewportChange, true);
 });
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
+  window.removeEventListener("resize", handleViewportChange);
+  window.removeEventListener("scroll", handleViewportChange, true);
 });
 </script>

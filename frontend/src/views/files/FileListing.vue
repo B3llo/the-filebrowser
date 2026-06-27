@@ -1231,9 +1231,10 @@ const revealPreviousItem = () => {
 const showContextMenu = (event: MouseEvent) => {
   event.preventDefault();
   isContextMenuVisible.value = true;
+  // Menu is position:fixed → use viewport coordinates (no scrollY offset).
   contextMenuPos.value = {
     x: event.clientX + 8,
-    y: event.clientY + Math.floor(window.scrollY),
+    y: event.clientY + 8,
   };
 };
 

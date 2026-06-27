@@ -117,7 +117,9 @@
   position: fixed;
   top: 0;
   left: 0;
+  width: max-content;
   min-width: 160px;
+  max-width: calc(100vw - 16px);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -126,6 +128,8 @@
   z-index: 10000;
   animation: fbpop 0.12s ease;
   transform-origin: top right;
+  display: flex;
+  flex-direction: column;
 }
 
 .fb-sel-action-item {
@@ -143,8 +147,6 @@
   transition: background 0.1s;
   font-family: inherit;
   white-space: nowrap;
-  width: 100%;
-  box-sizing: border-box;
 }
 
 .fb-sel-action-item:hover {

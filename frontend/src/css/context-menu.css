@@ -1,6 +1,10 @@
 .context-menu {
-  position: absolute;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: max-content;
   min-width: 214px;
+  max-width: calc(100vw - 16px);
   background: var(--surface, oklch(1 0 0));
   border: 1px solid var(--border, oklch(0.87 0.01 100));
   border-radius: 12px;
@@ -9,13 +13,14 @@
   z-index: 61;
   animation: fbpop 0.12s ease-out;
   transform-origin: top left;
+  display: flex;
+  flex-direction: column;
 }
 
 .context-menu .action {
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 100%;
   padding: 8px 10px;
   border-radius: 8px;
   border: 0;
