@@ -160,10 +160,10 @@ html[dir="rtl"] #listing {
   align-items: center;
   justify-content: center;
 }
-#listing.mosaic .item[data-dir="true"] > div:first-of-type i {
-  font-size: 21px;
-  margin-right: 0;
-  color: var(--accent);
+#listing.mosaic .item[data-dir="true"] > div:first-of-type .fb-folder-icon {
+  width: 21px;
+  height: 21px;
+  flex: 0 0 auto;
 }
 #listing.mosaic .item[data-dir="true"] > div:last-of-type {
   flex: 1;
@@ -383,10 +383,11 @@ html[dir="rtl"] #listing {
   display: none;
 }
 /* Folder icon */
-#listing.list .item[data-dir="true"] > div:first-of-type > i.material-icons {
-  font-size: 20px;
+#listing.list .item[data-dir="true"] > div:first-of-type > .fb-folder-icon {
+  width: 20px;
+  height: 20px;
   margin: 0;
-  color: var(--accent);
+  flex: 0 0 auto;
 }
 /* Files hide the material icon in favor of the extension pill */
 #listing.list .item:not([data-dir="true"]) > div:first-of-type > i.material-icons {

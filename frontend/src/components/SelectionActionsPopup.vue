@@ -15,8 +15,9 @@
     <div
       class="fb-sel-actions-menu"
       v-show="isOpen"
-      @click.stop
       :style="menuStyle"
+      @click.stop
+      ref="menuRef"
     >
       <button class="fb-sel-action-item" @click="handleInfo">
         <FbIcon name="info" size="16px" />
@@ -86,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
+import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
@@ -110,73 +111,62 @@ const layoutStore = useLayoutStore();
 
 const isOpen = ref(false);
 const popupRef = ref<HTMLElement | null>(null);
-const menuTop = ref(0);
-const menuLeft = ref(0);
-const menuTransform = ref("");
+const menuRef = ref<HTMLElement | null>(null);
+// Kept hidden until measured & positioned so it never flashes at (0,0)
+const menuStyle = ref<Record<string, string>>({ visibility: "hidden" });
 
 const togglePopup = async () => {
   isOpen.value = !isOpen.value;
   if (isOpen.value) {
+    menuStyle.value = { visibility: "hidden" };
     await nextTick();
-    calculatePosition();
+    // rAF guarantees the browser has laid the menu out before we measure
+    requestAnimationFrame(positionMenu);
   }
 };
 
 const closePopup = () => {
   isOpen.value = false;
+  menuStyle.value = { visibility: "hidden" };
 };
 
-const menuStyle = computed(() => ({
-  top: `${menuTop.value}px`,
-  left: `${menuLeft.value}px`,
-  transform: menuTransform.value,
-}));
-
-const calculatePosition = () => {
-  if (!popupRef.value) return;
-
-  const trigger = popupRef.value.querySelector(".fb-sel-actions-trigger") as HTMLElement;
-  const menu = popupRef.value.querySelector(".fb-sel-actions-menu") as HTMLElement;
+const positionMenu = () => {
+  const trigger = popupRef.value?.querySelector(
+    ".fb-sel-actions-trigger"
+  ) as HTMLElement | null;
+  const menu = menuRef.value;
   if (!trigger || !menu) return;
 
   const triggerRect = trigger.getBoundingClientRect();
-  const menuRect = menu.getBoundingClientRect();
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
+  // offsetWidth/Height are reliable layout metrics; the menu is position:fixed
+  // in CSS so it is already shrink-wrapped to its content, not the toolbar.
+  const menuWidth = menu.offsetWidth;
+  const menuHeight = menu.offsetHeight;
   const gap = 8;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
 
+  // Default: hang below the trigger, right edge aligned to the trigger's right
+  let left = triggerRect.right - menuWidth;
   let top = triggerRect.bottom + gap;
-  let left = triggerRect.right - menuRect.width;
-  let transform = "";
 
-  // If menu would go off the bottom, show above the trigger
-  if (top + menuRect.height > viewportHeight) {
-    top = triggerRect.top - menuRect.height - gap;
-    transform = "none";
-  }
+  // Clamp horizontally inside the viewport (handles right- and left-edge cases)
+  if (left + menuWidth > vw - gap) left = vw - menuWidth - gap;
+  if (left < gap) left = gap;
 
-  // If menu would go off the top, pin to top with some padding
-  if (top < gap) {
-    top = gap;
-  }
+  // Flip above the trigger if it would overflow the bottom, then clamp top
+  if (top + menuHeight > vh - gap) top = triggerRect.top - gap - menuHeight;
+  if (top < gap) top = gap;
 
-  // If menu would go off the right edge, align to right edge of trigger
-  if (left + menuRect.width > viewportWidth - gap) {
-    left = viewportWidth - menuRect.width - gap;
-  }
-
-  // If menu would go off the left edge, pin to left with some padding
-  if (left < gap) {
-    left = gap;
-  }
-
-  menuTop.value = top;
-  menuLeft.value = left;
-  menuTransform.value = transform;
+  menuStyle.value = {
+    visibility: "visible",
+    top: `${top}px`,
+    left: `${left}px`,
+  };
 };
 
 const handleInfo = () => {
-  layoutStore.toggleDetails();
+  layoutStore.showDetails = true;
   closePopup();
 };
 
@@ -218,26 +208,19 @@ const handleDelete = () => {
 };
 
 const handleClickOutside = (event: MouseEvent) => {
-  if (popupRef.value && !popupRef.value.contains(event.target as Node)) {
+  if (
+    popupRef.value && !popupRef.value.contains(event.target as Node) &&
+    menuRef.value && !menuRef.value.contains(event.target as Node)
+  ) {
     closePopup();
-  }
-};
-
-const handleScroll = () => {
-  if (isOpen.value) {
-    calculatePosition();
   }
 };
 
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
-  document.addEventListener("scroll", handleScroll, true);
-  window.addEventListener("resize", handleScroll);
 });
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
-  document.removeEventListener("scroll", handleScroll, true);
-  window.removeEventListener("resize", handleScroll);
 });
 </script>

@@ -400,7 +400,7 @@
           <action
             :fbIcon="'info'"
             :label="t('buttons.info')"
-            @action="layoutStore.toggleDetails()"
+            @action="layoutStore.showDetails = true"
           />
           <hr class="fb-menu-divider" />
           <action
