@@ -12,7 +12,12 @@
       <FbIcon name="more-vertical" size="18px" />
       <span class="fb-sel-actions-count">{{ fileStore.selectedCount }}</span>
     </button>
-    <div class="fb-sel-actions-menu" v-show="isOpen" @click.stop>
+    <div
+      class="fb-sel-actions-menu"
+      v-show="isOpen"
+      @click.stop
+      :style="menuStyle"
+    >
       <button class="fb-sel-action-item" @click="handleInfo">
         <FbIcon name="info" size="16px" />
         <span>{{ t('buttons.info') }}</span>
@@ -81,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
@@ -105,13 +110,69 @@ const layoutStore = useLayoutStore();
 
 const isOpen = ref(false);
 const popupRef = ref<HTMLElement | null>(null);
+const menuTop = ref(0);
+const menuLeft = ref(0);
+const menuTransform = ref("");
 
-const togglePopup = () => {
+const togglePopup = async () => {
   isOpen.value = !isOpen.value;
+  if (isOpen.value) {
+    await nextTick();
+    calculatePosition();
+  }
 };
 
 const closePopup = () => {
   isOpen.value = false;
+};
+
+const menuStyle = computed(() => ({
+  top: `${menuTop.value}px`,
+  left: `${menuLeft.value}px`,
+  transform: menuTransform.value,
+}));
+
+const calculatePosition = () => {
+  if (!popupRef.value) return;
+
+  const trigger = popupRef.value.querySelector(".fb-sel-actions-trigger") as HTMLElement;
+  const menu = popupRef.value.querySelector(".fb-sel-actions-menu") as HTMLElement;
+  if (!trigger || !menu) return;
+
+  const triggerRect = trigger.getBoundingClientRect();
+  const menuRect = menu.getBoundingClientRect();
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const gap = 8;
+
+  let top = triggerRect.bottom + gap;
+  let left = triggerRect.right - menuRect.width;
+  let transform = "";
+
+  // If menu would go off the bottom, show above the trigger
+  if (top + menuRect.height > viewportHeight) {
+    top = triggerRect.top - menuRect.height - gap;
+    transform = "none";
+  }
+
+  // If menu would go off the top, pin to top with some padding
+  if (top < gap) {
+    top = gap;
+  }
+
+  // If menu would go off the right edge, align to right edge of trigger
+  if (left + menuRect.width > viewportWidth - gap) {
+    left = viewportWidth - menuRect.width - gap;
+  }
+
+  // If menu would go off the left edge, pin to left with some padding
+  if (left < gap) {
+    left = gap;
+  }
+
+  menuTop.value = top;
+  menuLeft.value = left;
+  menuTransform.value = transform;
 };
 
 const handleInfo = () => {
@@ -162,11 +223,21 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 };
 
+const handleScroll = () => {
+  if (isOpen.value) {
+    calculatePosition();
+  }
+};
+
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
+  document.addEventListener("scroll", handleScroll, true);
+  window.addEventListener("resize", handleScroll);
 });
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside);
+  document.removeEventListener("scroll", handleScroll, true);
+  window.removeEventListener("resize", handleScroll);
 });
 </script>
