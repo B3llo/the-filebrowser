@@ -1,35 +1,129 @@
+/* ============================================================
+   Inputs — New Design Tokens
+   ============================================================ */
+
 .input {
-  background: var(--surfacePrimary);
-  color: var(--textSecondary);
-  border: 1px solid var(--borderPrimary);
-  border-radius: 0.1em;
-  padding: 0.5em 1em;
-  transition: 0.2s ease all;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  font-family: inherit;
+  transition: border-color 0.12s, box-shadow 0.12s;
   margin: 0;
+  outline: none;
 }
 
-.input:hover,
+.input:hover {
+  border-color: var(--border-strong);
+}
+
 .input:focus {
-  border-color: var(--borderSecondary);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--sel);
+}
+
+.input::placeholder {
+  color: var(--faint);
 }
 
 .input--block {
-  margin-bottom: 0.5em;
+  margin-bottom: 8px;
   display: block;
   width: 100%;
 }
 
 .input--textarea {
-  line-height: 1.15;
-  font-family: monospace;
-  min-height: 10em;
+  line-height: 1.5;
+  font-family: "SF Mono", "Monaco", "Inconsolata", "Fira Mono", monospace;
+  font-size: 13px;
+  min-height: 120px;
   resize: vertical;
+  padding: 10px 12px;
 }
 
 .input--red {
   background: var(--input-red) !important;
+  border-color: oklch(0.55 0.2 25) !important;
 }
 
 .input--green {
   background: var(--input-green) !important;
+  border-color: oklch(0.7 0.17 145) !important;
+}
+
+/* Select input */
+.input--select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.input--select:focus {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+/* Disabled input */
+.input:disabled {
+  background: var(--hover);
+  color: var(--faint);
+  cursor: not-allowed;
+  border-color: var(--border);
+}
+
+/* Number input */
+.input--number {
+  width: 120px;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+.input--number::-webkit-outer-spin-button,
+.input--number::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Vue Number Input overrides */
+.vue-number-input {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.vue-number-input__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: var(--hover);
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 18px;
+  transition: background 0.1s, color 0.1s;
+}
+
+.vue-number-input__button:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.vue-number-input__input {
+  width: 60px;
+  text-align: center;
+  border: none;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13.5px;
+  font-family: inherit;
+  padding: 8px;
+  outline: none;
 }

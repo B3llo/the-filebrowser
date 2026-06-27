@@ -1,49 +1,51 @@
 <template>
   <errors v-if="error" :errorCode="error.status" />
-  <div class="row" v-else-if="!layoutStore.loading">
-    <div class="column">
-      <form @submit="save" class="card">
-        <div class="card-title">
-          <h2 v-if="user?.id === 0">{{ $t("settings.newUser") }}</h2>
-          <h2 v-else>{{ $t("settings.user") }} {{ user?.username }}</h2>
-        </div>
+  <div class="fb-settings-section" v-else-if="!layoutStore.loading">
+    <div class="dashboard row">
+      <div class="column">
+        <form @submit="save" class="card">
+          <div class="card-title">
+            <h2 v-if="user?.id === 0">{{ $t("settings.newUser") }}</h2>
+            <h2 v-else>{{ $t("settings.user") }} {{ user?.username }}</h2>
+          </div>
 
-        <div class="card-content" v-if="user">
-          <user-form
-            v-model:user="user"
-            v-model:createUserDir="createUserDir"
-            :isDefault="false"
-            :isNew="isNew"
-          />
-        </div>
+          <div class="card-content" v-if="user">
+            <user-form
+              v-model:user="user"
+              v-model:createUserDir="createUserDir"
+              :isDefault="false"
+              :isNew="isNew"
+            />
+          </div>
 
-        <div class="card-action">
-          <button
-            v-if="!isNew"
-            @click.prevent="deletePrompt"
-            type="button"
-            class="button button--flat button--red"
-            :aria-label="$t('buttons.delete')"
-            :title="$t('buttons.delete')"
-          >
-            {{ $t("buttons.delete") }}
-          </button>
-          <router-link to="/settings/users">
+          <div class="card-action">
             <button
-              class="button button--flat button--grey"
-              :aria-label="$t('buttons.cancel')"
-              :title="$t('buttons.cancel')"
+              v-if="!isNew"
+              @click.prevent="deletePrompt"
+              type="button"
+              class="button button--flat button--red"
+              :aria-label="$t('buttons.delete')"
+              :title="$t('buttons.delete')"
             >
-              {{ $t("buttons.cancel") }}
+              {{ $t("buttons.delete") }}
             </button>
-          </router-link>
-          <input
-            class="button button--flat"
-            type="submit"
-            :value="$t('buttons.save')"
-          />
-        </div>
-      </form>
+            <router-link to="/settings/users">
+              <button
+                class="button button--flat button--grey"
+                :aria-label="$t('buttons.cancel')"
+                :title="$t('buttons.cancel')"
+              >
+                {{ $t("buttons.cancel") }}
+              </button>
+            </router-link>
+            <input
+              class="button"
+              type="submit"
+              :value="$t('buttons.save')"
+            />
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>

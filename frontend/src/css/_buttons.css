@@ -1,18 +1,29 @@
+/* ============================================================
+   Buttons — New Design Tokens
+   ============================================================ */
+
 .button {
   outline: 0;
   border: 0;
-  padding: 0.5em 1em;
-  border-radius: 0.1em;
+  padding: 8px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  background: var(--blue);
-  color: white;
-  border: 1px solid var(--divider);
-  box-shadow: 0 0 5px var(--divider);
-  transition: 0.1s ease all;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+  white-space: nowrap;
 }
 
 .button:hover {
-  background-color: var(--dark-blue);
+  background: var(--accent-press);
+  color: var(--on-accent);
+}
+
+.button:active {
+  transform: scale(0.98);
 }
 
 .button--block {
@@ -22,34 +33,107 @@
 }
 
 .button--red {
-  background: var(--red);
+  background: oklch(0.55 0.2 25);
+}
+
+.button--red:hover {
+  background: oklch(0.49 0.2 25);
 }
 
 .button--blue {
-  background: var(--blue);
+  background: var(--accent);
 }
 
 .button--flat {
-  color: var(--dark-blue);
+  color: var(--dim);
   background: transparent;
-  box-shadow: 0 0 0;
-  border: 0;
-  text-transform: uppercase;
+  box-shadow: none;
+  border: 1px solid var(--border);
 }
 
 .button--flat:hover {
-  background: var(--surfaceSecondary);
+  background: var(--hover);
+  color: var(--text);
+  border-color: var(--border-strong);
 }
 
 .button--flat.button--red {
-  color: var(--dark-red);
+  color: oklch(0.55 0.2 25);
+  border-color: oklch(0.55 0.2 25);
+}
+
+.button--flat.button--red:hover {
+  background: oklch(0.95 0.05 25);
+  color: oklch(0.49 0.2 25);
 }
 
 .button--flat.button--grey {
-  color: #6f6f6f;
+  color: var(--faint);
+  border-color: var(--border);
+}
+
+.button--flat.button--grey:hover {
+  background: var(--hover);
+  color: var(--dim);
 }
 
 .button[disabled] {
   opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Small button variant */
+.button--sm {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+/* Icon button */
+.button--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--border);
+}
+
+.button--icon:hover {
+  background: var(--hover);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+/* Ghost button (no border) */
+.button--ghost {
+  background: transparent;
+  color: var(--dim);
+  box-shadow: none;
+}
+
+.button--ghost:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+/* Danger button (for destructive actions) */
+.button--danger {
+  background: oklch(0.55 0.2 25);
+  color: #fff;
+}
+
+.button--danger:hover {
+  background: oklch(0.49 0.2 25);
+  color: #fff;
+}
+
+/* Legacy compatibility */
+.button--flat.button--grey {
+  color: var(--faint);
 }

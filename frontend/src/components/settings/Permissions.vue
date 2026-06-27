@@ -1,45 +1,54 @@
 <template>
   <div>
-    <h3>{{ $t("settings.permissions") }}</h3>
-    <p class="small">{{ $t("settings.permissionsHelp") }}</p>
+    <h3 style="margin: 20px 0 8px; font-size: 14px; font-weight: 600; color: var(--text)">{{ $t("settings.permissions") }}</h3>
+    <p class="small" style="margin-bottom: 12px">{{ $t("settings.permissionsHelp") }}</p>
 
-    <p>
-      <input type="checkbox" v-model="admin" />
-      {{ $t("settings.administrator") }}
-    </p>
+    <div class="fb-settings-perm-grid">
+      <div class="fb-settings-perm-item">
+        <input type="checkbox" v-model="admin" id="perm-admin" />
+        <label for="perm-admin">{{ $t("settings.administrator") }}</label>
+      </div>
 
-    <p>
-      <input type="checkbox" :disabled="admin" v-model="perm.create" />
-      {{ $t("settings.perm.create") }}
-    </p>
-    <p>
-      <input type="checkbox" :disabled="admin" v-model="perm.delete" />
-      {{ $t("settings.perm.delete") }}
-    </p>
-    <p>
-      <input
-        type="checkbox"
-        :disabled="admin || perm.share"
-        v-model="perm.download"
-      />
-      {{ $t("settings.perm.download") }}
-    </p>
-    <p>
-      <input type="checkbox" :disabled="admin" v-model="perm.modify" />
-      {{ $t("settings.perm.modify") }}
-    </p>
-    <p v-if="isExecEnabled">
-      <input type="checkbox" :disabled="admin" v-model="perm.execute" />
-      {{ $t("settings.perm.execute") }}
-    </p>
-    <p>
-      <input type="checkbox" :disabled="admin" v-model="perm.rename" />
-      {{ $t("settings.perm.rename") }}
-    </p>
-    <p>
-      <input type="checkbox" :disabled="admin" v-model="perm.share" />
-      {{ $t("settings.perm.share") }}
-    </p>
+      <div class="fb-settings-perm-item">
+        <input type="checkbox" :disabled="admin" v-model="perm.create" id="perm-create" />
+        <label for="perm-create">{{ $t("settings.perm.create") }}</label>
+      </div>
+
+      <div class="fb-settings-perm-item">
+        <input type="checkbox" :disabled="admin" v-model="perm.delete" id="perm-delete" />
+        <label for="perm-delete">{{ $t("settings.perm.delete") }}</label>
+      </div>
+
+      <div class="fb-settings-perm-item">
+        <input
+          type="checkbox"
+          :disabled="admin || perm.share"
+          v-model="perm.download"
+          id="perm-download"
+        />
+        <label for="perm-download">{{ $t("settings.perm.download") }}</label>
+      </div>
+
+      <div class="fb-settings-perm-item">
+        <input type="checkbox" :disabled="admin" v-model="perm.modify" id="perm-modify" />
+        <label for="perm-modify">{{ $t("settings.perm.modify") }}</label>
+      </div>
+
+      <div v-if="isExecEnabled" class="fb-settings-perm-item">
+        <input type="checkbox" :disabled="admin" v-model="perm.execute" id="perm-execute" />
+        <label for="perm-execute">{{ $t("settings.perm.execute") }}</label>
+      </div>
+
+      <div class="fb-settings-perm-item">
+        <input type="checkbox" :disabled="admin" v-model="perm.rename" id="perm-rename" />
+        <label for="perm-rename">{{ $t("settings.perm.rename") }}</label>
+      </div>
+
+      <div class="fb-settings-perm-item">
+        <input type="checkbox" :disabled="admin" v-model="perm.share" id="perm-share" />
+        <label for="perm-share">{{ $t("settings.perm.share") }}</label>
+      </div>
+    </div>
   </div>
 </template>
 

@@ -1,17 +1,17 @@
 <template>
-  <div>
-    <p v-if="!isDefault && props.user !== null">
-      <label for="username">{{ t("settings.username") }}</label>
+  <div class="fb-settings-form">
+    <div v-if="!isDefault && props.user !== null" class="fb-settings-field">
+      <label class="fb-settings-field-label" for="username">{{ t("settings.username") }}</label>
       <input
         class="input input--block"
         type="text"
         v-model="user.username"
         id="username"
       />
-    </p>
+    </div>
 
-    <p v-if="!isDefault">
-      <label for="password">{{ t("settings.password") }}</label>
+    <div v-if="!isDefault" class="fb-settings-field">
+      <label class="fb-settings-field-label" for="password">{{ t("settings.password") }}</label>
       <input
         class="input input--block"
         type="password"
@@ -19,10 +19,10 @@
         v-model="user.password"
         id="password"
       />
-    </p>
+    </div>
 
-    <p>
-      <label for="scope">{{ t("settings.scope") }}</label>
+    <div class="fb-settings-field">
+      <label class="fb-settings-field-label" for="scope">{{ t("settings.scope") }}</label>
       <input
         :disabled="createUserDirData ?? false"
         :placeholder="scopePlaceholder"
@@ -31,36 +31,38 @@
         v-model="user.scope"
         id="scope"
       />
-    </p>
-    <p class="small" v-if="displayHomeDirectoryCheckbox">
-      <input type="checkbox" v-model="createUserDirData" />
-      {{ t("settings.createUserHomeDirectory") }}
-    </p>
+    </div>
 
-    <p>
-      <label for="locale">{{ t("settings.language") }}</label>
+    <div v-if="displayHomeDirectoryCheckbox" class="fb-settings-checkbox-item" style="background: transparent; padding: 0">
+      <input type="checkbox" v-model="createUserDirData" id="createUserDir" />
+      <label for="createUserDir">{{ t("settings.createUserHomeDirectory") }}</label>
+    </div>
+
+    <div class="fb-settings-field">
+      <label class="fb-settings-field-label" for="locale">{{ t("settings.language") }}</label>
       <languages
-        class="input input--block"
+        class="input input--block input--select"
         id="locale"
         v-model:locale="user.locale"
       ></languages>
-    </p>
+    </div>
 
-    <p v-if="!isDefault && user.perm">
+    <div v-if="!isDefault && user.perm" class="fb-settings-checkbox-item" style="background: transparent; padding: 0">
       <input
         type="checkbox"
         :disabled="user.perm.admin"
         v-model="user.lockPassword"
+        id="lockPassword"
       />
-      {{ t("settings.lockPassword") }}
-    </p>
+      <label for="lockPassword">{{ t("settings.lockPassword") }}</label>
+    </div>
 
     <permissions v-model:perm="user.perm" />
     <commands v-if="enableExec" v-model:commands="user.commands" />
 
     <div v-if="!isDefault">
-      <h3>{{ t("settings.rules") }}</h3>
-      <p class="small">{{ t("settings.rulesHelp") }}</p>
+      <h3 style="margin: 20px 0 8px; font-size: 14px; font-weight: 600; color: var(--text)">{{ t("settings.rules") }}</h3>
+      <p class="small" style="margin-bottom: 12px">{{ t("settings.rulesHelp") }}</p>
       <rules v-model:rules="user.rules" />
     </div>
   </div>

@@ -1,102 +1,115 @@
 <template>
-  <div class="row">
-    <div class="column">
-      <form class="card" @submit="updateSettings">
-        <div class="card-title">
-          <h2>{{ t("settings.profileSettings") }}</h2>
-        </div>
+  <div class="fb-settings-section">
+    <div class="dashboard row">
+      <div class="column">
+        <form class="card" @submit="updateSettings">
+          <div class="card-title">
+            <h2>{{ t("settings.profileSettings") }}</h2>
+          </div>
 
-        <div class="card-content">
-          <p>
-            <input type="checkbox" name="hideDotfiles" v-model="hideDotfiles" />
-            {{ t("settings.hideDotfiles") }}
-          </p>
-          <p>
-            <input type="checkbox" name="singleClick" v-model="singleClick" />
-            {{ t("settings.singleClick") }}
-          </p>
-          <p>
+          <div class="card-content">
+            <div class="fb-settings-checkbox-list">
+              <div class="fb-settings-checkbox-item">
+                <input type="checkbox" name="hideDotfiles" v-model="hideDotfiles" id="hideDotfiles" />
+                <label for="hideDotfiles">{{ t("settings.hideDotfiles") }}</label>
+              </div>
+              <div class="fb-settings-checkbox-item">
+                <input type="checkbox" name="singleClick" v-model="singleClick" id="singleClick" />
+                <label for="singleClick">{{ t("settings.singleClick") }}</label>
+              </div>
+              <div class="fb-settings-checkbox-item">
+                <input type="checkbox" name="redirectAfterCopyMove" v-model="redirectAfterCopyMove" id="redirectAfterCopyMove" />
+                <label for="redirectAfterCopyMove">{{ t("settings.redirectAfterCopyMove") }}</label>
+              </div>
+              <div class="fb-settings-checkbox-item">
+                <input type="checkbox" name="dateFormat" v-model="dateFormat" id="dateFormat" />
+                <label for="dateFormat">{{ t("settings.setDateFormat") }}</label>
+              </div>
+            </div>
+
+            <div class="fb-settings-divider"></div>
+
+            <div class="fb-settings-field">
+              <label class="fb-settings-field-label" for="locale">{{ t("settings.language") }}</label>
+              <languages
+                class="input input--block input--select"
+                v-model:locale="locale"
+                id="locale"
+              ></languages>
+            </div>
+
+            <div class="fb-settings-field" style="margin-top: 16px">
+              <label class="fb-settings-field-label" for="aceTheme">{{ t("settings.aceEditorTheme") }}</label>
+              <AceEditorTheme
+                class="input input--block input--select"
+                v-model:aceEditorTheme="aceEditorTheme"
+                id="aceTheme"
+              ></AceEditorTheme>
+            </div>
+          </div>
+
+          <div class="card-action">
             <input
-              type="checkbox"
-              name="redirectAfterCopyMove"
-              v-model="redirectAfterCopyMove"
+              class="button"
+              type="submit"
+              name="submitProfile"
+              :value="t('buttons.update')"
             />
-            {{ t("settings.redirectAfterCopyMove") }}
-          </p>
-          <p>
-            <input type="checkbox" name="dateFormat" v-model="dateFormat" />
-            {{ t("settings.setDateFormat") }}
-          </p>
-          <h3>{{ t("settings.language") }}</h3>
-          <languages
-            class="input input--block"
-            v-model:locale="locale"
-          ></languages>
+          </div>
+        </form>
+      </div>
 
-          <h3>{{ t("settings.aceEditorTheme") }}</h3>
-          <AceEditorTheme
-            class="input input--block"
-            v-model:aceEditorTheme="aceEditorTheme"
-            id="aceTheme"
-          ></AceEditorTheme>
-        </div>
+      <div v-if="!noAuth" class="column">
+        <form
+          class="card"
+          v-if="!authStore.user?.lockPassword"
+          @submit="updatePassword"
+        >
+          <div class="card-title">
+            <h2>{{ t("settings.changePassword") }}</h2>
+          </div>
 
-        <div class="card-action">
-          <input
-            class="button button--flat"
-            type="submit"
-            name="submitProfile"
-            :value="t('buttons.update')"
-          />
-        </div>
-      </form>
-    </div>
+          <div class="card-content">
+            <div class="fb-settings-field">
+              <input
+                :class="passwordClass"
+                type="password"
+                :placeholder="t('settings.newPassword')"
+                v-model="password"
+                name="password"
+              />
+            </div>
+            <div class="fb-settings-field">
+              <input
+                :class="passwordClass"
+                type="password"
+                :placeholder="t('settings.newPasswordConfirm')"
+                v-model="passwordConf"
+                name="passwordConf"
+              />
+            </div>
+            <div v-if="isCurrentPasswordRequired" class="fb-settings-field">
+              <input
+                :class="passwordClass"
+                type="password"
+                :placeholder="t('settings.currentPassword')"
+                v-model="currentPassword"
+                name="current_password"
+                autocomplete="current-password"
+              />
+            </div>
+          </div>
 
-    <div v-if="!noAuth" class="column">
-      <form
-        class="card"
-        v-if="!authStore.user?.lockPassword"
-        @submit="updatePassword"
-      >
-        <div class="card-title">
-          <h2>{{ t("settings.changePassword") }}</h2>
-        </div>
-
-        <div class="card-content">
-          <input
-            :class="passwordClass"
-            type="password"
-            :placeholder="t('settings.newPassword')"
-            v-model="password"
-            name="password"
-          />
-          <input
-            :class="passwordClass"
-            type="password"
-            :placeholder="t('settings.newPasswordConfirm')"
-            v-model="passwordConf"
-            name="passwordConf"
-          />
-          <input
-            v-if="isCurrentPasswordRequired"
-            :class="passwordClass"
-            type="password"
-            :placeholder="t('settings.currentPassword')"
-            v-model="currentPassword"
-            name="current_password"
-            autocomplete="current-password"
-          />
-        </div>
-
-        <div class="card-action">
-          <input
-            class="button button--flat"
-            type="submit"
-            name="submitPassword"
-            :value="t('buttons.update')"
-          />
-        </div>
-      </form>
+          <div class="card-action">
+            <input
+              class="button"
+              type="submit"
+              name="submitPassword"
+              :value="t('buttons.update')"
+            />
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>

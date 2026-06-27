@@ -1,246 +1,252 @@
 <template>
   <errors v-if="error" :errorCode="error.status" />
-  <div class="row" v-else-if="!layoutStore.loading && settings !== null">
-    <div class="column">
-      <form class="card" @submit.prevent="save">
-        <div class="card-title">
-          <h2>{{ t("settings.globalSettings") }}</h2>
-        </div>
-
-        <div class="card-content">
-          <p>
-            <input type="checkbox" v-model="settings.signup" />
-            {{ t("settings.allowSignup") }}
-          </p>
-
-          <p>
-            <input type="checkbox" v-model="settings.createUserDir" />
-            {{ t("settings.createUserDir") }}
-          </p>
-
-          <p>
-            <input type="checkbox" v-model="settings.hideLoginButton" />
-            {{ t("settings.hideLoginButton") }}
-          </p>
-
-          <p>
-            <label class="small">{{ t("settings.userHomeBasePath") }}</label>
-            <input
-              class="input input--block"
-              type="text"
-              v-model="settings.userHomeBasePath"
-            />
-          </p>
-
-          <p>
-            <label for="minimumPasswordLength">{{
-              t("settings.minimumPasswordLength")
-            }}</label>
-            <vue-number-input
-              controls
-              v-model.number="settings.minimumPasswordLength"
-              id="minimumPasswordLength"
-              :min="1"
-            />
-          </p>
-
-          <h3>{{ t("settings.rules") }}</h3>
-          <p class="small">{{ t("settings.globalRules") }}</p>
-          <rules v-model:rules="settings.rules" />
-
-          <div v-if="enableExec">
-            <h3>{{ t("settings.executeOnShell") }}</h3>
-            <p class="small">{{ t("settings.executeOnShellDescription") }}</p>
-            <input
-              class="input input--block"
-              type="text"
-              placeholder="bash -c, cmd /c, ..."
-              v-model="shellValue"
-            />
+  <div class="fb-settings-section" v-else-if="!layoutStore.loading && settings !== null">
+    <div class="dashboard row">
+      <div class="column">
+        <form class="card" @submit.prevent="save">
+          <div class="card-title">
+            <h2>{{ t("settings.globalSettings") }}</h2>
           </div>
 
-          <h3>{{ t("settings.branding") }}</h3>
+          <div class="card-content">
+            <div class="fb-settings-checkbox-list">
+              <div class="fb-settings-checkbox-item">
+                <input type="checkbox" v-model="settings.signup" id="signup" />
+                <label for="signup">{{ t("settings.allowSignup") }}</label>
+              </div>
+              <div class="fb-settings-checkbox-item">
+                <input type="checkbox" v-model="settings.createUserDir" id="createUserDir" />
+                <label for="createUserDir">{{ t("settings.createUserDir") }}</label>
+              </div>
+              <div class="fb-settings-checkbox-item">
+                <input type="checkbox" v-model="settings.hideLoginButton" id="hideLoginButton" />
+                <label for="hideLoginButton">{{ t("settings.hideLoginButton") }}</label>
+              </div>
+            </div>
 
-          <i18n-t
-            keypath="settings.brandingHelp"
-            tag="p"
-            class="small"
-            scope="global"
-          >
-            <a
-              class="link"
-              target="_blank"
-              href="https://filebrowser.org/customization.html#custom-branding"
-              >{{ t("settings.documentation") }}</a
-            >
-          </i18n-t>
+            <div class="fb-settings-divider"></div>
 
-          <p>
-            <input
-              type="checkbox"
-              v-model="settings.branding.disableExternal"
-              id="branding-links"
-            />
-            {{ t("settings.disableExternalLinks") }}
-          </p>
-
-          <p>
-            <input
-              type="checkbox"
-              v-model="settings.branding.disableUsedPercentage"
-              id="branding-used-disk"
-            />
-            {{ t("settings.disableUsedDiskPercentage") }}
-          </p>
-
-          <p>
-            <label for="theme">{{ t("settings.themes.title") }}</label>
-            <themes
-              class="input input--block"
-              v-model:theme="settings.branding.theme"
-              id="theme"
-            ></themes>
-          </p>
-
-          <p>
-            <label for="branding-name">{{ t("settings.instanceName") }}</label>
-            <input
-              class="input input--block"
-              type="text"
-              v-model="settings.branding.name"
-              id="branding-name"
-            />
-          </p>
-
-          <p>
-            <label for="branding-files">{{
-              t("settings.brandingDirectoryPath")
-            }}</label>
-            <input
-              class="input input--block"
-              type="text"
-              v-model="settings.branding.files"
-              id="branding-files"
-            />
-          </p>
-
-          <h3>{{ t("settings.tusUploads") }}</h3>
-
-          <p class="small">{{ t("settings.tusUploadsHelp") }}</p>
-
-          <div class="tusConditionalSettings">
-            <p>
-              <label for="tus-chunkSize">{{
-                t("settings.tusUploadsChunkSize")
-              }}</label>
+            <div class="fb-settings-field">
+              <label class="fb-settings-field-label" for="userHomeBasePath">{{ t("settings.userHomeBasePath") }}</label>
               <input
                 class="input input--block"
                 type="text"
-                v-model="formattedChunkSize"
-                id="tus-chunkSize"
+                v-model="settings.userHomeBasePath"
+                id="userHomeBasePath"
               />
-            </p>
+            </div>
 
-            <p>
-              <label for="tus-retryCount">{{
-                t("settings.tusUploadsRetryCount")
-              }}</label>
+            <div class="fb-settings-field">
+              <label class="fb-settings-field-label" for="minimumPasswordLength">{{ t("settings.minimumPasswordLength") }}</label>
               <vue-number-input
                 controls
-                v-model.number="settings.tus.retryCount"
-                id="tus-retryCount"
-                :min="0"
+                v-model.number="settings.minimumPasswordLength"
+                id="minimumPasswordLength"
+                :min="1"
               />
-            </p>
-          </div>
-        </div>
+            </div>
 
-        <div class="card-action">
-          <input
-            class="button button--flat"
-            type="submit"
-            :value="t('buttons.update')"
-          />
-        </div>
-      </form>
-    </div>
+            <div class="fb-settings-divider"></div>
 
-    <div class="column">
-      <form class="card" @submit.prevent="save">
-        <div class="card-title">
-          <h2>{{ t("settings.userDefaults") }}</h2>
-        </div>
+            <h3>{{ t("settings.rules") }}</h3>
+            <p class="small">{{ t("settings.globalRules") }}</p>
+            <rules v-model:rules="settings.rules" />
 
-        <div class="card-content">
-          <p class="small">{{ t("settings.defaultUserDescription") }}</p>
+            <div v-if="enableExec" class="fb-settings-field" style="margin-top: 20px">
+              <h3>{{ t("settings.executeOnShell") }}</h3>
+              <p class="small">{{ t("settings.executeOnShellDescription") }}</p>
+              <input
+                class="input input--block"
+                type="text"
+                placeholder="bash -c, cmd /c, ..."
+                v-model="shellValue"
+              />
+            </div>
 
-          <user-form
-            :isNew="false"
-            :isDefault="true"
-            v-model:user="settings.defaults"
-          />
-        </div>
+            <div class="fb-settings-divider"></div>
 
-        <div class="card-action">
-          <input
-            class="button button--flat"
-            type="submit"
-            :value="t('buttons.update')"
-          />
-        </div>
-      </form>
-    </div>
+            <h3>{{ t("settings.branding") }}</h3>
 
-    <div class="column">
-      <form v-if="enableExec" class="card" @submit.prevent="save">
-        <div class="card-title">
-          <h2>{{ t("settings.commandRunner") }}</h2>
-        </div>
-
-        <div class="card-content">
-          <i18n-t
-            keypath="settings.commandRunnerHelp"
-            tag="p"
-            class="small"
-            scope="global"
-          >
-            <code>FILE</code>
-            <code>SCOPE</code>
-            <a
-              class="link"
-              target="_blank"
-              href="https://filebrowser.org/command-execution.html#hook-runner"
-              >{{ t("settings.documentation") }}</a
+            <i18n-t
+              keypath="settings.brandingHelp"
+              tag="p"
+              class="small"
+              scope="global"
             >
-          </i18n-t>
+              <a
+                class="link"
+                target="_blank"
+                href="https://filebrowser.org/customization.html#custom-branding"
+                >{{ t("settings.documentation") }}</a
+              >
+            </i18n-t>
 
-          <div
-            v-for="(command, key) in settings.commands"
-            :key="key"
-            class="collapsible"
-          >
-            <input :id="key" type="checkbox" />
-            <label :for="key">
-              <p>{{ capitalize(key) }}</p>
-              <i class="material-icons">arrow_drop_down</i>
-            </label>
-            <div class="collapse">
-              <textarea
-                class="input input--block input--textarea"
-                v-model.trim="commandObject[key]"
-              ></textarea>
+            <div class="fb-settings-checkbox-list" style="margin-top: 12px">
+              <div class="fb-settings-checkbox-item">
+                <input
+                  type="checkbox"
+                  v-model="settings.branding.disableExternal"
+                  id="branding-links"
+                />
+                <label for="branding-links">{{ t("settings.disableExternalLinks") }}</label>
+              </div>
+              <div class="fb-settings-checkbox-item">
+                <input
+                  type="checkbox"
+                  v-model="settings.branding.disableUsedPercentage"
+                  id="branding-used-disk"
+                />
+                <label for="branding-used-disk">{{ t("settings.disableUsedDiskPercentage") }}</label>
+              </div>
+            </div>
+
+            <div class="fb-settings-field" style="margin-top: 16px">
+              <label class="fb-settings-field-label" for="theme">{{ t("settings.themes.title") }}</label>
+              <themes
+                class="input input--block input--select"
+                v-model:theme="settings.branding.theme"
+                id="theme"
+              ></themes>
+            </div>
+
+            <div class="fb-settings-field">
+              <label class="fb-settings-field-label" for="branding-name">{{ t("settings.instanceName") }}</label>
+              <input
+                class="input input--block"
+                type="text"
+                v-model="settings.branding.name"
+                id="branding-name"
+              />
+            </div>
+
+            <div class="fb-settings-field">
+              <label class="fb-settings-field-label" for="branding-files">{{ t("settings.brandingDirectoryPath") }}</label>
+              <input
+                class="input input--block"
+                type="text"
+                v-model="settings.branding.files"
+                id="branding-files"
+              />
+            </div>
+
+            <div class="fb-settings-divider"></div>
+
+            <h3>{{ t("settings.tusUploads") }}</h3>
+
+            <p class="small">{{ t("settings.tusUploadsHelp") }}</p>
+
+            <div class="tusConditionalSettings" style="margin-top: 12px">
+              <div class="fb-settings-field">
+                <label class="fb-settings-field-label" for="tus-chunkSize">{{ t("settings.tusUploadsChunkSize") }}</label>
+                <input
+                  class="input input--block"
+                  type="text"
+                  v-model="formattedChunkSize"
+                  id="tus-chunkSize"
+                />
+              </div>
+
+              <div class="fb-settings-field">
+                <label class="fb-settings-field-label" for="tus-retryCount">{{ t("settings.tusUploadsRetryCount") }}</label>
+                <vue-number-input
+                  controls
+                  v-model.number="settings.tus.retryCount"
+                  id="tus-retryCount"
+                  :min="0"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="card-action">
-          <input
-            class="button button--flat"
-            type="submit"
-            :value="t('buttons.update')"
-          />
-        </div>
-      </form>
+          <div class="card-action">
+            <input
+              class="button"
+              type="submit"
+              :value="t('buttons.update')"
+            />
+          </div>
+        </form>
+      </div>
+
+      <div class="column">
+        <form class="card" @submit.prevent="save">
+          <div class="card-title">
+            <h2>{{ t("settings.userDefaults") }}</h2>
+          </div>
+
+          <div class="card-content">
+            <p class="small">{{ t("settings.defaultUserDescription") }}</p>
+
+            <user-form
+              :isNew="false"
+              :isDefault="true"
+              v-model:user="settings.defaults"
+            />
+          </div>
+
+          <div class="card-action">
+            <input
+              class="button"
+              type="submit"
+              :value="t('buttons.update')"
+            />
+          </div>
+        </form>
+      </div>
+
+      <div class="column" v-if="enableExec">
+        <form class="card" @submit.prevent="save">
+          <div class="card-title">
+            <h2>{{ t("settings.commandRunner") }}</h2>
+          </div>
+
+          <div class="card-content">
+            <i18n-t
+              keypath="settings.commandRunnerHelp"
+              tag="p"
+              class="small"
+              scope="global"
+            >
+              <code>FILE</code>
+              <code>SCOPE</code>
+              <a
+                class="link"
+                target="_blank"
+                href="https://filebrowser.org/command-execution.html#hook-runner"
+                >{{ t("settings.documentation") }}</a
+              >
+            </i18n-t>
+
+            <div
+              v-for="(command, key) in settings.commands"
+              :key="key"
+              class="collapsible"
+            >
+              <input :id="key" type="checkbox" />
+              <label :for="key">
+                <p style="margin: 0; font-size: 14px; font-weight: 550; color: var(--text)">{{ capitalize(key) }}</p>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;color:var(--dim)">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </label>
+              <div class="collapse">
+                <textarea
+                  class="input input--block input--textarea"
+                  v-model.trim="commandObject[key]"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-action">
+            <input
+              class="button"
+              type="submit"
+              :value="t('buttons.update')"
+            />
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -282,21 +288,16 @@ const formattedChunkSize = computed({
       : "";
   },
   set(value: string) {
-    // Use debouncing to allow the user to type freely without
-    // interruption by the formatter
-    // Clear the previous timeout if it exists
     if (debounceTimeout.value) {
       clearTimeout(debounceTimeout.value);
     }
 
-    // Set a new timeout to apply the format after a short delay
     debounceTimeout.value = window.setTimeout(() => {
       if (settings.value) settings.value.tus.chunkSize = parseBytes(value);
     }, 1500);
   },
 });
 
-// Define funcs
 const capitalize = (name: string, where: string | RegExp = "_") => {
   if (where === "caps") where = /(?=[A-Z])/;
   const split = name.split(where);
@@ -326,7 +327,6 @@ const save = async () => {
     keyof SettingsCommand
   >;
   for (const key of keys) {
-    // not sure if we can safely assume non-null
     const newValue = commandObject.value[key];
     if (!newValue) continue;
 
@@ -356,7 +356,7 @@ const save = async () => {
 
   return true;
 };
-// Parse the user-friendly input (e.g., "20M" or "1T") to bytes
+
 const parseBytes = (input: string) => {
   const regex = /^(\d+)(\.\d+)?(B|K|KB|M|MB|G|GB|T|TB)?$/i;
   const matches = input.match(regex);
@@ -378,7 +378,7 @@ const parseBytes = (input: string) => {
     return 1024 ** 2;
   }
 };
-// Format the chunk size in bytes to user-friendly format
+
 const formatBytes = (bytes: number) => {
   const units = ["B", "KB", "MB", "GB", "TB"];
   let size = bytes;
@@ -389,8 +389,6 @@ const formatBytes = (bytes: number) => {
   }
   return `${size}${units[unitIndex]}`;
 };
-
-// Define Hooks
 
 onMounted(async () => {
   try {
@@ -416,7 +414,6 @@ onMounted(async () => {
   }
 });
 
-// Clear the debounce timeout when the component is destroyed
 onBeforeUnmount(() => {
   if (debounceTimeout.value) {
     clearTimeout(debounceTimeout.value);

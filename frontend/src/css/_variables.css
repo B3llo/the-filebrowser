@@ -171,3 +171,14 @@
   --kind-text-soft:    oklch(0.32 0.02  260);
   --kind-default-soft: var(--hover);
 }
+
+/* ============================================================
+   Compact density
+   Applied via :root[data-density="compact"]
+   ============================================================ */
+
+:root[data-density="compact"] {
+  --rowh: 36px;
+  --gpad: 18px;
+  --gap: 13px;
+}

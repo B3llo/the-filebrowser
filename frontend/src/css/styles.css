@@ -21,6 +21,8 @@
 @import "./selection-bar.css";
 @import "./empty-states.css";
 @import "./skeleton.css";
+@import "./settings-modal.css";
+@import "./settings.css";
 
 /* For testing only
  :focus {

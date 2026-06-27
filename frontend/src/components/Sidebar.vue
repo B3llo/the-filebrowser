@@ -110,18 +110,8 @@
       </div>
       <div class="fb-sidebar-footer-actions">
         <button
-          v-if="user.perm.admin"
           class="fb-icon-btn"
-          @click="toGlobalSettings"
-          :aria-label="$t('sidebar.settings')"
-          :title="$t('sidebar.settings')"
-        >
-          <fb-icon name="settings" size="16px" />
-        </button>
-        <button
-          v-else
-          class="fb-icon-btn"
-          @click="toAccountSettings"
+          @click="openSettingsModal"
           :aria-label="$t('sidebar.settings')"
           :title="$t('sidebar.settings')"
         >
@@ -201,7 +191,7 @@ export default {
     canLogout: () => !noAuth && (loginPage || logoutPage !== "/login"),
   },
   methods: {
-    ...mapActions(useLayoutStore, ["closeHovers", "showHover"]),
+    ...mapActions(useLayoutStore, ["closeHovers", "showHover", "openSettings"]),
     abortOngoingFetchUsage() {
       this.usageAbortController.abort();
     },
@@ -233,12 +223,8 @@ export default {
       this.$router.push({ path: "/files" });
       this.closeHovers();
     },
-    toAccountSettings() {
-      this.$router.push({ path: "/settings/profile" });
-      this.closeHovers();
-    },
-    toGlobalSettings() {
-      this.$router.push({ path: "/settings/global" });
+    openSettingsModal() {
+      this.openSettings();
       this.closeHovers();
     },
     toShares() {
