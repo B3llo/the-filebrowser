@@ -286,13 +286,6 @@ const itemClick = (event: Event | KeyboardEvent) => {
     return;
   }
 
-  // Folders always navigate on click (never select-first)
-  if (props.isDir) {
-    open();
-    return;
-  }
-
-  // Files: respect singleClick setting
   if (
     singleClick.value &&
     !(event as KeyboardEvent).ctrlKey &&
