@@ -38,11 +38,7 @@
                 {{ $t("buttons.cancel") }}
               </button>
             </router-link>
-            <input
-              class="button"
-              type="submit"
-              :value="$t('buttons.save')"
-            />
+            <input class="button" type="submit" :value="$t('buttons.save')" />
           </div>
         </form>
       </div>

@@ -1,7 +1,11 @@
 /* Skeleton shimmer animation */
 @keyframes fbshimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* Base skeleton element */
@@ -121,10 +125,18 @@
   border-radius: 4px;
 }
 
-#listing.list .fb-skeleton-col-label:nth-child(1) { width: 34px; }
-#listing.list .fb-skeleton-col-label:nth-child(2) { width: 100px; }
-#listing.list .fb-skeleton-col-label:nth-child(3) { width: 60px; }
-#listing.list .fb-skeleton-col-label:nth-child(4) { width: 90px; }
+#listing.list .fb-skeleton-col-label:nth-child(1) {
+  width: 34px;
+}
+#listing.list .fb-skeleton-col-label:nth-child(2) {
+  width: 100px;
+}
+#listing.list .fb-skeleton-col-label:nth-child(3) {
+  width: 60px;
+}
+#listing.list .fb-skeleton-col-label:nth-child(4) {
+  width: 90px;
+}
 
 /* Row skeleton */
 #listing.list .fb-skeleton-row {

@@ -182,7 +182,7 @@ main .spinner .bounce2 {
   width: 100%;
   height: 100%;
   z-index: 9999;
-  overflow: hidden;
+  overflow: auto;
 }
 
 #previewer header {

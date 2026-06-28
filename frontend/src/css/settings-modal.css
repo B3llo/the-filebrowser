@@ -48,7 +48,9 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
 
 .fb-settings-close:hover {
@@ -109,7 +111,10 @@
   font-weight: 500;
   font-family: inherit;
   white-space: nowrap;
-  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s,
+    box-shadow 0.12s;
 }
 
 .fb-settings-seg-btn--active {

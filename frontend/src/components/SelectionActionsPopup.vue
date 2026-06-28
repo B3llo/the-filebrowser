@@ -21,7 +21,7 @@
     >
       <button class="fb-sel-action-item" @click="handleInfo">
         <FbIcon name="info" size="16px" />
-        <span>{{ t('buttons.info') }}</span>
+        <span>{{ t("buttons.info") }}</span>
       </button>
       <button
         v-if="headerButtons.download"
@@ -29,7 +29,7 @@
         @click="handleDownload"
       >
         <FbIcon name="download" size="16px" />
-        <span>{{ t('buttons.download') }}</span>
+        <span>{{ t("buttons.download") }}</span>
       </button>
       <button
         v-if="headerButtons.share"
@@ -37,11 +37,14 @@
         @click="handleShare"
       >
         <FbIcon name="share" size="16px" />
-        <span>{{ t('buttons.share') }}</span>
+        <span>{{ t("buttons.share") }}</span>
       </button>
-      <button class="fb-sel-action-item fb-sel-action--disabled" aria-disabled="true">
+      <button
+        class="fb-sel-action-item fb-sel-action--disabled"
+        aria-disabled="true"
+      >
         <FbIcon name="star" size="16px" />
-        <span>{{ t('buttons.star', 'Star') }}</span>
+        <span>{{ t("buttons.star", "Star") }}</span>
       </button>
       <div class="fb-menu-divider"></div>
       <button
@@ -50,7 +53,7 @@
         @click="handleRename"
       >
         <FbIcon name="rename" size="16px" />
-        <span>{{ t('buttons.rename') }}</span>
+        <span>{{ t("buttons.rename") }}</span>
       </button>
       <button
         v-if="headerButtons.copy"
@@ -58,7 +61,7 @@
         @click="handleCopy"
       >
         <FbIcon name="copy" size="16px" />
-        <span>{{ t('buttons.copyFile') }}</span>
+        <span>{{ t("buttons.copyFile") }}</span>
       </button>
       <button
         v-if="headerButtons.move"
@@ -66,12 +69,12 @@
         @click="handleMove"
       >
         <FbIcon name="move" size="16px" />
-        <span>{{ t('buttons.moveFile') }}</span>
+        <span>{{ t("buttons.moveFile") }}</span>
       </button>
       <div class="fb-menu-divider"></div>
       <button class="fb-sel-action-item" @click="handleSelectAll">
         <FbIcon name="check" size="16px" />
-        <span>{{ t('buttons.selectAll', 'Select All') }}</span>
+        <span>{{ t("buttons.selectAll", "Select All") }}</span>
       </button>
       <div class="fb-menu-divider"></div>
       <button
@@ -80,7 +83,7 @@
         @click="handleDelete"
       >
         <FbIcon name="delete" size="16px" />
-        <span>{{ t('buttons.delete') }}</span>
+        <span>{{ t("buttons.delete") }}</span>
       </button>
     </div>
   </div>
@@ -209,8 +212,10 @@ const handleDelete = () => {
 
 const handleClickOutside = (event: MouseEvent) => {
   if (
-    popupRef.value && !popupRef.value.contains(event.target as Node) &&
-    menuRef.value && !menuRef.value.contains(event.target as Node)
+    popupRef.value &&
+    !popupRef.value.contains(event.target as Node) &&
+    menuRef.value &&
+    !menuRef.value.contains(event.target as Node)
   ) {
     closePopup();
   }

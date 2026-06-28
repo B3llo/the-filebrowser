@@ -10,27 +10,55 @@
           <div class="card-content">
             <div class="fb-settings-checkbox-list">
               <div class="fb-settings-checkbox-item">
-                <input type="checkbox" name="hideDotfiles" v-model="hideDotfiles" id="hideDotfiles" />
-                <label for="hideDotfiles">{{ t("settings.hideDotfiles") }}</label>
+                <input
+                  type="checkbox"
+                  name="hideDotfiles"
+                  v-model="hideDotfiles"
+                  id="hideDotfiles"
+                />
+                <label for="hideDotfiles">{{
+                  t("settings.hideDotfiles")
+                }}</label>
               </div>
               <div class="fb-settings-checkbox-item">
-                <input type="checkbox" name="singleClick" v-model="singleClick" id="singleClick" />
+                <input
+                  type="checkbox"
+                  name="singleClick"
+                  v-model="singleClick"
+                  id="singleClick"
+                />
                 <label for="singleClick">{{ t("settings.singleClick") }}</label>
               </div>
               <div class="fb-settings-checkbox-item">
-                <input type="checkbox" name="redirectAfterCopyMove" v-model="redirectAfterCopyMove" id="redirectAfterCopyMove" />
-                <label for="redirectAfterCopyMove">{{ t("settings.redirectAfterCopyMove") }}</label>
+                <input
+                  type="checkbox"
+                  name="redirectAfterCopyMove"
+                  v-model="redirectAfterCopyMove"
+                  id="redirectAfterCopyMove"
+                />
+                <label for="redirectAfterCopyMove">{{
+                  t("settings.redirectAfterCopyMove")
+                }}</label>
               </div>
               <div class="fb-settings-checkbox-item">
-                <input type="checkbox" name="dateFormat" v-model="dateFormat" id="dateFormat" />
-                <label for="dateFormat">{{ t("settings.setDateFormat") }}</label>
+                <input
+                  type="checkbox"
+                  name="dateFormat"
+                  v-model="dateFormat"
+                  id="dateFormat"
+                />
+                <label for="dateFormat">{{
+                  t("settings.setDateFormat")
+                }}</label>
               </div>
             </div>
 
             <div class="fb-settings-divider"></div>
 
             <div class="fb-settings-field">
-              <label class="fb-settings-field-label" for="locale">{{ t("settings.language") }}</label>
+              <label class="fb-settings-field-label" for="locale">{{
+                t("settings.language")
+              }}</label>
               <languages
                 class="input input--block input--select"
                 v-model:locale="locale"
@@ -39,7 +67,9 @@
             </div>
 
             <div class="fb-settings-field" style="margin-top: 16px">
-              <label class="fb-settings-field-label" for="aceTheme">{{ t("settings.aceEditorTheme") }}</label>
+              <label class="fb-settings-field-label" for="aceTheme">{{
+                t("settings.aceEditorTheme")
+              }}</label>
               <AceEditorTheme
                 class="input input--block input--select"
                 v-model:aceEditorTheme="aceEditorTheme"

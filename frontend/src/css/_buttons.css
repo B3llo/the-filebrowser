@@ -13,7 +13,10 @@
   font-size: 13.5px;
   font-weight: 500;
   font-family: inherit;
-  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s,
+    box-shadow 0.12s;
   white-space: nowrap;
 }
 

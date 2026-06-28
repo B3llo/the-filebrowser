@@ -20,9 +20,9 @@ describe("fileKind", () => {
     expect(fileKind({ isDir: false, type: "text", name: "notes.txt" })).toBe(
       "text"
     );
-    expect(fileKind({ isDir: false, type: "textImmutable", name: "a.md" })).toBe(
-      "text"
-    );
+    expect(
+      fileKind({ isDir: false, type: "textImmutable", name: "a.md" })
+    ).toBe("text");
   });
 
   it("extension wins over backend 'blob' type for office/archive/code kinds", () => {
@@ -47,7 +47,9 @@ describe("fileKind", () => {
   });
 
   it("classifies pdf directly", () => {
-    expect(fileKind({ isDir: false, type: "pdf", name: "doc.pdf" })).toBe("pdf");
+    expect(fileKind({ isDir: false, type: "pdf", name: "doc.pdf" })).toBe(
+      "pdf"
+    );
     expect(fileKind({ isDir: false, type: "blob", name: "doc.pdf" })).toBe(
       "pdf"
     );

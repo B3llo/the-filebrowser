@@ -5,12 +5,7 @@
     @click.self="hideContextMenu"
     @contextmenu.prevent="hideContextMenu"
   />
-  <div
-    class="context-menu"
-    ref="contextMenu"
-    v-show="show"
-    :style="menuStyle"
-  >
+  <div class="context-menu" ref="contextMenu" v-show="show" :style="menuStyle">
     <slot />
   </div>
 </template>

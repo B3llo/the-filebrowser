@@ -11,7 +11,12 @@
     </button>
 
     <!-- Logo (used by Preview/Editor which don't have a sidebar context on mobile) -->
-    <img v-if="showLogo && !showBreadcrumb" :src="logoURL" class="fb-toolbar-logo" alt="FileBrowser" />
+    <img
+      v-if="showLogo && !showBreadcrumb"
+      :src="logoURL"
+      class="fb-toolbar-logo"
+      alt="FileBrowser"
+    />
 
     <!-- Breadcrumb integrated into toolbar -->
     <div v-if="showBreadcrumb" class="fb-toolbar-breadcrumb">
@@ -116,7 +121,9 @@ const ifActionsSlot = computed(() => !!slots.actions);
   color: var(--dim);
   cursor: pointer;
   padding: 0;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
 
 .fb-toolbar-btn:hover {

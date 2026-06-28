@@ -77,7 +77,15 @@ import FbIcon from "@/components/FbIcon.vue";
 import type { IconName } from "@/utils/icons";
 import url from "@/utils/url";
 import { search } from "@/api";
-import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import {
+  computed,
+  inject,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { StatusError } from "@/api/utils";
@@ -121,7 +129,9 @@ const text = computed(() => {
     : t("search.pressToSearch");
 });
 
-const filteredResults = computed(() => results.value.slice(0, resultsCount.value));
+const filteredResults = computed(() =>
+  results.value.slice(0, resultsCount.value)
+);
 
 onMounted(() => {
   if (!dropdownEl.value) return;

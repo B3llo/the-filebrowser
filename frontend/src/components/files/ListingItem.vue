@@ -18,7 +18,9 @@
     :data-dir="isDir"
     :data-type="type"
     :data-kind="kind"
-    :data-thumb="hasImageThumb ? 'true' : 'false'"
+    :data-thumb="
+      hasImageThumb || hasVideoThumb || hasPdfThumb ? 'true' : 'false'
+    "
     :data-dotfile="isDotfile ? 'true' : 'false'"
     :aria-label="name"
     :aria-selected="isSelected"
@@ -30,6 +32,16 @@
         v-if="!readOnly && type === 'image' && isThumbsEnabled"
         v-lazy="thumbnailUrl"
       />
+      <canvas
+        v-else-if="hasVideoThumb"
+        ref="videoCanvas"
+        class="fb-video-thumb"
+      ></canvas>
+      <canvas
+        v-else-if="hasPdfThumb"
+        ref="pdfCanvas"
+        class="fb-pdf-thumb"
+      ></canvas>
       <svg
         v-else-if="isDir"
         class="fb-folder-icon"
@@ -46,9 +58,39 @@
       </svg>
       <i v-else class="material-icons"></i>
 
+      <!-- Hidden video element for frame capture -->
+      <video
+        v-if="hasVideoThumb"
+        ref="videoEl"
+        :src="thumbnailUrl + '#t=0.1'"
+        preload="metadata"
+        muted
+        class="fb-video-hidden"
+        @loadeddata="captureFrame"
+      ></video>
+
+      <!-- Play icon overlay for video thumbnails -->
+      <div
+        v-if="hasVideoThumb"
+        class="fb-video-play-overlay"
+        aria-hidden="true"
+      >
+        <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.9)">
+          <path d="M8 5v14l11-7z" />
+        </svg>
+      </div>
+
+      <!-- Mosaic card: rendered markdown preview -->
+      <div
+        v-if="hasMarkdownPreview"
+        class="fb-card-markdown markdown-body"
+        aria-hidden="true"
+        v-html="renderedMarkdown"
+      ></div>
+
       <!-- Mosaic card: inline preview for code/text files -->
       <pre
-        v-if="hasPreview"
+        v-else-if="hasPreview"
         class="fb-card-preview"
         aria-hidden="true"
       ><code>{{ previewText }}</code></pre>
@@ -100,8 +142,16 @@ import { fileKind, extLabel } from "@/utils/fileKind";
 import dayjs from "dayjs";
 import { files as api } from "@/api";
 import * as upload from "@/utils/upload";
-import { computed, inject, ref } from "vue";
+import { computed, inject, ref, watch } from "vue";
 import { useRouter } from "vue-router";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
+import * as pdfjsLib from "pdfjs-dist";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 const touches = ref<number>(0);
 
@@ -174,6 +224,14 @@ const hasImageThumb = computed(
   () => !props.readOnly && props.type === "image" && isThumbsEnabled.value
 );
 
+const hasVideoThumb = computed(
+  () => !props.readOnly && props.type === "video" && isThumbsEnabled.value
+);
+
+const hasPdfThumb = computed(
+  () => !props.readOnly && props.type === "pdf" && isThumbsEnabled.value
+);
+
 const isDotfile = computed(() => {
   const n = props.name;
   return n.length > 0 && n[0] === ".";
@@ -192,6 +250,92 @@ const previewText = computed(() => {
   const lines = props.preview.split("\n").slice(0, 12).join("\n");
   return lines;
 });
+
+const isMarkdownFile = computed(() => {
+  const lower = props.name.toLowerCase();
+  return lower.endsWith(".md") || lower.endsWith(".markdown");
+});
+
+const hasMarkdownPreview = computed(() => {
+  if (props.isDir) return false;
+  if (!isMarkdownFile.value) return false;
+  return !!props.preview && props.preview.trim().length > 0;
+});
+
+const renderedMarkdown = ref<string>("");
+
+watch(
+  () => props.preview,
+  async (preview) => {
+    if (!hasMarkdownPreview.value || !preview) {
+      renderedMarkdown.value = "";
+      return;
+    }
+    try {
+      const stripped = preview.replace(/^---\n[\s\S]*?\n---\n?/, "");
+      renderedMarkdown.value = DOMPurify.sanitize(await marked(stripped));
+    } catch {
+      renderedMarkdown.value = "";
+    }
+  },
+  { immediate: true }
+);
+
+const videoEl = ref<HTMLVideoElement | null>(null);
+const videoCanvas = ref<HTMLCanvasElement | null>(null);
+
+const captureFrame = () => {
+  const video = videoEl.value;
+  const canvas = videoCanvas.value;
+  if (!video || !canvas) return;
+  if (video.videoWidth === 0 || video.videoHeight === 0) return;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  const size = Math.min(vw, vh);
+  const sx = (vw - size) / 2;
+  const sy = (vh - size) / 2;
+
+  canvas.width = 256;
+  canvas.height = 256;
+  ctx.drawImage(video, sx, sy, size, size, 0, 0, 256, 256);
+};
+
+const pdfCanvas = ref<HTMLCanvasElement | null>(null);
+
+watch(
+  pdfCanvas,
+  async (canvas) => {
+    if (!canvas || !hasPdfThumb.value) return;
+    try {
+      const loadingTask = pdfjsLib.getDocument({ url: thumbnailUrl.value });
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 1 });
+      const targetSize = 256;
+      const scale = Math.min(
+        targetSize / viewport.width,
+        targetSize / viewport.height
+      );
+      const scaledViewport = page.getViewport({ scale });
+      canvas.width = scaledViewport.width;
+      canvas.height = scaledViewport.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      await page.render({
+        canvas,
+        canvasContext: ctx,
+        viewport: scaledViewport,
+      }).promise;
+    } catch (e) {
+      console.error("Failed to render PDF thumbnail:", e);
+    }
+  },
+  { immediate: true }
+);
 
 const humanSize = () => {
   return props.type == "invalid_link" ? "invalid link" : filesize(props.size);

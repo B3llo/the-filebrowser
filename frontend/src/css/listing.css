@@ -279,6 +279,69 @@ html[dir="rtl"] #listing {
   display: none;
 }
 
+/* Video thumbnails fill the area like images */
+#listing.mosaic .item:not([data-dir="true"]) > div:first-of-type video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  margin: 0;
+}
+/* Hidden video element used only for canvas frame capture */
+.fb-video-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+/* Canvas for video thumbnail frame capture */
+#listing.mosaic
+  .item:not([data-dir="true"])
+  > div:first-of-type
+  canvas.fb-video-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  margin: 0;
+}
+/* Canvas for PDF page thumbnail */
+#listing.mosaic
+  .item:not([data-dir="true"])
+  > div:first-of-type
+  canvas.fb-pdf-thumb {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  margin: 0;
+}
+/* Play icon overlay for video thumbnails */
+.fb-video-play-overlay {
+  display: none;
+}
+#listing.mosaic
+  .item:not([data-dir="true"])
+  > div:first-of-type
+  .fb-video-play-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 60%,
+    rgba(0, 0, 0, 0.35) 100%
+  );
+}
+#listing.mosaic .fb-video-play-overlay svg {
+  width: 38px;
+  height: 38px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+}
+
 /* Document outline shape for non-thumb files */
 .fb-card-doc {
   display: none;
@@ -364,6 +427,7 @@ html[dir="rtl"] #listing {
   display: none;
   position: absolute;
   inset: 0;
+  z-index: 1;
   margin: 0;
   padding: 12px;
   overflow: hidden;
@@ -385,6 +449,99 @@ html[dir="rtl"] #listing {
   .item:not([data-dir="true"]):not([data-thumb="true"])
   .fb-card-preview {
   display: block;
+}
+
+/* Rendered markdown preview in mosaic cards */
+.fb-card-markdown {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  margin: 0;
+  padding: 14px 16px;
+  overflow: hidden;
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: left;
+  color: var(--text);
+  background: var(--surface);
+  border-radius: inherit;
+  pointer-events: none;
+}
+#listing.mosaic
+  .item:not([data-dir="true"]):not([data-thumb="true"])
+  .fb-card-markdown {
+  display: block;
+}
+.fb-card-markdown h1,
+.fb-card-markdown h2,
+.fb-card-markdown h3,
+.fb-card-markdown h4 {
+  margin: 0.4em 0 0.2em;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text);
+}
+.fb-card-markdown h1 {
+  font-size: 1.5em;
+}
+.fb-card-markdown h2 {
+  font-size: 1.25em;
+}
+.fb-card-markdown h3 {
+  font-size: 1.1em;
+}
+.fb-card-markdown p {
+  margin: 0.3em 0;
+}
+.fb-card-markdown ul,
+.fb-card-markdown ol {
+  margin: 0.3em 0;
+  padding-left: 1.4em;
+}
+.fb-card-markdown li {
+  margin: 0.1em 0;
+}
+.fb-card-markdown code {
+  background: var(--hover);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-size: 0.9em;
+  font-family: "Monaco", "Menlo", monospace;
+}
+.fb-card-markdown pre {
+  background: var(--hover);
+  padding: 0.4em 0.6em;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0.3em 0;
+}
+.fb-card-markdown pre code {
+  background: none;
+  padding: 0;
+}
+.fb-card-markdown a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.fb-card-markdown blockquote {
+  border-left: 2px solid var(--accent);
+  margin: 0.3em 0;
+  padding-left: 0.6em;
+  color: var(--dim);
+}
+.fb-card-markdown img {
+  max-width: 100%;
+  border-radius: 4px;
+}
+.fb-card-markdown strong {
+  font-weight: 700;
+}
+.fb-card-markdown hr {
+  border: none;
+  height: 1px;
+  background: var(--border);
+  margin: 0.4em 0;
 }
 #listing.mosaic
   .item:not([data-dir="true"])[data-kind="text"]
@@ -501,6 +658,15 @@ html[dir="rtl"] #listing {
   justify-content: flex-start;
 }
 #listing.list .item > div:first-of-type > img {
+  display: none;
+}
+#listing.list .item > div:first-of-type > video {
+  display: none;
+}
+#listing.list .item > div:first-of-type > canvas {
+  display: none;
+}
+#listing.list .item > div:first-of-type > canvas.fb-pdf-thumb {
   display: none;
 }
 #listing.list .item > div:first-of-type .fb-card-doc {

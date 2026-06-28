@@ -1,5 +1,10 @@
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   background: var(--bg);
   color: var(--text);
 }
@@ -43,7 +48,8 @@ i.spin {
 }
 
 /* Chain all wrappers to full height so the flex layout reaches the actual shell */
-html, body {
+html,
+body {
   height: 100%;
 }
 
@@ -79,7 +85,6 @@ html[dir="rtl"] nav {
   border-right: none;
   border-left: 1px solid var(--border);
 }
-
 
 /* Main column — takes remaining width, holds the flex row (content + details panel) */
 main {

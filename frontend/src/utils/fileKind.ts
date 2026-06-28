@@ -13,29 +13,80 @@ export type FileKind =
   | "text"
   | "default";
 
-const VECTOR_EXTS = new Set([
-  ".svg", ".eps", ".fig", ".ai",
-]);
-const DOC_EXTS = new Set([
-  ".doc", ".docx", ".odt", ".rtf", ".pages", ".log",
-]);
+const VECTOR_EXTS = new Set([".svg", ".eps", ".fig", ".ai"]);
+const DOC_EXTS = new Set([".doc", ".docx", ".odt", ".rtf", ".pages", ".log"]);
 const SHEET_EXTS = new Set([
-  ".xls", ".xlsx", ".ods", ".csv", ".numbers", ".db", ".sqlite",
+  ".xls",
+  ".xlsx",
+  ".ods",
+  ".csv",
+  ".numbers",
+  ".db",
+  ".sqlite",
 ]);
-const SLIDE_EXTS = new Set([
-  ".ppt", ".pptx", ".odp", ".key",
-]);
+const SLIDE_EXTS = new Set([".ppt", ".pptx", ".odp", ".key"]);
 const ARCHIVE_EXTS = new Set([
-  ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".zst",
-  ".dmg", ".iso", ".deb", ".rpm", ".pkg", ".msi", ".apk",
-  ".cab", ".tgz",
+  ".zip",
+  ".rar",
+  ".7z",
+  ".tar",
+  ".gz",
+  ".bz2",
+  ".xz",
+  ".zst",
+  ".dmg",
+  ".iso",
+  ".deb",
+  ".rpm",
+  ".pkg",
+  ".msi",
+  ".apk",
+  ".cab",
+  ".tgz",
 ]);
 const CODE_EXTS = new Set([
-  ".js", ".ts", ".jsx", ".tsx", ".mjs", ".cjs", ".vue", ".svelte",
-  ".json", ".html", ".htm", ".css", ".scss", ".sass", ".less",
-  ".go", ".py", ".rb", ".rs", ".java", ".kt", ".c", ".cpp", ".h", ".hpp",
-  ".cs", ".php", ".xml", ".yml", ".yaml", ".toml", ".ini", ".sh", ".bat",
-  ".ps1", ".swift", ".dart", ".lua", ".pl", ".r", ".scala", ".clj",
+  ".js",
+  ".ts",
+  ".jsx",
+  ".tsx",
+  ".mjs",
+  ".cjs",
+  ".vue",
+  ".svelte",
+  ".json",
+  ".html",
+  ".htm",
+  ".css",
+  ".scss",
+  ".sass",
+  ".less",
+  ".go",
+  ".py",
+  ".rb",
+  ".rs",
+  ".java",
+  ".kt",
+  ".c",
+  ".cpp",
+  ".h",
+  ".hpp",
+  ".cs",
+  ".php",
+  ".xml",
+  ".yml",
+  ".yaml",
+  ".toml",
+  ".ini",
+  ".sh",
+  ".bat",
+  ".ps1",
+  ".swift",
+  ".dart",
+  ".lua",
+  ".pl",
+  ".r",
+  ".scala",
+  ".clj",
 ]);
 
 function extOf(name: string): string {
@@ -267,12 +318,18 @@ export function fileTypeLabel(item: {
 
   // No extension at all — fall back to backend type
   switch (item.type) {
-    case "image": return "Image";
-    case "video": return "Video";
-    case "audio": return "Audio";
+    case "image":
+      return "Image";
+    case "video":
+      return "Video";
+    case "audio":
+      return "Audio";
     case "text":
-    case "textImmutable": return "Text";
-    case "pdf": return "PDF";
-    default: return "File";
+    case "textImmutable":
+      return "Text";
+    case "pdf":
+      return "PDF";
+    default:
+      return "File";
   }
 }

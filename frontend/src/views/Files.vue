@@ -55,17 +55,55 @@ const Preview = defineAsyncComponent(() => import("@/views/files/Preview.vue"));
 
 const previewableExtensions = new Set([
   // Code
-  ".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx",
-  ".py", ".go", ".rs", ".java", ".kt", ".c", ".cpp", ".h", ".hpp",
-  ".cs", ".php", ".rb", ".swift", ".dart", ".lua", ".pl", ".r",
-  ".scala", ".clj", ".sh", ".bat", ".ps1",
-  ".html", ".htm", ".css", ".scss", ".sass",
-  ".json", ".xml", ".yaml", ".yml", ".toml",
-  ".sql", ".graphql",
+  ".js",
+  ".mjs",
+  ".cjs",
+  ".ts",
+  ".tsx",
+  ".jsx",
+  ".py",
+  ".go",
+  ".rs",
+  ".java",
+  ".kt",
+  ".c",
+  ".cpp",
+  ".h",
+  ".hpp",
+  ".cs",
+  ".php",
+  ".rb",
+  ".swift",
+  ".dart",
+  ".lua",
+  ".pl",
+  ".r",
+  ".scala",
+  ".clj",
+  ".sh",
+  ".bat",
+  ".ps1",
+  ".html",
+  ".htm",
+  ".css",
+  ".scss",
+  ".sass",
+  ".json",
+  ".xml",
+  ".yaml",
+  ".yml",
+  ".toml",
+  ".sql",
+  ".graphql",
   // Text
-  ".txt", ".log", ".ini", ".cfg", ".conf",
+  ".txt",
+  ".log",
+  ".ini",
+  ".cfg",
+  ".conf",
   // Markdown
-  ".md", ".markdown",
+  ".md",
+  ".markdown",
 ]);
 
 const isPreviewableText = (extension: string, type: string) => {
@@ -104,6 +142,9 @@ const currentView = computed(() => {
     }
     return Preview;
   } else if (isPreviewableText(fileStore.req.extension, fileStore.req.type)) {
+    if (route.query.edit === "true") {
+      return Editor;
+    }
     return Preview;
   } else if (
     fileStore.req.type === "text" ||

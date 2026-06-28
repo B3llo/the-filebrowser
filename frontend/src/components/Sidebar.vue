@@ -154,7 +154,6 @@ import { files as api } from "@/api";
 import ProgressBar from "@/components/ProgressBar.vue";
 import FbIcon from "@/components/FbIcon.vue";
 import prettyBytes from "pretty-bytes";
-import { useRoute } from "vue-router";
 
 const USAGE_DEFAULT = { used: "0 B", total: "0 B", usedPercentage: 0 };
 
@@ -206,10 +205,7 @@ export default {
       try {
         this.abortOngoingFetchUsage();
         this.usageAbortController = new AbortController();
-        const usage = await api.usage(
-          path,
-          this.usageAbortController.signal
-        );
+        const usage = await api.usage(path, this.usageAbortController.signal);
         usageStats = {
           used: prettyBytes(usage.used, { binary: true }),
           total: prettyBytes(usage.total, { binary: true }),
@@ -344,7 +340,9 @@ export default {
   cursor: pointer;
   text-align: left;
   text-decoration: none;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
   line-height: 1.3;
 }
 
@@ -465,7 +463,9 @@ export default {
   background: transparent;
   color: var(--faint);
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
   padding: 0;
 }
 

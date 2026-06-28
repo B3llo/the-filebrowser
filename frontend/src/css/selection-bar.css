@@ -98,7 +98,9 @@
   font-size: 13.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.1s, border-color 0.1s;
+  transition:
+    background 0.1s,
+    border-color 0.1s;
   font-family: inherit;
 }
 

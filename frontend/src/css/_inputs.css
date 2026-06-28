@@ -10,7 +10,9 @@
   padding: 8px 12px;
   font-size: 13.5px;
   font-family: inherit;
-  transition: border-color 0.12s, box-shadow 0.12s;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
   margin: 0;
   outline: none;
 }
@@ -108,7 +110,9 @@
   color: var(--dim);
   cursor: pointer;
   font-size: 18px;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
 
 .vue-number-input__button:hover {

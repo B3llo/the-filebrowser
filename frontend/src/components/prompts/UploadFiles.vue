@@ -1,9 +1,6 @@
 <template>
   <Transition name="fb-upload-toast">
-    <div
-      v-if="uploadStore.activeUploads.size > 0"
-      class="fb-upload-toast"
-    >
+    <div v-if="uploadStore.activeUploads.size > 0" class="fb-upload-toast">
       <!-- Header -->
       <div class="fb-upload-toast-header">
         <!-- Spinner while uploading -->
@@ -37,7 +34,14 @@
           @click="closeToast"
           aria-label="Close"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <path d="M18 6L6 18" />
             <path d="M6 6l12 12" />
           </svg>
@@ -74,10 +78,7 @@
             <path d="M20 6L9 17l-5-5" />
           </svg>
           <!-- Percentage while uploading -->
-          <span
-            v-else
-            class="fb-upload-toast-file-pct"
-          >{{ upload.pct }}%</span>
+          <span v-else class="fb-upload-toast-file-pct">{{ upload.pct }}%</span>
         </div>
       </div>
     </div>
@@ -105,12 +106,10 @@ interface UploadDisplay {
 
 const uploads = ref<UploadDisplay[]>([]);
 
-const uploadsBusy = computed(() =>
-  uploadStore.activeUploads.size > 0
-);
+const uploadsBusy = computed(() => uploadStore.activeUploads.size > 0);
 
-const uploadsDone = computed(() =>
-  uploads.value.length > 0 && !uploadsBusy.value
+const uploadsDone = computed(
+  () => uploads.value.length > 0 && !uploadsBusy.value
 );
 
 const uploadTitle = computed(() => {
@@ -123,9 +122,10 @@ const uploadTitle = computed(() => {
 const syncUploads = () => {
   const newUploads: UploadDisplay[] = [];
   for (const upload of uploadStore.activeUploads) {
-    const pct = upload.totalBytes > 0
-      ? Math.round((upload.sentBytes / upload.totalBytes) * 100)
-      : 0;
+    const pct =
+      upload.totalBytes > 0
+        ? Math.round((upload.sentBytes / upload.totalBytes) * 100)
+        : 0;
     newUploads.push({
       path: upload.path,
       name: upload.name,

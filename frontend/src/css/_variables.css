@@ -5,65 +5,66 @@
 
 :root {
   /* --- Surfaces --- */
-  --bg:      oklch(0.985 0.002 95);
+  --bg: oklch(0.985 0.002 95);
   --sidebar: oklch(0.972 0.003 95);
   --surface: oklch(1 0 0);
 
   /* --- Text --- */
-  --text:  oklch(0.27 0.012 260);
-  --dim:   oklch(0.51 0.012 260);
-  --faint: oklch(0.66 0.01  260);
+  --text: oklch(0.27 0.012 260);
+  --dim: oklch(0.51 0.012 260);
+  --faint: oklch(0.66 0.01 260);
 
   /* --- Borders --- */
-  --border:        oklch(0.915 0.004 260);
+  --border: oklch(0.915 0.004 260);
   --border-strong: oklch(0.855 0.006 260);
 
   /* --- States --- */
   --hover: oklch(0.957 0.004 260);
 
   /* --- Accent --- */
-  --accent:       oklch(0.55 0.13 255);
+  --accent: oklch(0.55 0.13 255);
   --accent-press: oklch(0.49 0.13 255);
-  --sel:          oklch(0.957 0.027 255);
-  --sel-border:   oklch(0.82  0.07  255);
+  --sel: oklch(0.957 0.027 255);
+  --sel-border: oklch(0.82 0.07 255);
   --on-accent: #fff;
 
   /* --- Shadows --- */
-  --shadow-menu:  0 1px 2px rgba(20,22,28,.05), 0 14px 34px -8px rgba(20,22,28,.22);
-  --shadow-panel: 0 1px 3px rgba(20,22,28,.07);
+  --shadow-menu:
+    0 1px 2px rgba(20, 22, 28, 0.05), 0 14px 34px -8px rgba(20, 22, 28, 0.22);
+  --shadow-panel: 0 1px 3px rgba(20, 22, 28, 0.07);
 
   /* --- Layout --- */
   --rowh: 46px;
   --gpad: 26px;
-  --gap:  18px;
+  --gap: 18px;
 
   /* --- File type tints (icon color + soft background) ---
      Backgrounds are visible pastels (L≈0.92) so each type reads as a
      distinct color on the white surface; hues match the design palette. */
-  --kind-folder-tint: oklch(0.58 0.1  70);
-  --kind-folder-soft: oklch(0.93 0.04  80);
-  --kind-image-tint:  oklch(0.56 0.1  165);
-  --kind-image-soft:  oklch(0.92 0.06  165);
-  --kind-video-tint:  oklch(0.57 0.11  28);
-  --kind-video-soft:  oklch(0.92 0.065 28);
-  --kind-pdf-tint:    oklch(0.56 0.14  28);
-  --kind-pdf-soft:    oklch(0.92 0.07  28);
-  --kind-doc-tint:    oklch(0.52 0.12 255);
-  --kind-doc-soft:    oklch(0.92 0.065 255);
-  --kind-sheet-tint:  oklch(0.5  0.11 150);
-  --kind-sheet-soft:  oklch(0.92 0.065 150);
-  --kind-code-tint:   oklch(0.54 0.09 265);
-  --kind-code-soft:   oklch(0.92 0.06  265);
-  --kind-archive-tint: oklch(0.56 0.08  80);
+  --kind-folder-tint: oklch(0.58 0.1 70);
+  --kind-folder-soft: oklch(0.93 0.04 80);
+  --kind-image-tint: oklch(0.56 0.1 165);
+  --kind-image-soft: oklch(0.92 0.06 165);
+  --kind-video-tint: oklch(0.57 0.11 28);
+  --kind-video-soft: oklch(0.92 0.065 28);
+  --kind-pdf-tint: oklch(0.56 0.14 28);
+  --kind-pdf-soft: oklch(0.92 0.07 28);
+  --kind-doc-tint: oklch(0.52 0.12 255);
+  --kind-doc-soft: oklch(0.92 0.065 255);
+  --kind-sheet-tint: oklch(0.5 0.11 150);
+  --kind-sheet-soft: oklch(0.92 0.065 150);
+  --kind-code-tint: oklch(0.54 0.09 265);
+  --kind-code-soft: oklch(0.92 0.06 265);
+  --kind-archive-tint: oklch(0.56 0.08 80);
   --kind-archive-soft: oklch(0.92 0.055 80);
-  --kind-audio-tint:  oklch(0.55 0.11 300);
-  --kind-audio-soft:  oklch(0.92 0.065 300);
-  --kind-slide-tint:  oklch(0.6  0.12  55);
-  --kind-slide-soft:  oklch(0.93 0.075 55);
-  --kind-vector-tint: oklch(0.55 0.11  315);
+  --kind-audio-tint: oklch(0.55 0.11 300);
+  --kind-audio-soft: oklch(0.92 0.065 300);
+  --kind-slide-tint: oklch(0.6 0.12 55);
+  --kind-slide-soft: oklch(0.93 0.075 55);
+  --kind-vector-tint: oklch(0.55 0.11 315);
   --kind-vector-soft: oklch(0.92 0.065 315);
-  --kind-text-tint:   oklch(0.5  0.02  260);
-  --kind-text-soft:   oklch(0.93 0.015 260);
+  --kind-text-tint: oklch(0.5 0.02 260);
+  --kind-text-soft: oklch(0.93 0.015 260);
   --kind-default-tint: var(--dim);
   --kind-default-soft: var(--hover);
 
@@ -74,45 +75,45 @@
      ============================================================ */
 
   /* Colors */
-  --blue:      var(--accent);
+  --blue: var(--accent);
   --dark-blue: var(--accent-press);
-  --red:       oklch(0.55 0.2 25);
-  --dark-red:  oklch(0.49 0.2 25);
+  --red: oklch(0.55 0.2 25);
+  --dark-red: oklch(0.49 0.2 25);
 
   /* Icon colors — preserved for listing-icons.css */
-  --icon-red:    oklch(0.56 0.18  20);
-  --icon-orange: oklch(0.62 0.16  45);
-  --icon-yellow: oklch(0.78 0.16  85);
-  --icon-green:  oklch(0.7  0.17 145);
-  --icon-blue:   var(--accent);
+  --icon-red: oklch(0.56 0.18 20);
+  --icon-orange: oklch(0.62 0.16 45);
+  --icon-yellow: oklch(0.78 0.16 85);
+  --icon-green: oklch(0.7 0.17 145);
+  --icon-blue: var(--accent);
   --icon-violet: oklch(0.55 0.14 295);
 
   /* Form states */
-  --input-red:   oklch(0.94 0.04  20);
+  --input-red: oklch(0.94 0.04 20);
   --input-green: oklch(0.93 0.05 145);
 
   /* Semantic surfaces (mapped to new tokens) */
-  --background:       var(--bg);
-  --surfacePrimary:   var(--surface);
+  --background: var(--bg);
+  --surfacePrimary: var(--surface);
   --surfaceSecondary: var(--border);
 
   /* Text (mapped to new tokens) */
-  --textPrimary:   var(--dim);
+  --textPrimary: var(--dim);
   --textSecondary: var(--text);
 
   /* Borders (mapped to new tokens) */
-  --borderPrimary:   var(--border);
+  --borderPrimary: var(--border);
   --borderSecondary: var(--border-strong);
 
   /* Dividers */
-  --divider:          var(--border);
-  --dividerPrimary:   rgba(255, 255, 255, 0.4);
+  --divider: var(--border);
+  --dividerPrimary: rgba(255, 255, 255, 0.4);
   --dividerSecondary: rgba(255, 255, 255, 0.9);
 
   /* Icons */
-  --iconPrimary:   var(--accent);
+  --iconPrimary: var(--accent);
   --iconSecondary: var(--on-accent);
-  --iconTertiary:  var(--faint);
+  --iconTertiary: var(--faint);
 
   /* Actions */
   --action: var(--dim);
@@ -125,50 +126,51 @@
 
 :root.dark {
   /* Surfaces */
-  --bg:      oklch(0.13 0.005 260);
+  --bg: oklch(0.13 0.005 260);
   --sidebar: oklch(0.115 0.006 260);
   --surface: oklch(0.16 0.006 260);
 
   /* Text */
-  --text:  oklch(0.93 0.004 260);
-  --dim:   oklch(0.65 0.008 260);
+  --text: oklch(0.93 0.004 260);
+  --dim: oklch(0.65 0.008 260);
   --faint: oklch(0.48 0.006 260);
 
   /* Borders */
-  --border:        oklch(0.25 0.006 260);
+  --border: oklch(0.25 0.006 260);
   --border-strong: oklch(0.32 0.008 260);
 
   /* States */
   --hover: oklch(0.21 0.006 260);
 
   /* Accent */
-  --accent:       oklch(0.62 0.13 255);
+  --accent: oklch(0.62 0.13 255);
   --accent-press: oklch(0.56 0.13 255);
-  --sel:          oklch(0.19 0.04 255);
-  --sel-border:   oklch(0.38 0.10 255);
+  --sel: oklch(0.19 0.04 255);
+  --sel-border: oklch(0.38 0.1 255);
 
   /* Shadows */
-  --shadow-menu:  0 1px 2px rgba(0,0,0,.2), 0 14px 34px -8px rgba(0,0,0,.5);
-  --shadow-panel: 0 1px 3px rgba(0,0,0,.25);
+  --shadow-menu:
+    0 1px 2px rgba(0, 0, 0, 0.2), 0 14px 34px -8px rgba(0, 0, 0, 0.5);
+  --shadow-panel: 0 1px 3px rgba(0, 0, 0, 0.25);
 
   /* Legacy overrides for dark mode */
-  --input-red:        oklch(0.3 0.1  20);
-  --input-green:      oklch(0.27 0.1 145);
-  --dividerPrimary:   rgba(30, 30, 30, 0.4);
+  --input-red: oklch(0.3 0.1 20);
+  --input-green: oklch(0.27 0.1 145);
+  --dividerPrimary: rgba(30, 30, 30, 0.4);
   --dividerSecondary: rgba(30, 30, 30, 0.6);
 
   /* Dark soft backgrounds for file-type tints (visible dark pastels) */
-  --kind-image-soft:   oklch(0.3 0.07  165);
-  --kind-video-soft:   oklch(0.3 0.08  28);
-  --kind-audio-soft:   oklch(0.3 0.08  300);
-  --kind-pdf-soft:     oklch(0.3 0.09  28);
-  --kind-doc-soft:     oklch(0.32 0.08 255);
-  --kind-sheet-soft:   oklch(0.3 0.08  150);
-  --kind-slide-soft:   oklch(0.32 0.09  55);
-  --kind-archive-soft: oklch(0.32 0.07  80);
-  --kind-code-soft:    oklch(0.31 0.07  265);
-  --kind-vector-soft:  oklch(0.31 0.08  315);
-  --kind-text-soft:    oklch(0.32 0.02  260);
+  --kind-image-soft: oklch(0.3 0.07 165);
+  --kind-video-soft: oklch(0.3 0.08 28);
+  --kind-audio-soft: oklch(0.3 0.08 300);
+  --kind-pdf-soft: oklch(0.3 0.09 28);
+  --kind-doc-soft: oklch(0.32 0.08 255);
+  --kind-sheet-soft: oklch(0.3 0.08 150);
+  --kind-slide-soft: oklch(0.32 0.09 55);
+  --kind-archive-soft: oklch(0.32 0.07 80);
+  --kind-code-soft: oklch(0.31 0.07 265);
+  --kind-vector-soft: oklch(0.31 0.08 315);
+  --kind-text-soft: oklch(0.32 0.02 260);
   --kind-default-soft: var(--hover);
 }
 

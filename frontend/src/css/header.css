@@ -33,7 +33,9 @@ header > * {
   cursor: pointer;
   font-size: 13.5px;
   font-weight: 500;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
 
 .fb-tbtn:hover {
@@ -224,7 +226,9 @@ input.fb-search {
   color: var(--text);
   font-size: 13.5px;
   font-family: inherit;
-  transition: border-color 0.12s, box-shadow 0.12s;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
   outline: none;
 }
 
@@ -253,7 +257,9 @@ input.fb-search::placeholder {
   color: var(--dim);
   cursor: pointer;
   padding: 0;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
 
 .fb-search-end:hover {
@@ -312,7 +318,9 @@ input.fb-search::placeholder {
   color: var(--dim);
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
 
 .fb-search-type-btn:hover {
@@ -426,4 +434,3 @@ header .menu-button {
 #more {
   display: none;
 }
-

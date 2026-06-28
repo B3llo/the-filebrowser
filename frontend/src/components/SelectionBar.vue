@@ -11,13 +11,9 @@
     <span class="fb-sel-label">
       {{ selectionLabel }}
     </span>
-    <button
-      v-if="headerButtons.download"
-      class="fb-act"
-      @click="download"
-    >
+    <button v-if="headerButtons.download" class="fb-act" @click="download">
       <FbIcon name="download" size="16px" />
-      <span>{{ t('buttons.download') }}</span>
+      <span>{{ t("buttons.download") }}</span>
     </button>
     <button
       v-if="headerButtons.share"
@@ -25,7 +21,7 @@
       @click="layoutStore.showHover('share')"
     >
       <FbIcon name="share" size="16px" />
-      <span>{{ t('buttons.share') }}</span>
+      <span>{{ t("buttons.share") }}</span>
     </button>
     <button
       v-if="headerButtons.move"
@@ -33,7 +29,7 @@
       @click="layoutStore.showHover('move')"
     >
       <FbIcon name="move" size="16px" />
-      <span>{{ t('buttons.moveFile') }}</span>
+      <span>{{ t("buttons.moveFile") }}</span>
     </button>
     <button
       v-if="headerButtons.rename"
@@ -41,15 +37,15 @@
       @click="layoutStore.showHover('rename')"
     >
       <FbIcon name="rename" size="16px" />
-      <span>{{ t('buttons.rename') }}</span>
+      <span>{{ t("buttons.rename") }}</span>
     </button>
     <button
       class="fb-act"
       aria-disabled="true"
-      style="opacity:0.38;pointer-events:none"
+      style="opacity: 0.38; pointer-events: none"
     >
       <FbIcon name="star" size="16px" />
-      <span>{{ t('buttons.star', 'Star') }}</span>
+      <span>{{ t("buttons.star", "Star") }}</span>
     </button>
     <div class="fb-sel-spacer" />
     <button
@@ -59,7 +55,7 @@
       @click="layoutStore.showHover('delete')"
     >
       <FbIcon name="delete" size="16px" />
-      <span>{{ t('buttons.delete') }}</span>
+      <span>{{ t("buttons.delete") }}</span>
     </button>
   </div>
 </template>
@@ -71,7 +67,7 @@ import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
 import FbIcon from "@/components/FbIcon.vue";
 
-const props = defineProps<{
+defineProps<{
   headerButtons: {
     download?: boolean;
     share?: boolean;

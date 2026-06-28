@@ -1,6 +1,9 @@
 <template>
   <errors v-if="error" :errorCode="error.status" />
-  <div class="fb-settings-section" v-else-if="!layoutStore.loading && settings !== null">
+  <div
+    class="fb-settings-section"
+    v-else-if="!layoutStore.loading && settings !== null"
+  >
     <div class="dashboard row">
       <div class="column">
         <form class="card" @submit.prevent="save">
@@ -15,19 +18,33 @@
                 <label for="signup">{{ t("settings.allowSignup") }}</label>
               </div>
               <div class="fb-settings-checkbox-item">
-                <input type="checkbox" v-model="settings.createUserDir" id="createUserDir" />
-                <label for="createUserDir">{{ t("settings.createUserDir") }}</label>
+                <input
+                  type="checkbox"
+                  v-model="settings.createUserDir"
+                  id="createUserDir"
+                />
+                <label for="createUserDir">{{
+                  t("settings.createUserDir")
+                }}</label>
               </div>
               <div class="fb-settings-checkbox-item">
-                <input type="checkbox" v-model="settings.hideLoginButton" id="hideLoginButton" />
-                <label for="hideLoginButton">{{ t("settings.hideLoginButton") }}</label>
+                <input
+                  type="checkbox"
+                  v-model="settings.hideLoginButton"
+                  id="hideLoginButton"
+                />
+                <label for="hideLoginButton">{{
+                  t("settings.hideLoginButton")
+                }}</label>
               </div>
             </div>
 
             <div class="fb-settings-divider"></div>
 
             <div class="fb-settings-field">
-              <label class="fb-settings-field-label" for="userHomeBasePath">{{ t("settings.userHomeBasePath") }}</label>
+              <label class="fb-settings-field-label" for="userHomeBasePath">{{
+                t("settings.userHomeBasePath")
+              }}</label>
               <input
                 class="input input--block"
                 type="text"
@@ -37,7 +54,11 @@
             </div>
 
             <div class="fb-settings-field">
-              <label class="fb-settings-field-label" for="minimumPasswordLength">{{ t("settings.minimumPasswordLength") }}</label>
+              <label
+                class="fb-settings-field-label"
+                for="minimumPasswordLength"
+                >{{ t("settings.minimumPasswordLength") }}</label
+              >
               <vue-number-input
                 controls
                 v-model.number="settings.minimumPasswordLength"
@@ -52,7 +73,11 @@
             <p class="small">{{ t("settings.globalRules") }}</p>
             <rules v-model:rules="settings.rules" />
 
-            <div v-if="enableExec" class="fb-settings-field" style="margin-top: 20px">
+            <div
+              v-if="enableExec"
+              class="fb-settings-field"
+              style="margin-top: 20px"
+            >
               <h3>{{ t("settings.executeOnShell") }}</h3>
               <p class="small">{{ t("settings.executeOnShellDescription") }}</p>
               <input
@@ -88,7 +113,9 @@
                   v-model="settings.branding.disableExternal"
                   id="branding-links"
                 />
-                <label for="branding-links">{{ t("settings.disableExternalLinks") }}</label>
+                <label for="branding-links">{{
+                  t("settings.disableExternalLinks")
+                }}</label>
               </div>
               <div class="fb-settings-checkbox-item">
                 <input
@@ -96,12 +123,16 @@
                   v-model="settings.branding.disableUsedPercentage"
                   id="branding-used-disk"
                 />
-                <label for="branding-used-disk">{{ t("settings.disableUsedDiskPercentage") }}</label>
+                <label for="branding-used-disk">{{
+                  t("settings.disableUsedDiskPercentage")
+                }}</label>
               </div>
             </div>
 
             <div class="fb-settings-field" style="margin-top: 16px">
-              <label class="fb-settings-field-label" for="theme">{{ t("settings.themes.title") }}</label>
+              <label class="fb-settings-field-label" for="theme">{{
+                t("settings.themes.title")
+              }}</label>
               <themes
                 class="input input--block input--select"
                 v-model:theme="settings.branding.theme"
@@ -110,7 +141,9 @@
             </div>
 
             <div class="fb-settings-field">
-              <label class="fb-settings-field-label" for="branding-name">{{ t("settings.instanceName") }}</label>
+              <label class="fb-settings-field-label" for="branding-name">{{
+                t("settings.instanceName")
+              }}</label>
               <input
                 class="input input--block"
                 type="text"
@@ -120,7 +153,9 @@
             </div>
 
             <div class="fb-settings-field">
-              <label class="fb-settings-field-label" for="branding-files">{{ t("settings.brandingDirectoryPath") }}</label>
+              <label class="fb-settings-field-label" for="branding-files">{{
+                t("settings.brandingDirectoryPath")
+              }}</label>
               <input
                 class="input input--block"
                 type="text"
@@ -137,7 +172,9 @@
 
             <div class="tusConditionalSettings" style="margin-top: 12px">
               <div class="fb-settings-field">
-                <label class="fb-settings-field-label" for="tus-chunkSize">{{ t("settings.tusUploadsChunkSize") }}</label>
+                <label class="fb-settings-field-label" for="tus-chunkSize">{{
+                  t("settings.tusUploadsChunkSize")
+                }}</label>
                 <input
                   class="input input--block"
                   type="text"
@@ -147,7 +184,9 @@
               </div>
 
               <div class="fb-settings-field">
-                <label class="fb-settings-field-label" for="tus-retryCount">{{ t("settings.tusUploadsRetryCount") }}</label>
+                <label class="fb-settings-field-label" for="tus-retryCount">{{
+                  t("settings.tusUploadsRetryCount")
+                }}</label>
                 <vue-number-input
                   controls
                   v-model.number="settings.tus.retryCount"
@@ -159,11 +198,7 @@
           </div>
 
           <div class="card-action">
-            <input
-              class="button"
-              type="submit"
-              :value="t('buttons.update')"
-            />
+            <input class="button" type="submit" :value="t('buttons.update')" />
           </div>
         </form>
       </div>
@@ -185,11 +220,7 @@
           </div>
 
           <div class="card-action">
-            <input
-              class="button"
-              type="submit"
-              :value="t('buttons.update')"
-            />
+            <input class="button" type="submit" :value="t('buttons.update')" />
           </div>
         </form>
       </div>
@@ -224,9 +255,26 @@
             >
               <input :id="key" type="checkbox" />
               <label :for="key">
-                <p style="margin: 0; font-size: 14px; font-weight: 550; color: var(--text)">{{ capitalize(key) }}</p>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;color:var(--dim)">
-                  <polyline points="6 9 12 15 18 9"/>
+                <p
+                  style="
+                    margin: 0;
+                    font-size: 14px;
+                    font-weight: 550;
+                    color: var(--text);
+                  "
+                >
+                  {{ capitalize(key) }}
+                </p>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  style="width: 16px; height: 16px; color: var(--dim)"
+                >
+                  <polyline points="6 9 12 15 18 9" />
                 </svg>
               </label>
               <div class="collapse">
@@ -239,11 +287,7 @@
           </div>
 
           <div class="card-action">
-            <input
-              class="button"
-              type="submit"
-              :value="t('buttons.update')"
-            />
+            <input class="button" type="submit" :value="t('buttons.update')" />
           </div>
         </form>
       </div>

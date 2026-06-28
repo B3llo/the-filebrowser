@@ -1,8 +1,8 @@
 <template>
   <div
     id="previewer"
-    @touchmove.prevent.stop
-    @wheel.prevent.stop
+    @touchmove="onTouchMove"
+    @wheel="onWheel"
     @mousemove="toggleNavigation"
     @touchstart="toggleNavigation"
   >
@@ -23,15 +23,11 @@
       <template #actions>
         <action
           :disabled="layoutStore.loading"
-          v-if="authStore.user?.perm.rename"
-          icon="mode_edit"
-          :label="$t('buttons.rename')"
-          show="rename"
-        />
-        <action
-          :disabled="layoutStore.loading"
-          v-if="isCsv && authStore.user?.perm.modify"
-          icon="edit_note"
+          v-if="
+            (isMarkdown || isCode || isText || isCsv) &&
+            authStore.user?.perm.modify
+          "
+          icon="edit"
           :label="t('buttons.editAsText')"
           @action="editAsText"
         />
@@ -279,7 +275,14 @@ const getRendition = (_rendition: Rendition) => {
   rendition.themes.override("background-color", "transparent", true);
 };
 
-const mediaTypes: ResourceType[] = ["image", "video", "audio", "blob"];
+const mediaTypes: ResourceType[] = [
+  "image",
+  "video",
+  "audio",
+  "blob",
+  "text",
+  "textImmutable",
+];
 
 const previousLink = ref<string>("");
 const nextLink = ref<string>("");
@@ -408,6 +411,24 @@ const isText = computed(() => {
   const ext = fileStore.req?.extension.toLowerCase() || "";
   return textExtensions.has(ext);
 });
+
+const isTextType = computed(
+  () => isMarkdown.value || isCode.value || isText.value
+);
+
+const onWheel = (e: WheelEvent) => {
+  if (!isTextType.value) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+};
+
+const onTouchMove = (e: TouchEvent) => {
+  if (!isTextType.value) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+};
 
 const codeLanguage = computed(() => {
   const ext = fileStore.req?.extension.toLowerCase() || "";
@@ -541,7 +562,7 @@ const updatePreview = async () => {
     autoPlay.value = false;
   }
 
-  const dirs = route.fullPath.split("/");
+  const dirs = route.path.split("/");
   name.value = decodeURIComponent(dirs[dirs.length - 1]);
 
   // Load CSV content if it's a CSV file

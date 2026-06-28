@@ -31,12 +31,13 @@
     <!-- Single item selected -->
     <div v-else-if="selectedItem" class="fb-details-body">
       <!-- Thumbnail area -->
-      <div
-        class="fb-details-thumb"
-        :style="{ background: thumbBg }"
-      >
+      <div class="fb-details-thumb" :style="{ background: thumbBg }">
         <!-- Image thumbnail -->
-        <img v-if="isImage && enableThumbs" :src="thumbUrl" :alt="selectedItem.name" />
+        <img
+          v-if="isImage && enableThumbs"
+          :src="thumbUrl"
+          :alt="selectedItem.name"
+        />
 
         <!-- Folder icon -->
         <svg
@@ -49,7 +50,9 @@
           stroke-linejoin="round"
           style="width: 58px; height: 58px"
         >
-          <path d="M20 19a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7.6a1 1 0 0 1-.8-.4L10.3 4.9a1 1 0 0 0-.8-.4H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z" />
+          <path
+            d="M20 19a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7.6a1 1 0 0 1-.8-.4L10.3 4.9a1 1 0 0 0-.8-.4H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2Z"
+          />
         </svg>
 
         <!-- File document outline with extension -->
@@ -68,7 +71,9 @@
               stroke-width="2"
             />
           </svg>
-          <span class="fb-details-doc-ext" :style="{ color: tint }">{{ extLabelText }}</span>
+          <span class="fb-details-doc-ext" :style="{ color: tint }">{{
+            extLabelText
+          }}</span>
         </div>
       </div>
 
@@ -127,11 +132,7 @@
       <!-- Tags section -->
       <div class="fb-details-section-title">Tags</div>
       <div class="fb-details-tags">
-        <span
-          v-for="tag in itemTags"
-          :key="tag"
-          class="fb-details-tag"
-        >
+        <span v-for="tag in itemTags" :key="tag" class="fb-details-tag">
           {{ tag }}
         </span>
         <button class="fb-details-tag-add">+ Add</button>

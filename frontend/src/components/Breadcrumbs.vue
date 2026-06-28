@@ -118,7 +118,9 @@ const element = computed(() => (props.noLink ? "span" : "router-link"));
   text-decoration: none;
   white-space: nowrap;
   display: inline-block;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
   font-family: inherit;
 }
 

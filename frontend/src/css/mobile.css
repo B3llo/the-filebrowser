@@ -172,7 +172,6 @@
   html[dir="rtl"] .dashboard .row {
     margin-right: unset;
   }
-
 }
 
 @media (max-width: 450px) {

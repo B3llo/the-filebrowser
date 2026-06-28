@@ -13,7 +13,7 @@
   justify-content: center;
   text-align: center;
   gap: 6px;
-  animation: fbfade .2s;
+  animation: fbfade 0.2s;
 }
 
 .fb-empty-icon {
