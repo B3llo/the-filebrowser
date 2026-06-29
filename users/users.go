@@ -29,6 +29,7 @@ type SourceRef struct {
 type User struct {
 	ID                    uint          `storm:"id,increment" json:"id"`
 	Username              string        `storm:"unique" json:"username"`
+	Displayname           string        `json:"displayName"`
 	Password              string        `json:"password"`
 	Scope                 string        `json:"scope"`
 	Sources               []SourceRef   `json:"sources"`

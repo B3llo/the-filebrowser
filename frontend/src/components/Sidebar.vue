@@ -109,7 +109,7 @@
       class="fb-sidebar-storage"
     >
       <div class="fb-sidebar-storage-header">
-        <span class="fb-sidebar-storage-label">Storage</span>
+        <span class="fb-sidebar-storage-label">{{ $t('sidebar.storage') }}</span>
         <span class="fb-sidebar-storage-pct">{{ usage.usedPercentage }}%</span>
       </div>
       <progress-bar :val="usage.usedPercentage" size="small" />
@@ -130,8 +130,8 @@
           {{ userInitial }}
         </div>
         <div class="fb-sidebar-user-info">
-          <span class="fb-sidebar-username">{{ user.username }}</span>
-          <span v-if="user.perm.admin" class="fb-sidebar-role">Admin</span>
+          <span class="fb-sidebar-username">{{ user.displayName || user.username }}</span>
+          <span v-if="user.perm.admin" class="fb-sidebar-role">{{ $t('settings.admin') }}</span>
         </div>
       </button>
       <div class="fb-sidebar-footer-actions">
@@ -217,7 +217,8 @@ export default {
       return this.$route.params?.sourceId;
     },
     userInitial() {
-      return this.user?.username?.[0]?.toUpperCase() ?? "?";
+      const name = this.user?.displayName || this.user?.username;
+      return name?.[0]?.toUpperCase() ?? "?";
     },
     signup: () => signup,
     hideLoginButton: () => hideLoginButton,

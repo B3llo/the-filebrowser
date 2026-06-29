@@ -396,7 +396,7 @@ const itemTags = computed((): string[] => {
 const userInitials = computed(() => {
   const user = authStore.user;
   if (!user) return "U";
-  const name = user.username || "";
+  const name = user.displayName || user.username || "";
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 2) {
     return (parts[0][0] + parts[1][0]).toUpperCase();

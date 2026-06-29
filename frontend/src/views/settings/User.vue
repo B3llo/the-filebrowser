@@ -97,6 +97,7 @@ const fetchData = async () => {
       user.value = {
         ...defaults,
         username: "",
+        displayName: "",
         password: "",
         rules: [],
         lockPassword: false,

@@ -8,6 +8,22 @@
           </div>
 
           <div class="card-content">
+            <div class="fb-settings-field">
+              <label class="fb-settings-field-label" for="displayName">{{
+                t("settings.displayName")
+              }}</label>
+              <input
+                class="input input--block"
+                type="text"
+                name="displayName"
+                v-model="displayName"
+                id="displayName"
+                :placeholder="t('settings.username')"
+              />
+            </div>
+
+            <div class="fb-settings-divider"></div>
+
             <div class="fb-settings-checkbox-list">
               <div class="fb-settings-checkbox-item">
                 <input
@@ -165,6 +181,7 @@ const password = ref<string>("");
 const passwordConf = ref<string>("");
 const currentPassword = ref<string>("");
 const isCurrentPasswordRequired = ref<boolean>(false);
+const displayName = ref<string>("");
 const hideDotfiles = ref<boolean>(false);
 const singleClick = ref<boolean>(false);
 const redirectAfterCopyMove = ref<boolean>(false);
@@ -189,6 +206,7 @@ const passwordClass = computed(() => {
 onMounted(async () => {
   layoutStore.loading = true;
   if (authStore.user === null) return false;
+  displayName.value = authStore.user.displayName || "";
   locale.value = authStore.user.locale;
   hideDotfiles.value = authStore.user.hideDotfiles;
   singleClick.value = authStore.user.singleClick;
@@ -237,6 +255,7 @@ const updateSettings = async (event: Event) => {
     const data = {
       ...authStore.user,
       id: authStore.user.id,
+      displayName: displayName.value,
       locale: locale.value,
       hideDotfiles: hideDotfiles.value,
       singleClick: singleClick.value,
@@ -246,6 +265,7 @@ const updateSettings = async (event: Event) => {
     };
 
     await api.update(data, [
+      "displayName",
       "locale",
       "hideDotfiles",
       "singleClick",

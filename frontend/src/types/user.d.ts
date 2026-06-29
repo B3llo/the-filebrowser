@@ -1,6 +1,7 @@
 interface IUser {
   id: number;
   username: string;
+  displayName: string;
   password: string;
   scope: string;
   sources?: IUserSourceRef[];
@@ -28,6 +29,7 @@ interface IUserSourceRef {
 interface IUserForm {
   id?: number;
   username?: string;
+  displayName?: string;
   password?: string;
   scope?: string;
   sources?: IUserSourceRef[];
