@@ -130,6 +130,7 @@
     "passwordsDontMatch": "Passwords don't match",
     "signup": "Signup",
     "submit": "Login",
+    "submitting": "Signing in…",
     "username": "Username",
     "usernameTaken": "Username already taken",
     "wrongCredentials": "Wrong credentials",

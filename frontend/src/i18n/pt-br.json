@@ -118,6 +118,7 @@
     "passwordsDontMatch": "As senhas não coincidem",
     "signup": "Cadastrar",
     "submit": "Login",
+    "submitting": "Entrando…",
     "username": "Nome do usuário",
     "usernameTaken": "Nome de usuário já existe",
     "wrongCredentials": "Ops! Dados incorretos.",

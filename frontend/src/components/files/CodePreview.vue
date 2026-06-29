@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
 import hljs from "highlight.js";
-import "highlight.js/styles/github-dark.css";
+import "highlight.js/styles/github.css";
 
 interface Props {
   content: string;
@@ -62,6 +62,7 @@ const highlightCode = async () => {
       sql: "sql",
       graphql: "graphql",
       markdown: "markdown",
+      dockerfile: "dockerfile",
     };
 
     lang = langMap[lang.toLowerCase()] || "plaintext";
@@ -108,7 +109,7 @@ watch(
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--code-bg, #1e1e1e);
+  background: var(--code-bg, var(--bg));
   border-radius: 8px;
   overflow: hidden;
 }
@@ -143,10 +144,10 @@ watch(
   margin: 0;
   padding: 16px;
   overflow: auto;
-  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-family: "SF Mono", "Monaco", "Menlo", "Ubuntu Mono", "Cascadia Code", "Consolas", "Liberation Mono", monospace;
   font-size: 14px;
   line-height: 1.6;
-  color: var(--text-primary, #d4d4d4);
+  color: var(--text);
   background: transparent;
   white-space: pre;
   tab-size: 2;
@@ -163,15 +164,15 @@ watch(
 }
 
 .code-content::-webkit-scrollbar-track {
-  background: var(--code-header-bg, #2d2d2d);
+  background: var(--hover);
 }
 
 .code-content::-webkit-scrollbar-thumb {
-  background: var(--border-color, #404040);
+  background: var(--border);
   border-radius: 4px;
 }
 
 .code-content::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary, #666);
+  background: var(--dim);
 }
 </style>

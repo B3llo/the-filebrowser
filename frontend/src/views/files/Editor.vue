@@ -238,6 +238,7 @@ const initEditor = (fileContent: string) => {
   });
 
   editor.value.setFontSize(fontSize.value);
+  editor.value.setOption("fontFamily", '"SF Mono", "Monaco", "Menlo", "Ubuntu Mono", "Cascadia Code", "Consolas", "Liberation Mono", monospace');
   editor.value.focus();
 
   const selection = editor.value?.getSelection();

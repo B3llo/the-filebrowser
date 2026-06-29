@@ -402,11 +402,16 @@ const codeExtensions = new Set([
   ".toml",
   ".sql",
   ".graphql",
+  ".dockerfile",
 ]);
 
 const isCode = computed(() => {
   const ext = fileStore.req?.extension.toLowerCase() || "";
-  return codeExtensions.has(ext);
+  if (codeExtensions.has(ext)) return true;
+  // Handle extensionless files like "Dockerfile"
+  const name = fileStore.req?.name?.toLowerCase() || "";
+  if (ext === "" && name === "dockerfile") return true;
+  return false;
 });
 
 // Plain-text fallback: any text-typed file that isn't markdown, code or CSV.
@@ -497,7 +502,11 @@ const codeLanguage = computed(() => {
     ".toml": "toml",
     ".sql": "sql",
     ".graphql": "graphql",
+    ".dockerfile": "dockerfile",
   };
+  // Handle extensionless files like "Dockerfile"
+  const name = fileStore.req?.name?.toLowerCase() || "";
+  if (ext === "" && name === "dockerfile") return "dockerfile";
   return langMap[ext] || "text";
 });
 

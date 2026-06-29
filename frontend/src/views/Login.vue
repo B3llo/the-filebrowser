@@ -34,7 +34,14 @@
       <input
         class="button button--block"
         type="submit"
-        :value="createMode ? t('login.signup') : t('login.submit')"
+        :disabled="loading"
+        :value="
+          loading
+            ? t('login.submitting')
+            : createMode
+              ? t('login.signup')
+              : t('login.submit')
+        "
       />
 
       <p @click="toggleMode" v-if="signup">
@@ -47,6 +54,7 @@
 <script setup lang="ts">
 import { StatusError } from "@/api/utils";
 import * as auth from "@/utils/auth";
+import { useAuthStore } from "@/stores/auth";
 import {
   name,
   logoURL,
@@ -64,9 +72,11 @@ const error = ref<string>("");
 const username = ref<string>("");
 const password = ref<string>("");
 const passwordConfirm = ref<string>("");
+const loading = ref<boolean>(false);
 
 const route = useRoute();
 const router = useRouter();
+const authStore = useAuthStore();
 const { t } = useI18n({});
 // Define functions
 const toggleMode = () => (createMode.value = !createMode.value);
@@ -75,11 +85,19 @@ const $showError = inject<IToastError>("$showError")!;
 
 const reason = route.query["logout-reason"] ?? null;
 
+// Only allow same-origin, absolute-path redirects. A user-controlled
+// `?redirect=` must never become an open redirect (e.g. //evil.com or
+// https://evil.com), since we navigate with window.location below.
+const safePath = (p: string) =>
+  p.startsWith("/") && !p.startsWith("//") ? p : "/files/";
+
 const submit = async (event: Event) => {
   event.preventDefault();
   event.stopPropagation();
 
-  const redirect = (route.query.redirect || "/files/") as string;
+  if (loading.value) return;
+
+  const redirect = safePath((route.query.redirect as string) || "/files/");
 
   let captcha = "";
   if (recaptcha) {
@@ -98,15 +116,16 @@ const submit = async (event: Event) => {
     }
   }
 
+  error.value = "";
+  loading.value = true;
+
   try {
     if (createMode.value) {
       await auth.signup(username.value, password.value);
     }
 
     await auth.login(username.value, password.value, captcha);
-    router.push({ path: redirect });
   } catch (e: any) {
-    // console.error(e);
     if (e instanceof StatusError) {
       if (e.status === 409) {
         error.value = t("login.usernameTaken");
@@ -122,7 +141,24 @@ const submit = async (event: Event) => {
       } else {
         $showError(e);
       }
+    } else if (!authStore.isLoggedIn) {
+      // Unknown failure and the session was not established — surface it
+      // instead of silently leaving the user on a dead button.
+      $showError(e);
     }
+    // If the token was already saved despite a tail error, fall through to
+    // the redirect below (authStore.isLoggedIn will be true).
+  } finally {
+    if (!authStore.isLoggedIn) {
+      loading.value = false;
+    }
+  }
+
+  // Navigate via a full load to the resolved URL. This mirrors the refresh
+  // (F5) path that reliably establishes the session, sources and routing,
+  // avoiding the in-SPA navigation race that left the button stuck (#29).
+  if (authStore.isLoggedIn) {
+    window.location.assign(router.resolve({ path: redirect }).href);
   }
 };
 
