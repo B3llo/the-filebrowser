@@ -390,6 +390,7 @@
         data-clear-on-click="true"
         :class="currentViewMode"
         @click="handleEmptyAreaClick"
+        @contextmenu="showContextMenu"
       >
         <div>
           <div class="fb-col-header">
@@ -488,52 +489,74 @@
           :pos="contextMenuPos"
           @hide="hideContextMenu"
         >
-          <action
-            v-if="headerButtons.share"
-            :fbIcon="'share'"
-            :label="t('buttons.share')"
-            show="share"
-          />
-          <action
-            v-if="headerButtons.download"
-            :fbIcon="'download'"
-            :label="t('buttons.download')"
-            @action="download"
-            :counter="fileStore.selectedCount"
-          />
-          <hr class="fb-menu-divider" />
-          <action
-            v-if="headerButtons.rename"
-            :fbIcon="'rename'"
-            :label="t('buttons.rename')"
-            show="rename"
-          />
-          <action
-            v-if="headerButtons.copy"
-            :fbIcon="'copy'"
-            :label="t('buttons.copyFile')"
-            show="copy"
-          />
-          <action
-            v-if="headerButtons.move"
-            :fbIcon="'move'"
-            :label="t('buttons.moveFile')"
-            show="move"
-          />
-          <hr class="fb-menu-divider" />
-          <action
-            :fbIcon="'info'"
-            :label="t('buttons.info')"
-            @action="layoutStore.showDetails = true"
-          />
-          <hr class="fb-menu-divider" />
-          <action
-            v-if="headerButtons.delete"
-            :fbIcon="'delete'"
-            :label="t('buttons.delete')"
-            show="delete"
-            :danger="true"
-          />
+          <template v-if="isContextMenuOnItem">
+            <action
+              v-if="headerButtons.share"
+              :fbIcon="'share'"
+              :label="t('buttons.share')"
+              show="share"
+            />
+            <action
+              v-if="headerButtons.download"
+              :fbIcon="'download'"
+              :label="t('buttons.download')"
+              @action="download"
+              :counter="fileStore.selectedCount"
+            />
+            <hr class="fb-menu-divider" />
+            <action
+              v-if="headerButtons.rename"
+              :fbIcon="'rename'"
+              :label="t('buttons.rename')"
+              show="rename"
+            />
+            <action
+              v-if="headerButtons.copy"
+              :fbIcon="'copy'"
+              :label="t('buttons.copyFile')"
+              show="copy"
+            />
+            <action
+              v-if="headerButtons.move"
+              :fbIcon="'move'"
+              :label="t('buttons.moveFile')"
+              show="move"
+            />
+            <hr class="fb-menu-divider" />
+            <action
+              :fbIcon="'info'"
+              :label="t('buttons.info')"
+              @action="layoutStore.showDetails = true"
+            />
+            <hr class="fb-menu-divider" />
+            <action
+              v-if="headerButtons.delete"
+              :fbIcon="'delete'"
+              :label="t('buttons.delete')"
+              show="delete"
+              :danger="true"
+            />
+          </template>
+          <template v-else>
+            <action
+              v-if="authStore.user?.perm.create"
+              :fbIcon="'new-folder'"
+              :label="t('sidebar.newFolder')"
+              @action="showHoverAndClose('newDir')"
+            />
+            <action
+              v-if="authStore.user?.perm.create"
+              :fbIcon="'new-file'"
+              :label="t('sidebar.newFile')"
+              @action="showHoverAndClose('newFile')"
+            />
+            <action
+              v-if="headerButtons.upload"
+              :fbIcon="'upload'"
+              :label="t('buttons.upload')"
+              @action="uploadAndClose()"
+            />
+          </template>
         </context-menu>
 
         <input
@@ -610,6 +633,7 @@ const width = ref<number>(window.innerWidth);
 const itemWeight = ref<number>(0);
 const isContextMenuVisible = ref<boolean>(false);
 const contextMenuPos = ref<{ x: number; y: number }>({ x: 0, y: 0 });
+const isContextMenuOnItem = ref<boolean>(false);
 const newMenuOpen = ref<boolean>(false);
 const sortMenuOpen = ref<boolean>(false);
 
@@ -1359,8 +1383,12 @@ const revealPreviousItem = () => {
 
 const showContextMenu = (event: MouseEvent) => {
   event.preventDefault();
+  const target = event.target as HTMLElement;
+  isContextMenuOnItem.value = !!target.closest(".item");
+  if (!isContextMenuOnItem.value) {
+    fileStore.selected = [];
+  }
   isContextMenuVisible.value = true;
-  // Menu is position:fixed → use viewport coordinates (no scrollY offset).
   contextMenuPos.value = {
     x: event.clientX + 8,
     y: event.clientY + 8,

@@ -105,7 +105,7 @@
 
     <!-- Storage meter -->
     <div
-      v-if="isLoggedIn && isFiles && !disableUsedPercentage"
+      v-if="isLoggedIn && !disableUsedPercentage"
       class="fb-sidebar-storage"
     >
       <div class="fb-sidebar-storage-header">
