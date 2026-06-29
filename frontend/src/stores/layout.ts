@@ -10,12 +10,15 @@ export const useLayoutStore = defineStore("layout", {
     showShell: boolean | null;
     showDetails: boolean;
     showSettings: boolean;
+    sidebarCollapsed: boolean;
   } => ({
     loading: false,
     prompts: [],
     showShell: false,
     showDetails: false,
     showSettings: false,
+    // Persisted across sessions: collapse the desktop sidebar to an icon rail.
+    sidebarCollapsed: localStorage.getItem("fb-sidebar-collapsed") === "true",
   }),
   getters: {
     currentPrompt(state) {
@@ -35,6 +38,13 @@ export const useLayoutStore = defineStore("layout", {
     },
     toggleDetails() {
       this.showDetails = !this.showDetails;
+    },
+    toggleSidebarCollapsed() {
+      this.sidebarCollapsed = !this.sidebarCollapsed;
+      localStorage.setItem(
+        "fb-sidebar-collapsed",
+        this.sidebarCollapsed ? "true" : "false"
+      );
     },
     toggleSettings() {
       this.showSettings = !this.showSettings;

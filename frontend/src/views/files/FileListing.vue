@@ -1,6 +1,6 @@
 <template>
   <div>
-    <header-bar showMenu showBreadcrumb base="/files">
+    <header-bar showMenu showBreadcrumb :base="filesBase">
       <template #actions>
         <!-- Inline search — 280px dropdown -->
         <Search ref="searchRef" />
@@ -623,6 +623,9 @@ const layoutStore = useLayoutStore();
 const { req } = storeToRefs(fileStore);
 
 const route = useRoute();
+
+const filesBase = computed(() => `/files/${route.params.sourceId ?? 0}`);
+
 onBeforeRouteUpdate(() => {
   hideContextMenu();
 });

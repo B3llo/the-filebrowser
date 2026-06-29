@@ -6,12 +6,15 @@ import Files from "@/views/Files.vue";
 import Share from "@/views/Share.vue";
 import Users from "@/views/settings/Users.vue";
 import User from "@/views/settings/User.vue";
+import Sources from "@/views/settings/Sources.vue";
+import Source from "@/views/settings/Source.vue";
 import Settings from "@/views/Settings.vue";
 import GlobalSettings from "@/views/settings/Global.vue";
 import ProfileSettings from "@/views/settings/Profile.vue";
 import Shares from "@/views/settings/Shares.vue";
 import Errors from "@/views/Errors.vue";
 import { useAuthStore } from "@/stores/auth";
+import { useSourceStore } from "@/stores/source";
 import { baseURL, name } from "@/utils/constants";
 import i18n from "@/i18n";
 import { recaptcha, loginPage } from "@/utils/constants";
@@ -27,6 +30,8 @@ const titles = {
   GlobalSettings: "settings.globalSettings",
   Users: "settings.users",
   User: "settings.user",
+  Sources: "settings.sources",
+  Source: "settings.source",
   Forbidden: "errors.forbidden",
   NotFound: "errors.notFound",
   InternalServerError: "errors.internal",
@@ -57,7 +62,7 @@ const routes = [
     },
     children: [
       {
-        path: ":path*",
+        path: ":sourceId/:path*",
         name: "Files",
         component: Files,
       },
@@ -108,6 +113,22 @@ const routes = [
             path: "users/:id",
             name: "User",
             component: User,
+            meta: {
+              requiresAdmin: true,
+            },
+          },
+          {
+            path: "sources",
+            name: "Sources",
+            component: Sources,
+            meta: {
+              requiresAdmin: true,
+            },
+          },
+          {
+            path: "sources/:id",
+            name: "Source",
+            component: Source,
             meta: {
               requiresAdmin: true,
             },
@@ -185,6 +206,7 @@ router.beforeResolve(async (to, from, next) => {
   document.title = title + " - " + name;
 
   const authStore = useAuthStore();
+  const sourceStore = useSourceStore();
 
   // this will only be null on first route
   if (from.name == null) {
@@ -195,8 +217,38 @@ router.beforeResolve(async (to, from, next) => {
     }
   }
 
+  // Load the user's accessible sources once authenticated.
+  if (authStore.isLoggedIn && !sourceStore.loaded) {
+    try {
+      await sourceStore.load();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  // Normalize /files URLs so every deep link carries a valid source segment:
+  //   /files           -> /files/<defaultSource>/
+  //   /files/<seg>/... -> if <seg> is a known source, activate it; otherwise it
+  //                       is a legacy path and is rebased under the default source.
+  if (authStore.isLoggedIn && sourceStore.loaded) {
+    if (to.path === "/files" || to.path === "/files/") {
+      next({ path: `${sourceStore.filesBase}/` });
+      return;
+    }
+    if (to.path.startsWith("/files/")) {
+      const rest = to.path.slice("/files/".length);
+      const slash = rest.indexOf("/");
+      const seg = slash === -1 ? rest : rest.slice(0, slash);
+      if (!sourceStore.isKnown(seg)) {
+        next({ path: `/files/${sourceStore.defaultId}/${rest}` });
+        return;
+      }
+      sourceStore.setActive(seg);
+    }
+  }
+
   if (to.path.endsWith("/login") && authStore.isLoggedIn) {
-    next({ path: "/files/" });
+    next({ path: `${sourceStore.filesBase}/` });
     return;
   }
 

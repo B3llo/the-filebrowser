@@ -78,6 +78,36 @@
     <permissions v-model:perm="user.perm" />
     <commands v-if="enableExec" v-model:commands="user.commands" />
 
+    <div v-if="!isDefault && availableSources.length > 0">
+      <h3
+        style="
+          margin: 20px 0 8px;
+          font-size: 14px;
+          font-weight: 600;
+          color: var(--text);
+        "
+      >
+        {{ t("settings.userSources") }}
+      </h3>
+      <p class="small" style="margin-bottom: 12px">
+        {{ t("settings.userSourcesHelp") }}
+      </p>
+      <div
+        v-for="s in availableSources"
+        :key="s.id"
+        class="fb-settings-checkbox-item"
+        style="background: transparent; padding: 0"
+      >
+        <input
+          type="checkbox"
+          :id="'source-' + s.id"
+          :checked="isSourceGranted(s.id)"
+          @change="toggleSource(s.id)"
+        />
+        <label :for="'source-' + s.id">{{ s.name }}</label>
+      </div>
+    </div>
+
     <div v-if="!isDefault">
       <h3
         style="
@@ -103,6 +133,7 @@ import Rules from "./Rules.vue";
 import Permissions from "./Permissions.vue";
 import Commands from "./Commands.vue";
 import { enableExec } from "@/utils/constants";
+import { sources as sourcesApi } from "@/api";
 import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -110,6 +141,7 @@ const { t } = useI18n();
 
 const createUserDirData = ref<boolean | null>(null);
 const originalUserScope = ref<string | null>(null);
+const availableSources = ref<ISource[]>([]);
 
 const props = defineProps<{
   user: IUserForm;
@@ -118,12 +150,38 @@ const props = defineProps<{
   createUserDir?: boolean;
 }>();
 
-onMounted(() => {
+onMounted(async () => {
   if (props.user.scope) {
     originalUserScope.value = props.user.scope;
     createUserDirData.value = props.createUserDir;
   }
+
+  if (!props.isDefault) {
+    try {
+      // Only real, admin-defined sources can be assigned; the implicit legacy
+      // source (id 0) is virtual and always accessible.
+      availableSources.value = (await sourcesApi.list()).filter(
+        (s) => s.id !== 0
+      );
+    } catch {
+      availableSources.value = [];
+    }
+  }
 });
+
+const isSourceGranted = (id: number): boolean =>
+  (props.user.sources ?? []).some((r) => r.id === id);
+
+const toggleSource = (id: number) => {
+  const list = props.user.sources ? [...props.user.sources] : [];
+  const idx = list.findIndex((r) => r.id === id);
+  if (idx >= 0) {
+    list.splice(idx, 1);
+  } else {
+    list.push({ id, default: false });
+  }
+  props.user.sources = list;
+};
 
 const passwordPlaceholder = computed(() =>
   props.isNew ? "" : t("settings.avoidChanges")

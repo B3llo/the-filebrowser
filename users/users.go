@@ -17,12 +17,21 @@ const (
 	MosaicViewMode ViewMode = "mosaic"
 )
 
+// SourceRef assigns a source to a user. When a user has at least one SourceRef,
+// only the listed sources are accessible; otherwise every defined source is
+// accessible. Default marks the source selected on first visit.
+type SourceRef struct {
+	ID      uint `json:"id"`
+	Default bool `json:"default"`
+}
+
 // User describes a user.
 type User struct {
 	ID                    uint          `storm:"id,increment" json:"id"`
 	Username              string        `storm:"unique" json:"username"`
 	Password              string        `json:"password"`
 	Scope                 string        `json:"scope"`
+	Sources               []SourceRef   `json:"sources"`
 	Locale                string        `json:"locale"`
 	LockPassword          bool          `json:"lockPassword"`
 	ViewMode              ViewMode      `json:"viewMode"`
@@ -47,6 +56,7 @@ var checkableFields = []string{
 	"Username",
 	"Password",
 	"Scope",
+	"Sources",
 	"ViewMode",
 	"Commands",
 	"Sorting",
@@ -73,6 +83,10 @@ func (u *User) Clean(baseScope string, followExternalSymlinks bool, fields ...st
 		case "ViewMode":
 			if u.ViewMode == "" {
 				u.ViewMode = ListViewMode
+			}
+		case "Sources":
+			if u.Sources == nil {
+				u.Sources = []SourceRef{}
 			}
 		case "Commands":
 			if u.Commands == nil {

@@ -39,6 +39,31 @@
           :alt="selectedItem.name"
         />
 
+        <!-- Video thumbnail (first frame captured to a canvas) -->
+        <template v-else-if="isVideo && enableThumbs">
+          <canvas ref="videoCanvas" class="fb-details-thumb-media"></canvas>
+          <video
+            ref="videoEl"
+            :src="thumbUrl + '#t=0.1'"
+            preload="metadata"
+            muted
+            class="fb-details-thumb-hidden"
+            @loadeddata="captureFrame"
+          ></video>
+          <div class="fb-details-play" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.92)">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </template>
+
+        <!-- PDF thumbnail (first page rendered to a canvas) -->
+        <canvas
+          v-else-if="isPdf && enableThumbs"
+          ref="pdfCanvas"
+          class="fb-details-thumb-media"
+        ></canvas>
+
         <!-- Folder icon -->
         <svg
           v-else-if="selectedItem.isDir"
@@ -155,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
@@ -167,7 +192,13 @@ import { enableThumbs } from "@/utils/constants";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import FbIcon from "@/components/FbIcon.vue";
+import * as pdfjsLib from "pdfjs-dist";
 import dayjs from "dayjs";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  "pdfjs-dist/build/pdf.worker.min.mjs",
+  import.meta.url
+).toString();
 
 const fileStore = useFileStore();
 const layoutStore = useLayoutStore();
@@ -194,11 +225,72 @@ const kind = computed(() => {
 });
 
 const isImage = computed(() => selectedItem.value?.type === "image");
+const isVideo = computed(() => selectedItem.value?.type === "video");
+const isPdf = computed(() => selectedItem.value?.type === "pdf");
 
 const thumbUrl = computed(() => {
   if (!selectedItem.value) return "";
   return api.getPreviewURL(selectedItem.value, "thumb");
 });
+
+// Video: capture the first frame onto a canvas (mirrors the listing grid).
+const videoEl = ref<HTMLVideoElement | null>(null);
+const videoCanvas = ref<HTMLCanvasElement | null>(null);
+
+const captureFrame = () => {
+  const video = videoEl.value;
+  const canvas = videoCanvas.value;
+  if (!video || !canvas) return;
+  if (video.videoWidth === 0 || video.videoHeight === 0) return;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const vw = video.videoWidth;
+  const vh = video.videoHeight;
+  const size = Math.min(vw, vh);
+  const sx = (vw - size) / 2;
+  const sy = (vh - size) / 2;
+
+  canvas.width = 256;
+  canvas.height = 256;
+  ctx.drawImage(video, sx, sy, size, size, 0, 0, 256, 256);
+};
+
+// PDF: render the first page onto a canvas. Re-run when the selected PDF or the
+// canvas element changes (the canvas persists across pdf→pdf selections).
+const pdfCanvas = ref<HTMLCanvasElement | null>(null);
+
+watch(
+  [pdfCanvas, () => selectedItem.value?.path],
+  async ([canvas]) => {
+    if (!canvas || !isPdf.value || !enableThumbs) return;
+    try {
+      const loadingTask = pdfjsLib.getDocument({ url: thumbUrl.value });
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 1 });
+      const targetSize = 256;
+      const scale = Math.min(
+        targetSize / viewport.width,
+        targetSize / viewport.height
+      );
+      const scaledViewport = page.getViewport({ scale });
+      canvas.width = scaledViewport.width;
+      canvas.height = scaledViewport.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      await page.render({
+        canvas,
+        canvasContext: ctx,
+        viewport: scaledViewport,
+      }).promise;
+    } catch (e) {
+      console.error("Failed to render PDF thumbnail:", e);
+    }
+  },
+  { immediate: true }
+);
 
 const tint = computed(() => {
   const k = kind.value;
@@ -221,7 +313,8 @@ const tint = computed(() => {
 });
 
 const thumbBg = computed(() => {
-  if (isImage.value && enableThumbs) return "var(--hover)";
+  if ((isImage.value || isVideo.value || isPdf.value) && enableThumbs)
+    return "var(--hover)";
   const k = kind.value;
   const softs: Record<string, string> = {
     folder: "var(--hover)",

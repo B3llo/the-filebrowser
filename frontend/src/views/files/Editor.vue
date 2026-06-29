@@ -42,7 +42,7 @@
     </div>
     <template v-else>
       <div class="editor-header">
-        <Breadcrumbs base="/files" noLink />
+        <Breadcrumbs :base="filesBase" noLink />
 
         <div>
           <button
@@ -95,7 +95,7 @@ import { useLayoutStore } from "@/stores/layout";
 import { getEditorTheme } from "@/utils/theme";
 import { marked } from "marked";
 import markedKatex from "marked-katex-extension";
-import { inject, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
+import { computed, inject, onBeforeUnmount, onMounted, ref, watchEffect } from "vue";
 import { useI18n } from "vue-i18n";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 import { read, copy } from "@/utils/clipboard";
@@ -110,6 +110,8 @@ const { t } = useI18n();
 
 const route = useRoute();
 const router = useRouter();
+
+const filesBase = computed(() => `/files/${route.params.sourceId ?? 0}`);
 
 const editor = ref<Ace.Editor | null>(null);
 const fontSize = ref(parseInt(localStorage.getItem("editorFontSize") || "14"));

@@ -5,9 +5,9 @@
       :to="base || '/files'"
       class="fb-crumb"
       :class="{ 'fb-crumb--active': items.length === 0 }"
-      :aria-label="t('files.home')"
+      :aria-label="rootLabel"
     >
-      {{ t("sidebar.myFiles") }}
+      {{ rootLabel }}
     </component>
 
     <span v-for="(link, index) in items" :key="index" class="fb-crumb-seg">
@@ -39,14 +39,20 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
+import { useSourceStore } from "@/stores/source";
 
 const { t } = useI18n();
 const route = useRoute();
+const sourceStore = useSourceStore();
 
 const props = defineProps<{
   base: string;
   noLink?: boolean;
 }>();
+
+// The root crumb is the active source's name (e.g. "Documents", "Photos"),
+// falling back to "My Files" for the implicit legacy source.
+const rootLabel = computed(() => sourceStore.active?.name ?? t("sidebar.myFiles"));
 
 const items = computed(() => {
   const relativePath = route.path.replace(props.base, "");

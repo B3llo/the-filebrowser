@@ -106,6 +106,7 @@ func withUser(fn handleFunc) handleFunc {
 		if err != nil {
 			return http.StatusInternalServerError, err
 		}
+		resolveActiveSource(r, d)
 		return fn(w, r, d)
 	}
 }

@@ -57,6 +57,13 @@ func NewHandler(
 	users.Handle("/{id:[0-9]+}", monkey(userGetHandler, "")).Methods("GET")
 	users.Handle("/{id:[0-9]+}", monkey(userDeleteHandler, "")).Methods("DELETE")
 
+	sources := api.PathPrefix("/sources").Subrouter()
+	sources.Handle("", monkey(sourcesListHandler, "")).Methods("GET")
+	sources.Handle("", monkey(sourcePostHandler, "")).Methods("POST")
+	sources.Handle("/{id:[0-9]+}", monkey(sourcePutHandler, "")).Methods("PUT")
+	sources.Handle("/{id:[0-9]+}", monkey(sourceGetHandler, "")).Methods("GET")
+	sources.Handle("/{id:[0-9]+}", monkey(sourceDeleteHandler, "")).Methods("DELETE")
+
 	api.PathPrefix("/resources/recursive").Handler(monkey(resourceGetRecursiveHandler, "/api/resources/recursive")).Methods("GET")
 	api.PathPrefix("/resources").Handler(monkey(resourceGetHandler, "/api/resources")).Methods("GET")
 	api.PathPrefix("/resources").Handler(monkey(resourceDeleteHandler(fileCache), "/api/resources")).Methods("DELETE")

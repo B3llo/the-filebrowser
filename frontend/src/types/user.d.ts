@@ -3,6 +3,7 @@ interface IUser {
   username: string;
   password: string;
   scope: string;
+  sources?: IUserSourceRef[];
   locale: string;
   perm: Permissions;
   commands: string[];
@@ -19,11 +20,17 @@ interface IUser {
 
 type ViewModeType = "list" | "mosaic" | "mosaic gallery";
 
+interface IUserSourceRef {
+  id: number;
+  default: boolean;
+}
+
 interface IUserForm {
   id?: number;
   username?: string;
   password?: string;
   scope?: string;
+  sources?: IUserSourceRef[];
   locale?: string;
   perm?: Permissions;
   commands?: string[];

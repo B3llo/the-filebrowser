@@ -4,7 +4,7 @@
       v-if="error || fileStore.req?.type === undefined"
       showMenu
       showBreadcrumb
-      base="/files"
+      :base="filesBase"
     />
     <div class="fb-content-row">
       <div class="fb-content-main">
@@ -40,6 +40,7 @@ import { files as api } from "@/api";
 import { storeToRefs } from "pinia";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
+import { useSourceStore } from "@/stores/source";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import DetailsPanel from "@/components/DetailsPanel.vue";
@@ -117,12 +118,17 @@ const isPreviewableText = (extension: string, type: string) => {
 
 const layoutStore = useLayoutStore();
 const fileStore = useFileStore();
+const sourceStore = useSourceStore();
 
 const { reload } = storeToRefs(fileStore);
 
 const route = useRoute();
 
 const { t } = useI18n({});
+
+// The /files base includes the active source segment so breadcrumbs and path
+// math resolve within the correct source.
+const filesBase = computed(() => `/files/${route.params.sourceId ?? 0}`);
 
 let fetchDataController = new AbortController();
 

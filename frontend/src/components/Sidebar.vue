@@ -4,26 +4,45 @@
     class="fb-sidebar-backdrop"
     @click="closeHovers"
   />
-  <nav class="fb-sidebar" :class="{ active: isMobileActive }">
-    <!-- Logo header -->
+  <nav
+    class="fb-sidebar"
+    :class="{ active: isMobileActive, collapsed: sidebarCollapsed }"
+  >
+    <!-- Logo header — clicking the brand opens the first/default source -->
     <div class="fb-sidebar-header">
-      <div class="fb-sidebar-logo-chip">
-        <img :src="logoURL" alt="" aria-hidden="true" />
-      </div>
-      <span class="fb-sidebar-wordmark">FileBrowser</span>
+      <button
+        class="fb-sidebar-brand"
+        @click="toRoot"
+        :aria-label="$t('files.home', 'Home')"
+        :title="$t('files.home', 'Home')"
+      >
+        <div class="fb-sidebar-logo-chip">
+          <img :src="logoURL" alt="" aria-hidden="true" />
+        </div>
+        <span class="fb-sidebar-wordmark">FileBrowser</span>
+      </button>
+      <button
+        class="fb-sidebar-collapse-btn"
+        @click="toggleSidebarCollapsed"
+        :aria-label="$t('buttons.toggleSidebar')"
+        :title="$t('buttons.toggleSidebar')"
+      >
+        <fb-icon name="panel-left" size="18px" />
+      </button>
     </div>
 
     <!-- Navigation destinations -->
     <ul class="fb-sidebar-nav" v-if="isLoggedIn" role="list">
-      <li>
+      <li v-for="src in sourceList" :key="src.id">
         <button
           class="fb-nav-item"
-          :class="{ 'is-active': isMyFiles }"
-          @click="toRoot"
-          :aria-label="$t('sidebar.myFiles')"
+          :class="{ 'is-active': isActiveSource(src.id) }"
+          @click="toSource(src.id)"
+          :aria-label="src.name"
+          :title="src.name"
         >
-          <fb-icon name="folder" size="18px" />
-          <span>{{ $t("sidebar.myFiles") }}</span>
+          <fb-icon :name="sourceIcon(src.id)" size="18px" />
+          <span class="fb-nav-item-label">{{ src.name }}</span>
         </button>
       </li>
       <li>
@@ -101,13 +120,20 @@
 
     <!-- User footer -->
     <div v-if="isLoggedIn" class="fb-sidebar-footer">
-      <div class="fb-sidebar-avatar" aria-hidden="true">
-        {{ userInitial }}
-      </div>
-      <div class="fb-sidebar-user-info">
-        <span class="fb-sidebar-username">{{ user.username }}</span>
-        <span v-if="user.perm.admin" class="fb-sidebar-role">Admin</span>
-      </div>
+      <button
+        class="fb-sidebar-user"
+        @click="toProfile"
+        :aria-label="$t('settings.profileSettings')"
+        :title="$t('settings.profileSettings')"
+      >
+        <div class="fb-sidebar-avatar" aria-hidden="true">
+          {{ userInitial }}
+        </div>
+        <div class="fb-sidebar-user-info">
+          <span class="fb-sidebar-username">{{ user.username }}</span>
+          <span v-if="user.perm.admin" class="fb-sidebar-role">Admin</span>
+        </div>
+      </button>
       <div class="fb-sidebar-footer-actions">
         <button
           class="fb-icon-btn"
@@ -137,6 +163,7 @@ import { mapActions, mapState } from "pinia";
 import { useAuthStore } from "@/stores/auth";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
+import { useSourceStore } from "@/stores/source";
 
 import * as auth from "@/utils/auth";
 import {
@@ -171,12 +198,23 @@ export default {
   computed: {
     ...mapState(useAuthStore, ["user", "isLoggedIn"]),
     ...mapState(useFileStore, ["isFiles", "reload"]),
-    ...mapState(useLayoutStore, ["currentPromptName"]),
+    ...mapState(useLayoutStore, ["currentPromptName", "sidebarCollapsed"]),
+    ...mapState(useSourceStore, ["sources", "hasMultiple"]),
+    sourceList() {
+      // Once sources are loaded they replace the navigation; while loading on
+      // first paint, show the implicit "My Files" so the sidebar is never empty.
+      return this.sources.length
+        ? this.sources
+        : [{ id: 0, name: this.$t("sidebar.myFiles") }];
+    },
     isMobileActive() {
       return this.currentPromptName === "sidebar";
     },
     isMyFiles() {
       return this.$route.path.startsWith("/files");
+    },
+    activeRouteSourceId() {
+      return this.$route.params?.sourceId;
     },
     userInitial() {
       return this.user?.username?.[0]?.toUpperCase() ?? "?";
@@ -190,7 +228,27 @@ export default {
     canLogout: () => !noAuth && (loginPage || logoutPage !== "/login"),
   },
   methods: {
-    ...mapActions(useLayoutStore, ["closeHovers", "showHover", "openSettings"]),
+    ...mapActions(useLayoutStore, [
+      "closeHovers",
+      "showHover",
+      "openSettings",
+      "toggleSidebarCollapsed",
+    ]),
+    isActiveSource(id) {
+      return (
+        this.$route.path.startsWith("/files") &&
+        String(this.activeRouteSourceId) === String(id)
+      );
+    },
+    sourceIcon(id) {
+      // The implicit legacy source keeps the generic folder icon; real sources
+      // read as mounted volumes.
+      return Number(id) === 0 ? "folder" : "folder";
+    },
+    toSource(id) {
+      this.$router.push({ path: `/files/${id}/` });
+      this.closeHovers();
+    },
     abortOngoingFetchUsage() {
       this.usageAbortController.abort();
     },
@@ -216,7 +274,8 @@ export default {
       }
     },
     toRoot() {
-      this.$router.push({ path: "/files" });
+      const sourceStore = useSourceStore();
+      this.$router.push({ path: `${sourceStore.filesBase}/` });
       this.closeHovers();
     },
     openSettingsModal() {
@@ -225,6 +284,10 @@ export default {
     },
     toShares() {
       this.$router.push({ path: "/settings/shares" });
+      this.closeHovers();
+    },
+    toProfile() {
+      this.$router.push({ path: "/settings/profile" });
       this.closeHovers();
     },
     logout: auth.logout,
@@ -274,22 +337,63 @@ export default {
   background: var(--sidebar);
   border-right: 1px solid var(--border);
   padding: 0 0 12px;
+  transition: width 0.16s ease;
 }
 
 /* Logo header */
 .fb-sidebar-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 18px 16px 14px;
+  gap: 4px;
+  padding: 12px 12px 8px;
   flex-shrink: 0;
+}
+
+.fb-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.fb-sidebar-brand:hover {
+  background: var(--hover);
+}
+
+.fb-sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.1s,
+    color 0.1s;
+}
+
+.fb-sidebar-collapse-btn:hover {
+  background: var(--hover);
+  color: var(--text);
 }
 
 .fb-sidebar-logo-chip {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -298,10 +402,9 @@ export default {
 }
 
 .fb-sidebar-logo-chip img {
-  width: 18px;
-  height: 18px;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  filter: brightness(0) invert(1);
 }
 
 .fb-sidebar-wordmark {
@@ -357,6 +460,14 @@ export default {
   color: var(--accent);
 }
 
+.fb-nav-item-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Placeholder items (Coming soon) */
 .fb-nav-item--placeholder {
   opacity: 0.38;
@@ -407,6 +518,25 @@ export default {
   margin-top: 10px;
   border-top: 1px solid var(--border);
   flex-shrink: 0;
+}
+
+.fb-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 8px;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.fb-sidebar-user:hover {
+  background: var(--hover);
 }
 
 .fb-sidebar-avatar {
@@ -472,5 +602,73 @@ export default {
 .fb-icon-btn:hover {
   background: var(--hover);
   color: var(--text);
+}
+
+/* Collapse toggle is a desktop-only affordance */
+@media (max-width: 736px) {
+  .fb-sidebar-collapse-btn {
+    display: none;
+  }
+}
+
+/* --- Collapsed rail (desktop only) --- */
+@media (min-width: 737px) {
+  .fb-sidebar.collapsed {
+    width: 68px;
+  }
+
+  /* Header stacks the logo above the toggle, both centered */
+  .fb-sidebar.collapsed .fb-sidebar-header {
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 0 8px;
+  }
+
+  .fb-sidebar.collapsed .fb-sidebar-brand {
+    flex: 0 0 auto;
+    justify-content: center;
+    padding: 6px;
+  }
+
+  .fb-sidebar.collapsed .fb-sidebar-wordmark {
+    display: none;
+  }
+
+  /* Nav items become icon-only, centered (tooltips via title attr) */
+  .fb-sidebar.collapsed .fb-sidebar-nav {
+    padding: 0 10px;
+  }
+
+  .fb-sidebar.collapsed .fb-nav-item {
+    justify-content: center;
+    padding: 8px 0;
+  }
+
+  /* Hide only the text label, never the FbIcon (its root is span.fb-icon) */
+  .fb-sidebar.collapsed .fb-nav-item span:not(.fb-icon) {
+    display: none;
+  }
+
+  /* Hide the storage meter in the rail */
+  .fb-sidebar.collapsed .fb-sidebar-storage {
+    display: none;
+  }
+
+  /* Footer collapses to avatar + stacked action icons */
+  .fb-sidebar.collapsed .fb-sidebar-footer {
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px 0 4px;
+    margin-top: auto;
+  }
+
+  .fb-sidebar.collapsed .fb-sidebar-user {
+    justify-content: center;
+    padding: 4px;
+  }
+
+  .fb-sidebar.collapsed .fb-sidebar-user-info {
+    display: none;
+  }
 }
 </style>

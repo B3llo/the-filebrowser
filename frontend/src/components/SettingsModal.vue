@@ -6,7 +6,9 @@
   >
     <div class="fb-settings-modal">
       <div class="fb-settings-header">
-        <span class="fb-settings-title">{{ t("settings.settings") }}</span>
+        <span class="fb-settings-title">{{
+          t("settings.quickSettings", "Quick settings")
+        }}</span>
         <button
           class="fb-settings-close"
           @click="close"
@@ -176,6 +178,38 @@
           </button>
         </div>
       </div>
+
+      <div class="fb-settings-footer">
+        <button class="fb-settings-all-btn" @click="openAllSettings">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            style="width: 16px; height: 16px"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+            />
+          </svg>
+          {{ t("settings.allSettings", "All settings") }}
+          <svg
+            class="fb-settings-all-chevron"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            style="width: 15px; height: 15px"
+          >
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -187,11 +221,13 @@ import { getTheme, setTheme } from "@/utils/theme";
 import { users as api } from "@/api";
 import { computed, inject, ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 
 const $showError = inject<IToastError>("$showError")!;
 
 const layoutStore = useLayoutStore();
 const authStore = useAuthStore();
+const router = useRouter();
 const { t } = useI18n();
 
 const currentTheme = ref<UserTheme>(getTheme());
@@ -215,6 +251,11 @@ onMounted(() => {
 
 function close() {
   layoutStore.closeSettings();
+}
+
+function openAllSettings() {
+  layoutStore.closeSettings();
+  router.push({ path: "/settings" });
 }
 
 function applyTheme(theme: UserTheme) {

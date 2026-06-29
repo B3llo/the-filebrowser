@@ -15,6 +15,7 @@ import BaseModal from "./BaseModal.vue";
 import Help from "./Help.vue";
 import Delete from "./Delete.vue";
 import DeleteUser from "./DeleteUser.vue";
+import DeleteSource from "./DeleteSource.vue";
 import Download from "./Download.vue";
 import Rename from "./Rename.vue";
 import Move from "./Move.vue";
@@ -47,6 +48,7 @@ const components = new Map<string, any>([
   ["upload", Upload],
   ["share-delete", ShareDelete],
   ["deleteUser", DeleteUser],
+  ["deleteSource", DeleteSource],
   ["discardEditorChanges", DiscardEditorChanges],
   ["resolve-conflict", ResolveConflict],
   ["current-password", CurrentPassword],

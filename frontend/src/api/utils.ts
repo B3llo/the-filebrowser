@@ -3,6 +3,20 @@ import { renew, logout } from "@/utils/auth";
 import { baseURL } from "@/utils/constants";
 import { encodePath } from "@/utils/url";
 
+// The active source id for the current view. It mirrors the "source" cookie
+// consumed by the backend to rebind the user filesystem. The source store
+// keeps this in sync on every navigation; api/files.ts reads it to rebuild
+// resource URLs that include the source segment.
+let activeSourceId = "0";
+
+export function setActiveSourceId(id: string) {
+  activeSourceId = id || "0";
+}
+
+export function getActiveSourceId(): string {
+  return activeSourceId;
+}
+
 export class StatusError extends Error {
   constructor(
     message: any,
@@ -74,7 +88,13 @@ export async function fetchJSON<T>(url: string, opts?: any): Promise<T> {
 }
 
 export function removePrefix(url: string): string {
-  url = url.split("/").splice(2).join("/");
+  const parts = url.split("/");
+  // parts[0] === "" (leading slash); parts[1] === area ("files" | "share" ...).
+  // Files URLs carry the active source as their first segment
+  // (/files/<sourceId>/<path...>), so drop three segments there; everything else
+  // drops two.
+  const drop = parts[1] === "files" ? 3 : 2;
+  url = parts.slice(drop).join("/");
 
   if (url === "") url = "/";
   if (url[0] !== "/") url = "/" + url;

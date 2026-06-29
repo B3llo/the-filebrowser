@@ -75,6 +75,32 @@
           </li>
           <li v-if="user?.perm.admin">
             <router-link
+              to="/settings/sources"
+              class="fb-settings-nav-item"
+              :class="{
+                'is-active':
+                  $route.path === '/settings/sources' ||
+                  $route.name === 'Source',
+              }"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="width: 18px; height: 18px"
+              >
+                <path
+                  d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
+                />
+              </svg>
+              {{ t("settings.sourceManagement") }}
+            </router-link>
+          </li>
+          <li v-if="user?.perm.admin">
+            <router-link
               to="/settings/users"
               class="fb-settings-nav-item"
               :class="{
