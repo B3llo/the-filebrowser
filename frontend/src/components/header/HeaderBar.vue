@@ -108,6 +108,15 @@ const ifActionsSlot = computed(() => !!slots.actions);
   flex: 0 0 auto;
 }
 
+.fb-toolbar-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Inherit base toolbar-btn style for the overflow button */
 .fb-toolbar-btn {
   display: inline-flex;

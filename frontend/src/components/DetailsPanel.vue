@@ -211,8 +211,14 @@ const { selected, req } = storeToRefs(fileStore);
 const multiSelected = computed(() => selected.value.length > 1);
 
 const selectedItem = computed<ResourceItem | null>(() => {
-  if (selected.value.length !== 1) return null;
-  return req.value?.items[selected.value[0]] ?? null;
+  // Listing view: exactly one item selected within the current directory.
+  if (req.value?.isDir) {
+    if (selected.value.length !== 1) return null;
+    return req.value.items[selected.value[0]] ?? null;
+  }
+  // Preview view: `req` is the file being previewed — show it directly so the
+  // details panel works alongside the previewer (#13).
+  return (req.value as ResourceItem | null) ?? null;
 });
 
 const kind = computed(() => {

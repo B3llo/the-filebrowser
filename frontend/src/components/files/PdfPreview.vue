@@ -1,9 +1,5 @@
 <template>
   <div class="pdf-preview">
-    <div class="pdf-header">
-      <span class="file-type">PDF</span>
-      <span class="file-name">{{ filename }}</span>
-    </div>
     <div class="pdf-content">
       <iframe
         v-if="src"

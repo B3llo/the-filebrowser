@@ -1,6 +1,8 @@
 <template>
   <div class="dashboard">
-    <header-bar showMenu showLogo />
+    <header-bar showMenu>
+      <span class="fb-toolbar-title">{{ sectionTitle }}</span>
+    </header-bar>
 
     <div class="fb-settings-content">
       <nav class="fb-settings-nav">
@@ -152,12 +154,29 @@ import { useLayoutStore } from "@/stores/layout";
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
 
 const { t } = useI18n();
+const route = useRoute();
 
 const authStore = useAuthStore();
 const layoutStore = useLayoutStore();
 
 const user = computed(() => authStore.user);
 const loading = computed(() => layoutStore.loading);
+
+const sectionTitles: Record<string, string> = {
+  ProfileSettings: "settings.profileSettings",
+  Shares: "settings.shareManagement",
+  GlobalSettings: "settings.globalSettings",
+  Users: "settings.users",
+  User: "settings.user",
+  Sources: "settings.sources",
+  Source: "settings.source",
+};
+
+const sectionTitle = computed(() => {
+  const name = route.name as string;
+  return t(sectionTitles[name] || "sidebar.settings");
+});
 </script>

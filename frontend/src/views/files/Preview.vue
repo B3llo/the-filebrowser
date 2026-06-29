@@ -11,38 +11,32 @@
         isPdf || isEpub || isCsv || isMarkdown || isCode || isText || showNav
       "
     >
-      <action icon="close" :label="$t('buttons.close')" @action="close()" />
-      <title>{{ name }}</title>
-      <action
-        :disabled="layoutStore.loading"
-        v-if="isResizeEnabled && fileStore.req?.type === 'image'"
-        :icon="fullSize ? 'photo_size_select_large' : 'hd'"
-        @action="toggleSize"
-      />
+      <span class="fb-preview-type">{{ typeLabel }}</span>
+      <title class="fb-preview-name">{{ name }}</title>
 
       <template #actions>
+        <action
+          :disabled="layoutStore.loading"
+          v-if="isResizeEnabled && fileStore.req?.type === 'image'"
+          :icon="fullSize ? 'photo_size_select_large' : 'hd'"
+          @action="toggleSize"
+        />
         <action
           :disabled="layoutStore.loading"
           v-if="
             (isMarkdown || isCode || isText || isCsv) &&
             authStore.user?.perm.modify
           "
-          icon="edit"
+          fb-icon="rename"
+          size="18px"
           :label="t('buttons.editAsText')"
           @action="editAsText"
         />
         <action
           :disabled="layoutStore.loading"
-          v-if="authStore.user?.perm.delete"
-          icon="delete"
-          :label="$t('buttons.delete')"
-          @action="deleteFile"
-          id="delete-button"
-        />
-        <action
-          :disabled="layoutStore.loading"
           v-if="authStore.user?.perm.download"
-          icon="file_download"
+          fb-icon="download"
+          size="18px"
           :label="$t('buttons.download')"
           @action="download"
         />
@@ -52,15 +46,26 @@
             ['image', 'audio', 'video'].includes(fileStore.req?.type || '') &&
             authStore.user?.perm.download
           "
-          icon="open_in_new"
+          fb-icon="external-link"
+          size="18px"
           :label="t('buttons.openDirect')"
           @action="openDirect"
         />
         <action
           :disabled="layoutStore.loading"
-          icon="info"
-          :label="$t('buttons.info')"
-          show="info"
+          v-if="authStore.user?.perm.delete"
+          fb-icon="delete"
+          size="18px"
+          :label="$t('buttons.delete')"
+          @action="deleteFile"
+          id="delete-button"
+          danger
+        />
+        <action
+          fb-icon="x"
+          size="18px"
+          :label="$t('buttons.close')"
+          @action="close()"
         />
       </template>
     </header-bar>
@@ -399,22 +404,41 @@ const codeExtensions = new Set([
   ".graphql",
 ]);
 
-// Text file extensions
-const textExtensions = new Set([".txt", ".log", ".ini", ".cfg", ".conf"]);
-
 const isCode = computed(() => {
   const ext = fileStore.req?.extension.toLowerCase() || "";
   return codeExtensions.has(ext);
 });
 
+// Plain-text fallback: any text-typed file that isn't markdown, code or CSV.
+// This covers extensionless files (LICENSE, README, Makefile) and unknown text
+// extensions that previously matched no viewer and rendered nothing (#3).
 const isText = computed(() => {
+  const type = fileStore.req?.type;
+  if (type !== "text" && type !== "textImmutable") return false;
   const ext = fileStore.req?.extension.toLowerCase() || "";
-  return textExtensions.has(ext);
+  if (ext === ".csv") return false;
+  return !isMarkdown.value && !isCode.value;
 });
 
 const isTextType = computed(
   () => isMarkdown.value || isCode.value || isText.value
 );
+
+// Short type label shown as a chip in the unified preview toolbar (#13).
+const typeLabel = computed(() => {
+  const ext = fileStore.req?.extension.toLowerCase() || "";
+  if (isPdf.value) return "PDF";
+  if (isEpub.value) return "EPUB";
+  if (ext === ".csv") return "CSV";
+  if (isMarkdown.value) return "Markdown";
+  if (isCode.value) return codeLanguage.value.toUpperCase();
+  const type = fileStore.req?.type;
+  if (type === "image") return "Image";
+  if (type === "video") return "Video";
+  if (type === "audio") return "Audio";
+  if (isText.value) return ext ? ext.slice(1).toUpperCase() : "Text";
+  return "File";
+});
 
 const onWheel = (e: WheelEvent) => {
   if (!isTextType.value) {

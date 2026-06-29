@@ -157,13 +157,13 @@
 }
 
 /* ============================================================
-   Markdown Preview — Previewer (dark background)
+   Markdown Preview — Previewer (respects theme)
    ============================================================ */
 #previewer .preview .md_preview.markdown-body {
   padding: 2.5rem 3rem;
   font-size: 15px;
   line-height: 1.7;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--text);
   text-align: left;
   overflow: auto;
   height: 100%;
@@ -178,7 +178,7 @@
 #previewer .preview .md_preview.markdown-body h4,
 #previewer .preview .md_preview.markdown-body h5,
 #previewer .preview .md_preview.markdown-body h6 {
-  color: #fff;
+  color: var(--text);
   margin-top: 1.6em;
   margin-bottom: 0.6em;
   font-weight: 650;
@@ -191,48 +191,48 @@
 #previewer .preview .md_preview.markdown-body h2 {
   font-size: 1.4em;
   padding-bottom: 0.4em;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border);
 }
 #previewer .preview .md_preview.markdown-body h3 {
   font-size: 1.15em;
 }
 #previewer .preview .md_preview.markdown-body h4 {
   font-size: 1em;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--dim);
 }
 
 #previewer .preview .md_preview.markdown-body p {
   margin-top: 0;
   margin-bottom: 1em;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--text);
 }
 
 #previewer .preview .md_preview.markdown-body strong {
-  color: #fff;
+  color: var(--text);
   font-weight: 650;
 }
 
 #previewer .preview .md_preview.markdown-body a {
-  color: oklch(0.7 0.13 255);
+  color: var(--accent);
   text-decoration: none;
   border-bottom: 1px solid transparent;
   transition: border-color 0.15s;
 }
 
 #previewer .preview .md_preview.markdown-body a:hover {
-  border-bottom-color: oklch(0.7 0.13 255);
+  border-bottom-color: var(--accent);
 }
 
 #previewer .preview .md_preview.markdown-body ul,
 #previewer .preview .md_preview.markdown-body ol {
   padding-left: 1.6em;
   margin-bottom: 1.2em;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--text);
 }
 
 #previewer .preview .md_preview.markdown-body li {
   margin-bottom: 0.35em;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--text);
 }
 
 #previewer .preview .md_preview.markdown-body li + li {
@@ -240,22 +240,22 @@
 }
 
 #previewer .preview .md_preview.markdown-body li::marker {
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--faint);
 }
 
 #previewer .preview .md_preview.markdown-body code {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--hover);
   padding: 0.15em 0.4em;
   border-radius: 5px;
   font-size: 88%;
   font-family:
     ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--dim);
 }
 
 #previewer .preview .md_preview.markdown-body pre {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--hover);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 1em 1.2em;
   overflow-x: auto;
@@ -266,16 +266,16 @@
   background: none;
   padding: 0;
   font-size: 88%;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--text);
   border-radius: 0;
 }
 
 #previewer .preview .md_preview.markdown-body blockquote {
-  border-left: 3px solid oklch(0.7 0.13 255);
+  border-left: 3px solid var(--accent);
   margin: 0 0 1.2em 0;
   padding: 0.6em 1em;
-  color: rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.04);
+  color: var(--dim);
+  background: var(--hover);
   border-radius: 0 8px 8px 0;
 }
 
@@ -290,21 +290,21 @@
   margin-bottom: 1.2em;
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
 }
 
 #previewer .preview .md_preview.markdown-body th,
 #previewer .preview .md_preview.markdown-body td {
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
   padding: 0.6em 0.9em;
   text-align: left;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--text);
 }
 
 #previewer .preview .md_preview.markdown-body th {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--hover);
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--dim);
   font-size: 0.9em;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -313,11 +313,11 @@
 #previewer .preview .md_preview.markdown-body hr {
   border: none;
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--border);
   margin: 2em 0;
 }
 
 #previewer .preview .md_preview.markdown-body input[type="checkbox"] {
   margin-right: 0.5em;
-  accent-color: oklch(0.7 0.13 255);
+  accent-color: var(--accent);
 }

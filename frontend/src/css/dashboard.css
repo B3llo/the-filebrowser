@@ -251,7 +251,6 @@ html[dir="rtl"] .card .card-title > *:first-child {
   justify-content: flex-end;
   gap: 10px;
   padding: 16px 20px;
-  border-top: 1px solid var(--border);
 }
 
 body.rtl .card .card-action {

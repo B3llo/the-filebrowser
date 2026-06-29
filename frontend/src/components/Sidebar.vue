@@ -670,5 +670,10 @@ export default {
   .fb-sidebar.collapsed .fb-sidebar-user-info {
     display: none;
   }
+
+  /* Collapsed rail: keep only the avatar, hide settings/logout actions */
+  .fb-sidebar.collapsed .fb-sidebar-footer-actions {
+    display: none;
+  }
 }
 </style>

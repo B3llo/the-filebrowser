@@ -398,6 +398,39 @@ header title {
   font-size: 1.2em;
 }
 
+/* Unified preview toolbar (#13): type chip + file name + FbIcon actions */
+.fb-preview-type {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--hover);
+  color: var(--dim);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+header title.fb-preview-name {
+  padding-left: 0.6em;
+  font-size: 1.05em;
+  font-weight: 500;
+}
+
+/* Match FbIcon-based actions to the material-icon action sizing/hover */
+header .action .fb-icon {
+  padding: 0.3em;
+  box-sizing: content-box;
+  border-radius: 50%;
+}
+
+header .action[data-danger="true"]:hover {
+  color: var(--red, #e53935);
+}
+
 header .overlay {
   width: 0;
   height: 0;
@@ -417,7 +450,7 @@ header img {
   height: 2.5em;
 }
 
-header .action span {
+header .action span:not(.fb-icon) {
   display: none;
 }
 

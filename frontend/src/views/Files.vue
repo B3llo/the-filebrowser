@@ -156,7 +156,12 @@ const currentView = computed(() => {
     fileStore.req.type === "text" ||
     fileStore.req.type === "textImmutable"
   ) {
-    return Editor;
+    // Text files (incl. unknown extensions) open in Preview first so prev/next
+    // navigation stays available; only ?edit=true drops into the editor (#12).
+    if (route.query.edit === "true") {
+      return Editor;
+    }
+    return Preview;
   } else {
     return Preview;
   }

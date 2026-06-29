@@ -7,7 +7,7 @@
     :class="{ 'action--danger': danger }"
     :data-danger="danger || null"
   >
-    <FbIcon v-if="fbIcon" :name="fbIcon" />
+    <FbIcon v-if="fbIcon" :name="fbIcon" :size="size" />
     <i v-else class="material-icons">{{ icon }}</i>
     <span>{{ label }}</span>
     <span v-if="counter && counter > 0" class="counter">{{ counter }}</span>
@@ -26,6 +26,7 @@ const props = defineProps<{
   counter?: number;
   show?: string;
   danger?: boolean;
+  size?: string;
 }>();
 
 const emit = defineEmits<{

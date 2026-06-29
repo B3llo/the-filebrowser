@@ -1,15 +1,11 @@
 <template>
   <div class="code-preview">
-    <div class="code-header">
-      <span class="language-badge">{{ language }}</span>
-      <span class="line-count">{{ lineCount }} lines</span>
-    </div>
     <pre class="code-content"><code v-html="highlightedCode"></code></pre>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import hljs from "highlight.js";
 import "highlight.js/styles/github-dark.css";
 
@@ -24,9 +20,6 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const highlightedCode = ref("");
-const lineCount = computed(() => {
-  return props.content.split("\n").length;
-});
 
 const highlightCode = async () => {
   if (!props.content) {

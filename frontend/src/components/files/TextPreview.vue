@@ -1,46 +1,17 @@
 <template>
   <div class="text-preview">
-    <div class="text-header">
-      <span class="file-type">{{ fileType }}</span>
-      <span class="line-count">{{ lineCount }} lines</span>
-    </div>
     <pre class="text-content">{{ content }}</pre>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-
 interface Props {
   content: string;
   filename?: string;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   filename: "",
-});
-
-const lineCount = computed(() => {
-  return props.content.split("\n").length;
-});
-
-const fileType = computed(() => {
-  if (!props.filename) return "Text";
-
-  const ext = props.filename.split(".").pop()?.toLowerCase() || "";
-  const typeMap: Record<string, string> = {
-    txt: "Text",
-    log: "Log",
-    ini: "INI",
-    cfg: "Config",
-    conf: "Config",
-    md: "Markdown",
-    markdown: "Markdown",
-    csv: "CSV",
-    tsv: "TSV",
-  };
-
-  return typeMap[ext] || "Text";
 });
 </script>
 
