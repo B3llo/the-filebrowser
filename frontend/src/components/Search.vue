@@ -33,6 +33,16 @@
     >
       <FbIcon name="x" size="15px" />
     </button>
+    <button
+      v-else
+      class="fb-search-kbd"
+      type="button"
+      @mousedown.prevent="openPalette"
+      :title="$t('commandPalette.placeholder')"
+      :aria-label="$t('commandPalette.placeholder')"
+    >
+      {{ shortcutLabel }}
+    </button>
 
     <div
       v-show="isOpen"
@@ -73,6 +83,7 @@
 
 <script setup lang="ts">
 import { useFileStore } from "@/stores/file";
+import { useLayoutStore } from "@/stores/layout";
 import FbIcon from "@/components/FbIcon.vue";
 import type { IconName } from "@/utils/icons";
 import url from "@/utils/url";
@@ -98,7 +109,20 @@ const boxes: Record<string, { label: string; icon: IconName }> = {
 };
 
 const fileStore = useFileStore();
+const layoutStore = useLayoutStore();
 let searchAbortController = new AbortController();
+
+// OS-aware shortcut hint shown in the search bar (⌘K on macOS, Ctrl K else),
+// mirroring the convention used by most modern apps. Clicking it opens the
+// command palette (#33).
+const isMac =
+  typeof navigator !== "undefined" &&
+  /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent || "");
+const shortcutLabel = isMac ? "⌘K" : "Ctrl K";
+
+const openPalette = () => {
+  layoutStore.toggleCommandPalette();
+};
 
 const prompt = ref<string>("");
 const ongoing = ref<boolean>(false);

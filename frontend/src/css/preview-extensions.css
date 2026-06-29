@@ -57,7 +57,7 @@
   overflow: auto;
   padding: 16px;
   margin: 0;
-  font-family: "SF Mono", "Monaco", "Menlo", "Ubuntu Mono", "Cascadia Code", "Consolas", "Liberation Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   line-height: 1.6;
   background: var(--code-bg, var(--bg));
@@ -74,7 +74,7 @@
   overflow: auto;
   padding: 16px;
   margin: 0;
-  font-family: "SF Mono", "Monaco", "Menlo", "Ubuntu Mono", "Cascadia Code", "Consolas", "Liberation Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   line-height: 1.6;
   background: var(--bg);

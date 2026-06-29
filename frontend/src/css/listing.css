@@ -431,7 +431,7 @@ html[dir="rtl"] #listing {
   margin: 0;
   padding: 12px;
   overflow: hidden;
-  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 10px;
   line-height: 1.5;
   color: var(--text-primary, #d4d4d4);
@@ -507,7 +507,7 @@ html[dir="rtl"] #listing {
   padding: 0.1em 0.3em;
   border-radius: 3px;
   font-size: 0.9em;
-  font-family: "Monaco", "Menlo", monospace;
+  font-family: var(--font-mono);
 }
 .fb-card-markdown pre {
   background: var(--hover);

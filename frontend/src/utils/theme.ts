@@ -43,7 +43,7 @@ export const getEditorTheme = (themeName: string) => {
   if (themesByName[themeKey] !== undefined) {
     return themeName;
   } else if (getTheme() === "dark") {
-    return "ace/theme/twilight";
+    return "ace/theme/dracula";
   } else {
     return "ace/theme/chrome";
   }

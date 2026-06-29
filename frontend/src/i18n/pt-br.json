@@ -1,4 +1,15 @@
 {
+  "commandPalette": {
+    "placeholder": "Buscar arquivos e pastas…",
+    "actions": "Ações",
+    "recent": "Recentes",
+    "searching": "Buscando…",
+    "noResults": "Nenhum arquivo ou pasta encontrado",
+    "goToSettings": "Ir para Configurações",
+    "hintNavigate": "navegar",
+    "hintOpen": "abrir",
+    "hintClose": "fechar"
+  },
   "buttons": {
     "cancel": "Cancelar",
     "clear": "Limpar",
@@ -299,6 +310,8 @@
     "currentPassword": "Your Current Password"
   },
   "sidebar": {
+    "comingSoon": "Em breve",
+    "diskUsed": "{used} de {total} usado",
     "help": "Ajuda",
     "hugoNew": "Hugo New",
     "login": "Login",
@@ -307,9 +320,14 @@
     "newFile": "Novo arquivo",
     "newFolder": "Nova pasta",
     "preview": "Pré-visualizar",
+    "recent": "Recentes",
     "settings": "Configurações",
+    "shares": "Compartilhamentos",
     "signup": "Cadastrar",
-    "siteSettings": "Configurações do site"
+    "siteSettings": "Configurações do site",
+    "starred": "Favoritos",
+    "storage": "Armazenamento",
+    "trash": "Lixeira"
   },
   "success": {
     "linkCopied": "Link copiado!"

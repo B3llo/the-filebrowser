@@ -11,12 +11,14 @@ export const useLayoutStore = defineStore("layout", {
     showDetails: boolean;
     showSettings: boolean;
     sidebarCollapsed: boolean;
+    commandPalette: boolean;
   } => ({
     loading: false,
     prompts: [],
     showShell: false,
     showDetails: false,
     showSettings: false,
+    commandPalette: false,
     // Persisted across sessions: collapse the desktop sidebar to an icon rail.
     sidebarCollapsed: localStorage.getItem("fb-sidebar-collapsed") === "true",
   }),
@@ -48,6 +50,12 @@ export const useLayoutStore = defineStore("layout", {
     },
     toggleSettings() {
       this.showSettings = !this.showSettings;
+    },
+    toggleCommandPalette() {
+      this.commandPalette = !this.commandPalette;
+    },
+    closeCommandPalette() {
+      this.commandPalette = false;
     },
     openSettings() {
       this.showSettings = true;

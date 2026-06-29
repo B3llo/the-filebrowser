@@ -231,6 +231,7 @@ import { getTheme } from "@/utils/theme";
 import { useI18n } from "vue-i18n";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
+import { addRecent } from "@/utils/recents";
 
 // CSV file size limit for preview (5MB)
 // Prevents browser memory issues with large files
@@ -597,6 +598,15 @@ const updatePreview = async () => {
 
   const dirs = route.path.split("/");
   name.value = decodeURIComponent(dirs[dirs.length - 1]);
+
+  // Record this file in the recents list (used by the command palette).
+  if (fileStore.req && !fileStore.req.isDir) {
+    addRecent({
+      url: route.path,
+      name: name.value,
+      type: fileStore.req.type,
+    });
+  }
 
   // Load CSV content if it's a CSV file
   if (isCsv.value && fileStore.req) {

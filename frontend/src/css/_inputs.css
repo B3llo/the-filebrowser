@@ -38,7 +38,7 @@
 
 .input--textarea {
   line-height: 1.5;
-  font-family: "SF Mono", "Monaco", "Inconsolata", "Fira Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
   min-height: 120px;
   resize: vertical;

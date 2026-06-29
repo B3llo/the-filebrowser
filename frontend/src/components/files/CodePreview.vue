@@ -144,7 +144,7 @@ watch(
   margin: 0;
   padding: 16px;
   overflow: auto;
-  font-family: "SF Mono", "Monaco", "Menlo", "Ubuntu Mono", "Cascadia Code", "Consolas", "Liberation Mono", monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   line-height: 1.6;
   color: var(--text);
