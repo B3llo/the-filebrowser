@@ -1,7 +1,5 @@
-// Lightweight "recent files" list backed by localStorage. There is no backend
-// recents API yet (the sidebar "Recent" item is still a placeholder), so the
-// command palette records files as they are previewed and reads the most
-// recent ones for its empty state.
+import { useAuthStore } from "@/stores/auth";
+import { users } from "@/api";
 
 export interface RecentFile {
   // Router path used to navigate back to the file (already source-prefixed).
@@ -30,12 +28,26 @@ export function getRecents(): RecentFile[] {
   }
 }
 
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+
 export function addRecent(file: Omit<RecentFile, "at">): void {
   if (!file.url || !file.name) return;
   try {
     const list = getRecents().filter((r) => r.url !== file.url);
-    list.unshift({ ...file, at: Date.now() });
-    localStorage.setItem(KEY, JSON.stringify(list.slice(0, MAX)));
+    const updated = [{ ...file, at: Date.now() }, ...list].slice(0, MAX);
+    localStorage.setItem(KEY, JSON.stringify(updated));
+
+    // Debounced write-through to backend (batches rapid navigation)
+    if (syncTimer) clearTimeout(syncTimer);
+    syncTimer = setTimeout(() => {
+      const authStore = useAuthStore();
+      if (authStore.user?.id) {
+        authStore.updateUser({ recents: updated });
+        users
+          .update({ id: authStore.user.id, recents: updated }, ["recents"])
+          .catch(() => {/* ignore sync errors */});
+      }
+    }, 500);
   } catch {
     // Storage full or unavailable — recents are best-effort, ignore.
   }

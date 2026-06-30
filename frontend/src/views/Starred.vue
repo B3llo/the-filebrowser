@@ -1,6 +1,6 @@
 <template>
   <div>
-    <header-bar showMenu>
+    <header-bar>
       <span class="fb-toolbar-title">{{ $t("sidebar.starred") }}</span>
     </header-bar>
 
@@ -63,6 +63,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { getStarred, starVersion, type StarredFile } from "@/utils/starred";
 import { removePrefix } from "@/api/utils";
+import { users } from "@/api";
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import FbIcon from "@/components/FbIcon.vue";
 import Item from "@/components/files/ListingItem.vue";
@@ -74,7 +75,21 @@ const loadItems = () => {
   items.value = getStarred();
 };
 
-onMounted(loadItems);
+onMounted(async () => {
+  // Show localStorage immediately, then sync with backend for cross-device data
+  loadItems();
+  try {
+    const fresh = await users.get(authStore.user!.id);
+    if (Array.isArray(fresh.starred) && fresh.starred.length >= 0) {
+      authStore.updateUser({ starred: fresh.starred });
+      localStorage.setItem("fb-starred-files", JSON.stringify(fresh.starred));
+      items.value = fresh.starred as StarredFile[];
+    }
+  } catch {
+    // backend unavailable — keep localStorage data
+  }
+});
+
 // Re-sync the list whenever a star/unstar happens (e.g. via badge click)
 watch(starVersion, loadItems);
 

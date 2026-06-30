@@ -32,7 +32,7 @@
     <div>
       <img
         v-if="!readOnly && type === 'image' && isThumbsEnabled"
-        v-lazy="thumbnailUrl"
+        ref="thumbImgRef"
       />
       <canvas
         v-else-if="hasVideoThumb"
@@ -163,7 +163,8 @@ import { fileKind, extLabel } from "@/utils/fileKind";
 import dayjs from "dayjs";
 import { files as api } from "@/api";
 import * as upload from "@/utils/upload";
-import { computed, inject, ref, watch } from "vue";
+import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
+import { loadThumbnail } from "@/utils/thumbnailCache";
 import { useRouter } from "vue-router";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
@@ -242,6 +243,35 @@ const thumbnailUrl = computed(() => {
   };
 
   return api.getPreviewURL(file as Resource, "thumb");
+});
+
+// Thumbnail lazy-load with concurrency limiting
+const thumbImgRef = ref<HTMLImageElement | null>(null);
+let thumbObserver: IntersectionObserver | null = null;
+
+onMounted(() => {
+  if (!thumbImgRef.value) return;
+  thumbObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries[0].isIntersecting) {
+        loadThumbnail(thumbImgRef.value!, thumbnailUrl.value);
+        thumbObserver?.disconnect();
+        thumbObserver = null;
+      }
+    },
+    { rootMargin: "200px" }
+  );
+  thumbObserver.observe(thumbImgRef.value);
+});
+
+onUnmounted(() => {
+  thumbObserver?.disconnect();
+  thumbObserver = null;
+});
+
+// Reload if the file is modified (url key changes)
+watch(thumbnailUrl, (url) => {
+  if (thumbImgRef.value && url) loadThumbnail(thumbImgRef.value, url);
 });
 
 const isThumbsEnabled = computed(() => {

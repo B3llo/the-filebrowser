@@ -1,6 +1,6 @@
 <template>
   <div>
-    <header-bar showMenu showLogo>
+    <header-bar showLogo>
       <title />
 
       <action
@@ -19,11 +19,17 @@
       >
         <i class="material-icons">content_paste</i>
       </button>
-      <action
-        icon="check_circle"
-        :label="t('buttons.selectMultiple')"
-        @action="toggleMultipleSelection"
-      />
+
+      <!-- Select multiple toggle -->
+      <button
+        class="fb-tbtn"
+        :class="{ 'fb-tbtn--active': fileStore.multiple }"
+        :aria-label="t('buttons.selectMultiple')"
+        :title="t('buttons.selectMultiple')"
+        @click="toggleMultipleSelection"
+      >
+        <FbIcon name="select-all" size="18px" />
+      </button>
     </header-bar>
 
     <breadcrumbs :base="'/share/' + hash" />
@@ -264,22 +270,17 @@
               </div>
             </div>
 
-            <div
-              :class="{ active: fileStore.multiple }"
-              id="multiple-selection"
-            >
-              <p>{{ t("files.multipleSelectionEnabled") }}</p>
-              <div
-                @click="() => (fileStore.multiple = false)"
-                tabindex="0"
-                role="button"
-                :data-title="t('buttons.clear')"
-                :aria-label="t('buttons.clear')"
-                class="action"
-              >
-                <i class="material-icons">clear</i>
-              </div>
-            </div>
+            <SelectionBar
+              v-if="fileStore.multiple && fileStore.selectedCount > 0"
+              :header-buttons="{
+                download: true,
+                share: false,
+                move: false,
+                rename: false,
+                delete: false,
+              }"
+              :download="download"
+            />
           </div>
         </div>
         <div
@@ -308,6 +309,8 @@ import Breadcrumbs from "@/components/Breadcrumbs.vue";
 import Errors from "@/views/Errors.vue";
 import QrcodeVue from "qrcode.vue";
 import Item from "@/components/files/ListingItem.vue";
+import SelectionBar from "@/components/SelectionBar.vue";
+import FbIcon from "@/components/FbIcon.vue";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
 import { computed, inject, onMounted, onBeforeUnmount, ref, watch } from "vue";

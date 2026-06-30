@@ -369,7 +369,21 @@
     "siteSettings": "Site Settings",
     "starred": "Starred",
     "storage": "Storage",
-    "trash": "Trash"
+    "trash": "Trash",
+    "sources": "Sources",
+    "addSource": "Add source",
+    "sourceName": "Source name",
+    "sourcePath": "Path",
+    "browseFolder": "Browse",
+    "adding": "Adding…",
+    "noSubfolders": "No folders",
+    "expand": "Expand",
+    "collapse": "Collapse"
+  },
+  "browse": {
+    "filterFolders": "Filter folders…",
+    "noFolders": "No folders here",
+    "selectFolder": "Select"
   },
   "success": {
     "linkCopied": "Link copied!"

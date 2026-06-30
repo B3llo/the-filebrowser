@@ -1,3 +1,17 @@
+interface IStarredFile {
+  url: string;
+  name: string;
+  type: string;
+  starredAt: number;
+}
+
+interface IRecentFile {
+  url: string;
+  name: string;
+  type: string;
+  at: number;
+}
+
 interface IUser {
   id: number;
   username: string;
@@ -19,6 +33,8 @@ interface IUser {
   aceEditorTheme: string;
   folderColors?: Record<string, string>;
   theme?: UserTheme;
+  starred?: IStarredFile[];
+  recents?: IRecentFile[];
 }
 
 type ViewModeType = "list" | "mosaic" | "mosaic gallery";

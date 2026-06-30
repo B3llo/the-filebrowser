@@ -3,10 +3,10 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/filebrowser/filebrowser/actions/workflows/ci.yaml"><img src="https://github.com/filebrowser/filebrowser/actions/workflows/ci.yaml/badge.svg" alt="Build"></a>
+  <a href="https://github.com/B3llo/the-filebrowser/actions/workflows/ci.yaml"><img src="https://github.com/B3llo/the-filebrowser/actions/workflows/ci.yaml/badge.svg" alt="Build"></a>
   <a href="https://goreportcard.com/report/github.com/filebrowser/filebrowser/v2"><img src="https://goreportcard.com/badge/github.com/filebrowser/filebrowser/v2" alt="Go Report Card"></a>
-  <a href="https://github.com/filebrowser/filebrowser/releases/latest"><img src="https://img.shields.io/github/release/filebrowser/filebrowser.svg" alt="Version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/filebrowser/filebrowser.svg" alt="License"></a>
+  <a href="https://github.com/B3llo/the-filebrowser/releases/latest"><img src="https://img.shields.io/github/release/B3llo/the-filebrowser.svg" alt="Version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/B3llo/the-filebrowser.svg" alt="License"></a>
 </p>
 
 <p align="center">
@@ -18,7 +18,7 @@
 
 ## What is FileBrowser?
 
-FileBrowser gives you a clean, fast web interface to access your files on any server. Point it to a directory, and you're ready to go — upload, download, preview, edit, and share files from any device with a browser.
+FileBrowser gives you a clean, fast web interface to access your files on any server. Point it to a directory and you're ready to go, upload, download, preview, edit, and share files from any device with a browser.
 
 It's not a cloud platform or a storage service. It's a **file manager for your existing filesystem**.
 
@@ -28,12 +28,12 @@ It's not a cloud platform or a storage service. It's a **file manager for your e
 |---|---|
 | 🎨 **Modern UI** | Redesigned interface with light/dark themes, smooth animations, and a clean layout |
 | 📂 **Multi-Source** | Browse multiple directories and mount points from a single interface |
-| 🔍 **Command Palette** | Instant search with `Cmd+K` / `Ctrl+K` — find files and folders fast |
+| 🔍 **Command Palette** | Instant search with `Cmd+K` / `Ctrl+K`, find files and folders fast |
 | 📤 **Upload & Share** | Drag-and-drop uploads, share links with expiration, and folder creation |
-| 👁️ **Preview 20+ Formats** | Preview images, PDFs, videos, Markdown, code files, and more — without downloading |
+| 👁️ **Preview 20+ Formats** | Preview images, PDFs, videos, Markdown, code files, and more, without downloading |
 | 🌍 **i18n** | Translated into multiple languages (Portuguese, English, and more via Transifex) |
 | 🔐 **Auth Providers** | JSON, No-Auth, Proxy, and custom authentication providers |
-| ⚡ **Single Binary** | Go backend + embedded Vue frontend = one binary, zero dependencies |
+| ⚡ **Single Binary** | Go backend + embedded Vue frontend, one binary, zero dependencies |
 | 🐳 **Docker Ready** | Docker and Docker Compose support out of the box |
 
 ## Quick Start
@@ -41,14 +41,15 @@ It's not a cloud platform or a storage service. It's a **file manager for your e
 ### Docker (recommended)
 
 ```bash
-docker run -v /path/to/your/files:/srv -p 8080:80 filebrowser/filebrowser
+docker pull b3llo/the-filebrowser
+docker run -v /path/to/your/files:/srv -p 8080:80 b3llo/the-filebrowser
 ```
 
 Then open [http://localhost:8080](http://localhost:8080) in your browser.
 
 ### Binary
 
-Download the latest release for your platform from [Releases](https://github.com/filebrowser/filebrowser/releases), then:
+Download the latest release for your platform from [Releases](https://github.com/B3llo/the-filebrowser/releases), then:
 
 ```bash
 ./filebrowser -r /path/to/your/files
@@ -57,8 +58,8 @@ Download the latest release for your platform from [Releases](https://github.com
 ### Build from Source
 
 ```bash
-git clone https://github.com/B3llo/filebrowser.git
-cd filebrowser
+git clone https://github.com/B3llo/the-filebrowser.git
+cd the-filebrowser
 task build
 ```
 

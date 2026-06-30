@@ -27,16 +27,32 @@
                 <label class="fb-settings-field-label" for="path">{{
                   t("settings.sourcePath")
                 }}</label>
-                <input
-                  class="input input--block"
-                  type="text"
-                  placeholder="/absolute/path"
-                  v-model="source.path"
-                  id="path"
-                />
+                <div class="fb-source-path-row">
+                  <input
+                    class="input"
+                    style="flex: 1; min-width: 0"
+                    type="text"
+                    placeholder="/absolute/path"
+                    v-model="source.path"
+                    id="path"
+                  />
+                  <button
+                    type="button"
+                    class="button button--flat button--grey"
+                    style="white-space: nowrap"
+                    @click="showPicker = !showPicker"
+                  >
+                    {{ t("sidebar.browseFolder") }}
+                  </button>
+                </div>
                 <p class="small" style="margin-top: 6px">
                   {{ t("settings.sourcePathHelp") }}
                 </p>
+                <directory-picker
+                  v-if="showPicker"
+                  v-model="source.path"
+                  style="margin-top: 8px"
+                />
               </div>
             </div>
           </div>
@@ -75,6 +91,7 @@ import { useLayoutStore } from "@/stores/layout";
 import { useSourceStore } from "@/stores/source";
 import { sources as api } from "@/api";
 import Errors from "@/views/Errors.vue";
+import DirectoryPicker from "@/components/sidebar/DirectoryPicker.vue";
 import { computed, inject, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
@@ -83,6 +100,7 @@ import { StatusError } from "@/api/utils";
 const error = ref<StatusError>();
 const original = ref<ISource>();
 const source = ref<{ name: string; path: string }>({ name: "", path: "" });
+const showPicker = ref(false);
 
 const $showError = inject<IToastError>("$showError")!;
 const $showSuccess = inject<IToastSuccess>("$showSuccess")!;
@@ -171,3 +189,11 @@ const deleteSource = async () => {
   }
 };
 </script>
+
+<style scoped>
+.fb-source-path-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+</style>

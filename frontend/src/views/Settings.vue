@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard">
-    <header-bar showMenu>
+    <header-bar>
       <span class="fb-toolbar-title">{{ sectionTitle }}</span>
     </header-bar>
 

@@ -1,10 +1,12 @@
 package fbhttp
 
 import (
+	"errors"
 	"log"
 	"net/http"
 	gopath "path"
 	"strconv"
+	"syscall"
 
 	"github.com/tomasen/realip"
 
@@ -63,6 +65,30 @@ func (d *data) Check(path string) bool {
 	return allow
 }
 
+// trackedWriter wraps http.ResponseWriter and records whether WriteHeader or
+// Write has already been called, so callers can avoid a second WriteHeader.
+type trackedWriter struct {
+	http.ResponseWriter
+	headerWritten bool
+}
+
+func (tw *trackedWriter) WriteHeader(code int) {
+	tw.headerWritten = true
+	tw.ResponseWriter.WriteHeader(code)
+}
+
+func (tw *trackedWriter) Write(b []byte) (int, error) {
+	tw.headerWritten = true
+	return tw.ResponseWriter.Write(b)
+}
+
+// isClientDisconnect reports whether err was caused by the client closing the
+// connection mid-response (broken pipe, connection reset). These are normal
+// and should not be logged as server errors.
+func isClientDisconnect(err error) bool {
+	return errors.Is(err, syscall.EPIPE) || errors.Is(err, syscall.ECONNRESET)
+}
+
 func handle(fn handleFunc, prefix string, store *storage.Storage, server *settings.Server) http.Handler {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		for k, v := range globalHeaders {
@@ -75,25 +101,29 @@ func handle(fn handleFunc, prefix string, store *storage.Storage, server *settin
 			return
 		}
 
-		status, err := fn(w, r, &data{
+		tw := &trackedWriter{ResponseWriter: w}
+		status, err := fn(tw, r, &data{
 			Runner:   &runner.Runner{Enabled: server.EnableExec, Settings: settings},
 			store:    store,
 			settings: settings,
 			server:   server,
 		})
 
+		if isClientDisconnect(err) {
+			return
+		}
+
 		if status >= 400 || err != nil {
 			clientIP := realip.FromRequest(r)
 			log.Printf("%s: %v %s %v", r.URL.Path, status, clientIP, err)
 		}
 
-		if status != 0 {
+		if status != 0 && !tw.headerWritten {
 			txt := http.StatusText(status)
 			if status == http.StatusBadRequest && err != nil {
 				txt += " (" + err.Error() + ")"
 			}
 			http.Error(w, strconv.Itoa(status)+" "+txt, status)
-			return
 		}
 	})
 

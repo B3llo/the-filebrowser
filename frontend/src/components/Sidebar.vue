@@ -33,6 +33,20 @@
 
     <!-- Navigation destinations -->
     <ul class="fb-sidebar-nav" v-if="isLoggedIn" role="list">
+      <!-- Sources section: label + "+" for admins (only when expanded) -->
+      <li v-if="!sidebarCollapsed && (sourceList.length > 1 || isAdmin)" class="fb-nav-section-header">
+        <span class="fb-nav-section-label">{{ $t("sidebar.sources", "Sources") }}</span>
+        <button
+          v-if="isAdmin"
+          class="fb-nav-section-add"
+          @click.stop="openAddSource"
+          :title="$t('sidebar.addSource', 'Add source')"
+        >
+          <fb-icon name="plus" size="14px" />
+        </button>
+      </li>
+
+      <!-- Flat source list -->
       <li v-for="src in sourceList" :key="src.id">
         <button
           class="fb-nav-item"
@@ -255,6 +269,9 @@ export default {
       if (t === "light") return false;
       return getMediaPreference() === "dark";
     },
+    isAdmin() {
+      return this.user?.perm?.admin ?? false;
+    },
   },
   methods: {
     ...mapActions(useLayoutStore, [
@@ -270,13 +287,14 @@ export default {
       );
     },
     sourceIcon(id) {
-      // The implicit legacy source keeps the generic folder icon; real sources
-      // read as mounted volumes.
       return Number(id) === 0 ? "folder" : "folder";
     },
     toSource(id) {
       this.$router.push({ path: `/files/${id}/` });
       this.closeHovers();
+    },
+    openAddSource() {
+      this.showHover("addSource");
     },
     abortOngoingFetchUsage() {
       this.usageAbortController.abort();
@@ -653,6 +671,45 @@ export default {
 .fb-icon-btn:hover {
   background: var(--hover);
   color: var(--text);
+}
+
+/* Source section header */
+.fb-nav-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 10px 2px;
+  margin-top: 4px;
+}
+
+.fb-nav-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.fb-nav-section-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  transition:
+    background 0.1s,
+    color 0.1s;
+  padding: 0;
+}
+
+.fb-nav-section-add:hover {
+  background: var(--hover);
+  color: var(--accent);
 }
 
 /* Collapse toggle is a desktop-only affordance */

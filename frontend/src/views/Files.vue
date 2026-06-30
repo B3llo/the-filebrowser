@@ -2,7 +2,6 @@
   <div class="fb-files-root">
     <header-bar
       v-if="error || fileStore.req?.type === undefined"
-      showMenu
       showBreadcrumb
       :base="filesBase"
     />

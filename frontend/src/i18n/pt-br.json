@@ -361,7 +361,21 @@
     "siteSettings": "Configurações do site",
     "starred": "Favoritos",
     "storage": "Armazenamento",
-    "trash": "Lixeira"
+    "trash": "Lixeira",
+    "sources": "Fontes",
+    "addSource": "Adicionar fonte",
+    "sourceName": "Nome da fonte",
+    "sourcePath": "Caminho",
+    "browseFolder": "Navegar",
+    "adding": "Adicionando…",
+    "noSubfolders": "Sem pastas",
+    "expand": "Expandir",
+    "collapse": "Recolher"
+  },
+  "browse": {
+    "filterFolders": "Filtrar pastas…",
+    "noFolders": "Nenhuma pasta aqui",
+    "selectFolder": "Selecionar"
   },
   "success": {
     "linkCopied": "Link copiado!"

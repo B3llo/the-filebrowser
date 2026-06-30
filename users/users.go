@@ -25,6 +25,22 @@ type SourceRef struct {
 	Default bool `json:"default"`
 }
 
+// StarredFile is a user-starred file/folder entry persisted per-user.
+type StarredFile struct {
+	URL       string `json:"url"`
+	Name      string `json:"name"`
+	Type      string `json:"type"`
+	StarredAt int64  `json:"starredAt"`
+}
+
+// RecentFile is a recently-visited file/folder entry persisted per-user.
+type RecentFile struct {
+	URL  string `json:"url"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+	At   int64  `json:"at"`
+}
+
 // User describes a user.
 type User struct {
 	ID                    uint              `storm:"id,increment" json:"id"`
@@ -48,6 +64,8 @@ type User struct {
 	AceEditorTheme        string            `json:"aceEditorTheme"`
 	FolderColors          map[string]string `json:"folderColors"`
 	Theme                 string            `json:"theme"`
+	Starred               []StarredFile     `json:"starred"`
+	Recents               []RecentFile      `json:"recents"`
 }
 
 // GetRules implements rules.Provider.

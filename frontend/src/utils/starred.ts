@@ -1,4 +1,6 @@
 import { ref } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import { users } from "@/api";
 
 export interface StarredFile {
   url: string;
@@ -38,16 +40,30 @@ export function toggleStarred(file: Omit<StarredFile, "starredAt">): boolean {
   try {
     const list = getStarred();
     const idx = list.findIndex((r) => r.url === file.url);
+    let updated: StarredFile[];
+    let nowStarred: boolean;
+
     if (idx !== -1) {
-      list.splice(idx, 1);
-      localStorage.setItem(KEY, JSON.stringify(list));
-      starVersion.value++;
-      return false;
+      updated = [...list.slice(0, idx), ...list.slice(idx + 1)];
+      nowStarred = false;
+    } else {
+      updated = [{ ...file, starredAt: Date.now() }, ...list].slice(0, MAX);
+      nowStarred = true;
     }
-    list.unshift({ ...file, starredAt: Date.now() });
-    localStorage.setItem(KEY, JSON.stringify(list.slice(0, MAX)));
+
+    localStorage.setItem(KEY, JSON.stringify(updated));
     starVersion.value++;
-    return true;
+
+    // Write-through to backend (fire-and-forget — local state is authoritative for UX)
+    const authStore = useAuthStore();
+    if (authStore.user?.id) {
+      authStore.updateUser({ starred: updated });
+      users
+        .update({ id: authStore.user.id, starred: updated }, ["starred"])
+        .catch(() => {/* ignore sync errors */});
+    }
+
+    return nowStarred;
   } catch {
     return false;
   }

@@ -1,15 +1,5 @@
 <template>
   <header class="fb-toolbar">
-    <!-- Mobile hamburger -->
-    <button
-      v-if="showMenu"
-      class="fb-toolbar-btn fb-toolbar-menu"
-      :aria-label="t('buttons.toggleSidebar')"
-      @click="layoutStore.showHover('sidebar')"
-    >
-      <FbIcon name="menu" size="20px" />
-    </button>
-
     <!-- Logo (used by Preview/Editor which don't have a sidebar context on mobile) -->
     <img
       v-if="showLogo && !showBreadcrumb"
@@ -65,7 +55,6 @@ import { useI18n } from "vue-i18n";
 
 defineProps<{
   showLogo?: boolean;
-  showMenu?: boolean;
   showBreadcrumb?: boolean;
   base?: string;
 }>();
@@ -82,17 +71,6 @@ const ifActionsSlot = computed(() => !!slots.actions);
   height: 2em;
   margin-right: 0.5em;
   flex-shrink: 0;
-}
-
-.fb-toolbar-menu {
-  margin-right: 4px;
-  display: none;
-}
-
-@media (max-width: 736px) {
-  .fb-toolbar-menu {
-    display: flex;
-  }
 }
 
 .fb-toolbar-breadcrumb {

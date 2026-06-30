@@ -1,6 +1,6 @@
 <template>
   <div>
-    <header-bar showMenu>
+    <header-bar>
       <span class="fb-toolbar-title">{{ $t("sidebar.recent") }}</span>
     </header-bar>
 
@@ -63,6 +63,7 @@ import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { getRecents, type RecentFile } from "@/utils/recents";
 import { removePrefix } from "@/api/utils";
+import { users } from "@/api";
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import FbIcon from "@/components/FbIcon.vue";
 import Item from "@/components/files/ListingItem.vue";
@@ -70,8 +71,19 @@ import Item from "@/components/files/ListingItem.vue";
 const authStore = useAuthStore();
 const items = ref<RecentFile[]>([]);
 
-onMounted(() => {
+onMounted(async () => {
+  // Show localStorage immediately, then sync with backend for cross-device data
   items.value = getRecents();
+  try {
+    const fresh = await users.get(authStore.user!.id);
+    if (Array.isArray(fresh.recents) && fresh.recents.length >= 0) {
+      authStore.updateUser({ recents: fresh.recents });
+      localStorage.setItem("fb-recent-files", JSON.stringify(fresh.recents));
+      items.value = fresh.recents as RecentFile[];
+    }
+  } catch {
+    // backend unavailable — keep localStorage data
+  }
 });
 
 const viewMode = computed(() => {

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <header-bar showMenu showBreadcrumb :base="filesBase">
+    <header-bar showBreadcrumb :base="filesBase">
       <template #actions>
         <!-- Inline search — 280px dropdown -->
         <Search ref="searchRef" />
@@ -270,14 +270,18 @@
             </button>
           </div>
         </div>
-
-        <!-- Mobile: select multiple -->
-        <action
-          icon="check_circle"
-          :label="t('buttons.selectMultiple')"
-          @action="toggleMultipleSelection"
-        />
       </template>
+
+      <!-- Select multiple toggle (always visible) -->
+      <button
+        class="fb-tbtn"
+        :class="{ 'fb-tbtn--active': fileStore.multiple }"
+        :aria-label="t('buttons.selectMultiple')"
+        :title="t('buttons.selectMultiple')"
+        @click="toggleMultipleSelection"
+      >
+        <FbIcon name="select-all" size="18px" />
+      </button>
     </header-bar>
 
     <div
@@ -615,19 +619,17 @@
           multiple
         />
 
-        <div :class="{ active: fileStore.multiple }" id="multiple-selection">
-          <p>{{ t("files.multipleSelectionEnabled") }}</p>
-          <div
-            @click="() => (fileStore.multiple = false)"
-            tabindex="0"
-            role="button"
-            :title="t('buttons.clear')"
-            :aria-label="t('buttons.clear')"
-            class="action"
-          >
-            <FbIcon name="x" size="18px" />
-          </div>
-        </div>
+        <SelectionBar
+          v-if="fileStore.multiple && fileStore.selectedCount > 0"
+          :header-buttons="{
+            download: headerButtons.download,
+            share: headerButtons.share,
+            move: headerButtons.move,
+            rename: headerButtons.rename,
+            delete: headerButtons.delete,
+          }"
+          :download="download"
+        />
       </div>
     </template>
   </div>
@@ -651,6 +653,7 @@ import Action from "@/components/header/Action.vue";
 import Item from "@/components/files/ListingItem.vue";
 import ContextMenu from "@/components/ContextMenu.vue";
 import SelectionActionsPopup from "@/components/SelectionActionsPopup.vue";
+import SelectionBar from "@/components/SelectionBar.vue";
 import FbIcon from "@/components/FbIcon.vue";
 import FolderColorPicker from "@/components/FolderColorPicker.vue";
 import type { IconName } from "@/utils/icons";

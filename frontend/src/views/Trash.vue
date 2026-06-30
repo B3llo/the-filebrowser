@@ -1,6 +1,6 @@
 <template>
   <div>
-    <header-bar showMenu>
+    <header-bar>
       <span class="fb-toolbar-title">{{ $t("sidebar.trash") }}</span>
       <template #actions>
         <div v-if="sourceStore.sources.length > 1" class="fb-source-tabs">
