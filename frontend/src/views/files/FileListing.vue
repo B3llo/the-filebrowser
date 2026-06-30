@@ -528,6 +528,12 @@
               :label="t('buttons.info')"
               @action="layoutStore.showDetails = true"
             />
+            <action
+              v-if="isContextMenuOnFolder"
+              :fbIcon="'palette'"
+              :label="t('contextMenu.color')"
+              @action="openColorPicker"
+            />
             <hr class="fb-menu-divider" />
             <action
               v-if="headerButtons.delete"
@@ -558,6 +564,27 @@
             />
           </template>
         </context-menu>
+
+        <div
+          v-if="showColorPicker"
+          class="fb-color-picker-overlay"
+          @click="showColorPicker = false"
+        >
+          <div
+            class="fb-color-picker-container"
+            :style="{
+              left: colorPickerPos.x + 'px',
+              top: colorPickerPos.y + 'px',
+            }"
+            @click.stop
+          >
+            <FolderColorPicker
+              :currentColor="getCurrentFolderColor()"
+              @select="handleColorSelect"
+              @remove="handleColorRemove"
+            />
+          </div>
+        </div>
 
         <input
           style="display: none"
@@ -611,6 +638,7 @@ import Item from "@/components/files/ListingItem.vue";
 import ContextMenu from "@/components/ContextMenu.vue";
 import SelectionActionsPopup from "@/components/SelectionActionsPopup.vue";
 import FbIcon from "@/components/FbIcon.vue";
+import FolderColorPicker from "@/components/FolderColorPicker.vue";
 import type { IconName } from "@/utils/icons";
 import Search from "@/components/Search.vue";
 import {
@@ -634,6 +662,9 @@ const itemWeight = ref<number>(0);
 const isContextMenuVisible = ref<boolean>(false);
 const contextMenuPos = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 const isContextMenuOnItem = ref<boolean>(false);
+const isContextMenuOnFolder = ref<boolean>(false);
+const showColorPicker = ref<boolean>(false);
+const colorPickerPos = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 const newMenuOpen = ref<boolean>(false);
 const sortMenuOpen = ref<boolean>(false);
 
@@ -1385,10 +1416,13 @@ const showContextMenu = (event: MouseEvent) => {
   event.preventDefault();
   const target = event.target as HTMLElement;
   isContextMenuOnItem.value = !!target.closest(".item");
+  isContextMenuOnFolder.value = !!target.closest('[data-dir="true"]');
   if (!isContextMenuOnItem.value) {
     fileStore.selected = [];
+    isContextMenuOnFolder.value = false;
   }
   isContextMenuVisible.value = true;
+  showColorPicker.value = false;
   contextMenuPos.value = {
     x: event.clientX + 8,
     y: event.clientY + 8,
@@ -1397,6 +1431,97 @@ const showContextMenu = (event: MouseEvent) => {
 
 const hideContextMenu = () => {
   isContextMenuVisible.value = false;
+};
+
+const openColorPicker = () => {
+  // Position the color picker to the right of the context menu
+  const menuWidth = 214; // approximate context menu width
+  let x = contextMenuPos.value.x + menuWidth + 8;
+  let y = contextMenuPos.value.y;
+
+  // Keep within viewport
+  if (x + 200 > window.innerWidth) {
+    x = contextMenuPos.value.x - 200 - 8;
+  }
+  if (y + 250 > window.innerHeight) {
+    y = window.innerHeight - 260;
+  }
+
+  colorPickerPos.value = { x, y };
+  showColorPicker.value = true;
+};
+
+const handleColorSelect = async (color: string) => {
+  if (!fileStore.selected || fileStore.selected.length === 0) return;
+  const selectedIndex = fileStore.selected[0];
+  const items = fileStore.req?.items;
+  if (!items || selectedIndex === undefined) return;
+  const selectedItem = items[selectedIndex];
+  if (!selectedItem || !selectedItem.isDir) return;
+
+  const path = selectedItem.path;
+  try {
+    const user = authStore.user;
+    if (!user) return;
+
+    const folderColors = { ...(user.folderColors || {}) };
+    folderColors[path] = color;
+
+    await users.update({ id: user.id, folderColors }, ["folderColors"]);
+    if (authStore.user) {
+      authStore.user.folderColors = folderColors;
+    }
+  } catch (error) {
+    console.error("Failed to update folder color:", error);
+  }
+  showColorPicker.value = false;
+  hideContextMenu();
+};
+
+const handleColorRemove = async () => {
+  if (!fileStore.selected || fileStore.selected.length === 0) return;
+  const selectedIndex = fileStore.selected[0];
+  const items = fileStore.req?.items;
+  if (!items || selectedIndex === undefined) return;
+  const selectedItem = items[selectedIndex];
+  if (!selectedItem || !selectedItem.isDir) return;
+
+  const path = selectedItem.path;
+  try {
+    const user = authStore.user;
+    if (!user) return;
+
+    const folderColors = { ...(user.folderColors || {}) };
+    delete folderColors[path];
+
+    await users.update({ id: user.id, folderColors }, ["folderColors"]);
+    if (authStore.user) {
+      authStore.user.folderColors = folderColors;
+    }
+  } catch (error) {
+    console.error("Failed to remove folder color:", error);
+  }
+  showColorPicker.value = false;
+  hideContextMenu();
+};
+
+const applyFolderColors = () => {
+  // Colors are now applied reactively via folderColorClass in ListingItem.vue
+  // This function is kept as a no-op for compatibility
+};
+
+const getCurrentFolderColor = (): string | undefined => {
+  if (!fileStore.selected || fileStore.selected.length === 0) return undefined;
+  const selectedIndex = fileStore.selected[0];
+  const items = fileStore.req?.items;
+  if (!items || selectedIndex === undefined) return undefined;
+  const selectedItem = items[selectedIndex];
+  if (!selectedItem || !selectedItem.isDir) return undefined;
+
+  const user = authStore.user;
+  if (!user || !user.folderColors) return undefined;
+
+  return user.folderColors[selectedItem.path];
 };
 
 const handleEmptyAreaClick = (e: MouseEvent) => {
@@ -1415,5 +1540,16 @@ const handleEmptyAreaClick = (e: MouseEvent) => {
 
 .file-selection-margin-bottom {
   margin-bottom: 3.5rem;
+}
+
+.fb-color-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.fb-color-picker-container {
+  position: fixed;
+  z-index: 1001;
 }
 </style>

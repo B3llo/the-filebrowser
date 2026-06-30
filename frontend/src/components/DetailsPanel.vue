@@ -68,8 +68,8 @@
         <svg
           v-else-if="selectedItem.isDir"
           viewBox="0 0 24 24"
-          fill="var(--sel)"
-          stroke="var(--accent)"
+          fill="var(--folder-fill)"
+          stroke="var(--folder-stroke)"
           stroke-width="1.3"
           stroke-linecap="round"
           stroke-linejoin="round"
@@ -301,7 +301,7 @@ watch(
 const tint = computed(() => {
   const k = kind.value;
   const tints: Record<string, string> = {
-    folder: "var(--accent)",
+    folder: "var(--folder-stroke)",
     image: "var(--kind-image-tint)",
     video: "var(--kind-video-tint)",
     audio: "var(--kind-audio-tint)",
@@ -323,7 +323,7 @@ const thumbBg = computed(() => {
     return "var(--hover)";
   const k = kind.value;
   const softs: Record<string, string> = {
-    folder: "var(--hover)",
+    folder: "var(--folder-soft)",
     image: "var(--kind-image-soft)",
     video: "var(--kind-video-soft)",
     audio: "var(--kind-audio-soft)",

@@ -202,7 +202,7 @@ export default {
     ...mapState(useAuthStore, ["user", "isLoggedIn"]),
     ...mapState(useFileStore, ["isFiles", "reload"]),
     ...mapState(useLayoutStore, ["currentPromptName", "sidebarCollapsed"]),
-    ...mapState(useSourceStore, ["sources", "hasMultiple"]),
+    ...mapState(useSourceStore, ["sources", "hasMultiple", "activeId"]),
     sourceList() {
       // Once sources are loaded they replace the navigation; while loading on
       // first paint, show the implicit "My Files" so the sidebar is never empty.
@@ -257,9 +257,11 @@ export default {
       this.usageAbortController.abort();
     },
     async fetchUsage() {
-      const path = this.$route.path.endsWith("/")
-        ? this.$route.path
-        : this.$route.path + "/";
+      let path = this.$route.path;
+      if (!path.includes("/files")) {
+        path = `/files/${this.activeId}/`;
+      }
+      path = path.endsWith("/") ? path : path + "/";
       let usageStats = USAGE_DEFAULT;
       if (this.disableUsedPercentage) {
         return Object.assign(this.usage, usageStats);
@@ -298,10 +300,8 @@ export default {
   },
   watch: {
     $route: {
-      handler(to) {
-        if (to.path.includes("/files")) {
-          this.fetchUsage();
-        }
+      handler() {
+        this.fetchUsage();
         this.closeHovers();
       },
       immediate: true,

@@ -15,6 +15,7 @@
     @touchend="handleTouchEnd"
     @touchcancel="handleTouchCancel"
     @touchmove="handleTouchMove"
+    :class="folderColorClass"
     :data-dir="isDir"
     :data-type="type"
     :data-kind="kind"
@@ -22,6 +23,7 @@
       hasImageThumb || hasVideoThumb || hasPdfThumb ? 'true' : 'false'
     "
     :data-dotfile="isDotfile ? 'true' : 'false'"
+    :data-path="path"
     :aria-label="name"
     :aria-selected="isSelected"
     :data-ext="getExtension(name).toLowerCase()"
@@ -46,8 +48,8 @@
         v-else-if="isDir"
         class="fb-folder-icon"
         viewBox="0 0 24 24"
-        fill="var(--sel)"
-        stroke="var(--accent)"
+        fill="var(--folder-fill)"
+        stroke="var(--folder-stroke)"
         stroke-width="1.6"
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -190,6 +192,12 @@ const isSelected = computed(
 const isDraggable = computed(
   () => !props.readOnly && authStore.user?.perm.rename
 );
+
+const folderColorClass = computed(() => {
+  if (!props.isDir || !props.path) return "";
+  const color = authStore.user?.folderColors?.[props.path];
+  return color ? `folder-color-${color}` : "";
+});
 
 const canDrop = computed(() => {
   if (!props.isDir || props.readOnly) return false;

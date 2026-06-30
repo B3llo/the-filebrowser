@@ -27,25 +27,26 @@ type SourceRef struct {
 
 // User describes a user.
 type User struct {
-	ID                    uint          `storm:"id,increment" json:"id"`
-	Username              string        `storm:"unique" json:"username"`
-	DisplayName           string        `json:"displayName"`
-	Password              string        `json:"password"`
-	Scope                 string        `json:"scope"`
-	Sources               []SourceRef   `json:"sources"`
-	Locale                string        `json:"locale"`
-	LockPassword          bool          `json:"lockPassword"`
-	ViewMode              ViewMode      `json:"viewMode"`
-	SingleClick           bool          `json:"singleClick"`
-	RedirectAfterCopyMove bool          `json:"redirectAfterCopyMove"`
-	Perm                  Permissions   `json:"perm"`
-	Commands              []string      `json:"commands"`
-	Sorting               files.Sorting `json:"sorting"`
-	Fs                    afero.Fs      `json:"-" yaml:"-"`
-	Rules                 []rules.Rule  `json:"rules"`
-	HideDotfiles          bool          `json:"hideDotfiles"`
-	DateFormat            bool          `json:"dateFormat"`
-	AceEditorTheme        string        `json:"aceEditorTheme"`
+	ID                    uint              `storm:"id,increment" json:"id"`
+	Username              string            `storm:"unique" json:"username"`
+	DisplayName           string            `json:"displayName"`
+	Password              string            `json:"password"`
+	Scope                 string            `json:"scope"`
+	Sources               []SourceRef       `json:"sources"`
+	Locale                string            `json:"locale"`
+	LockPassword          bool              `json:"lockPassword"`
+	ViewMode              ViewMode          `json:"viewMode"`
+	SingleClick           bool              `json:"singleClick"`
+	RedirectAfterCopyMove bool              `json:"redirectAfterCopyMove"`
+	Perm                  Permissions       `json:"perm"`
+	Commands              []string          `json:"commands"`
+	Sorting               files.Sorting     `json:"sorting"`
+	Fs                    afero.Fs          `json:"-" yaml:"-"`
+	Rules                 []rules.Rule      `json:"rules"`
+	HideDotfiles          bool              `json:"hideDotfiles"`
+	DateFormat            bool              `json:"dateFormat"`
+	AceEditorTheme        string            `json:"aceEditorTheme"`
+	FolderColors          map[string]string `json:"folderColors"`
 }
 
 // GetRules implements rules.Provider.
@@ -100,6 +101,10 @@ func (u *User) Clean(baseScope string, followExternalSymlinks bool, fields ...st
 		case "Rules":
 			if u.Rules == nil {
 				u.Rules = []rules.Rule{}
+			}
+		case "FolderColors":
+			if u.FolderColors == nil {
+				u.FolderColors = map[string]string{}
 			}
 		}
 	}

@@ -28,6 +28,11 @@
   --sel-border: oklch(0.82 0.07 255);
   --on-accent: #fff;
 
+  /* --- Folder Colors (defaults = blue/accent) --- */
+  --folder-fill: var(--sel);
+  --folder-stroke: var(--accent);
+  --folder-soft: var(--hover);
+
   /* --- Shadows --- */
   --shadow-menu:
     0 1px 2px rgba(20, 22, 28, 0.05), 0 14px 34px -8px rgba(20, 22, 28, 0.22);
@@ -175,6 +180,11 @@
   --kind-vector-soft: oklch(0.31 0.08 315);
   --kind-text-soft: oklch(0.32 0.02 260);
   --kind-default-soft: var(--hover);
+
+  /* Folder colors dark mode */
+  --folder-fill: var(--sel);
+  --folder-stroke: var(--accent);
+  --folder-soft: var(--hover);
 }
 
 /* ============================================================
@@ -186,4 +196,106 @@
   --rowh: 36px;
   --gpad: 18px;
   --gap: 13px;
+}
+
+/* ============================================================
+   Folder Color Classes
+   Applied via data-folder-color attribute on elements
+   ============================================================ */
+
+.folder-color-blue {
+  --folder-fill: oklch(0.957 0.027 255);
+  --folder-stroke: oklch(0.55 0.13 255);
+  --folder-soft: oklch(0.97 0.01 255);
+}
+
+.folder-color-green {
+  --folder-fill: oklch(0.95 0.04 145);
+  --folder-stroke: oklch(0.55 0.12 145);
+  --folder-soft: oklch(0.97 0.02 145);
+}
+
+.folder-color-purple {
+  --folder-fill: oklch(0.94 0.04 300);
+  --folder-stroke: oklch(0.50 0.13 300);
+  --folder-soft: oklch(0.96 0.02 300);
+}
+
+.folder-color-orange {
+  --folder-fill: oklch(0.95 0.04 60);
+  --folder-stroke: oklch(0.60 0.14 60);
+  --folder-soft: oklch(0.97 0.02 60);
+}
+
+.folder-color-pink {
+  --folder-fill: oklch(0.94 0.04 350);
+  --folder-stroke: oklch(0.55 0.12 350);
+  --folder-soft: oklch(0.96 0.02 350);
+}
+
+.folder-color-red {
+  --folder-fill: oklch(0.94 0.04 25);
+  --folder-stroke: oklch(0.55 0.15 25);
+  --folder-soft: oklch(0.96 0.02 25);
+}
+
+.folder-color-yellow {
+  --folder-fill: oklch(0.96 0.04 85);
+  --folder-stroke: oklch(0.70 0.12 85);
+  --folder-soft: oklch(0.98 0.02 85);
+}
+
+.folder-color-cyan {
+  --folder-fill: oklch(0.95 0.04 190);
+  --folder-stroke: oklch(0.55 0.10 190);
+  --folder-soft: oklch(0.97 0.02 190);
+}
+
+/* Dark mode overrides for folder colors */
+:root.dark .folder-color-blue {
+  --folder-fill: oklch(0.19 0.04 255);
+  --folder-stroke: oklch(0.62 0.13 255);
+  --folder-soft: oklch(0.22 0.03 255);
+}
+
+:root.dark .folder-color-green {
+  --folder-fill: oklch(0.18 0.05 145);
+  --folder-stroke: oklch(0.62 0.12 145);
+  --folder-soft: oklch(0.22 0.04 145);
+}
+
+:root.dark .folder-color-purple {
+  --folder-fill: oklch(0.18 0.05 300);
+  --folder-stroke: oklch(0.58 0.13 300);
+  --folder-soft: oklch(0.22 0.04 300);
+}
+
+:root.dark .folder-color-orange {
+  --folder-fill: oklch(0.2 0.05 60);
+  --folder-stroke: oklch(0.68 0.14 60);
+  --folder-soft: oklch(0.24 0.04 60);
+}
+
+:root.dark .folder-color-pink {
+  --folder-fill: oklch(0.19 0.05 350);
+  --folder-stroke: oklch(0.62 0.12 350);
+  --folder-soft: oklch(0.23 0.04 350);
+}
+
+:root.dark .folder-color-red {
+  --folder-fill: oklch(0.19 0.05 25);
+  --folder-stroke: oklch(0.62 0.15 25);
+  --folder-soft: oklch(0.23 0.04 25);
+}
+
+:root.dark .folder-color-yellow {
+  --folder-fill: oklch(0.22 0.05 85);
+  --folder-stroke: oklch(0.78 0.12 85);
+  --folder-soft: oklch(0.26 0.04 85);
+}
+
+:root.dark .folder-color-cyan {
+  --folder-fill: oklch(0.19 0.05 190);
+  --folder-stroke: oklch(0.62 0.10 190);
+  --folder-soft: oklch(0.23 0.04 190);
 }

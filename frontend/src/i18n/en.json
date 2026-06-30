@@ -67,6 +67,20 @@
     "renameAll": "Rename all files (create a copy)",
     "singleDecision": "Decide for each conflicting file"
   },
+  "contextMenu": {
+    "color": "Color"
+  },
+  "folderColors": {
+    "blue": "Blue",
+    "green": "Green",
+    "purple": "Purple",
+    "orange": "Orange",
+    "pink": "Pink",
+    "red": "Red",
+    "yellow": "Yellow",
+    "cyan": "Cyan",
+    "remove": "Remove color"
+  },
   "download": {
     "downloadFile": "Download File",
     "downloadFolder": "Download Folder",
