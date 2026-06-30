@@ -37,3 +37,10 @@ build/
 
 default.nix
 Dockerfile.dev
+
+# Local documentation and design files (keep locally, don't commit)
+FOUNDATION.md
+docs/vision.md
+docs/ui-principles.md
+test/the-filebrowser/
+design-overhaul/
