@@ -102,6 +102,15 @@
     "lastModified": "Última modificação",
     "loading": "Carregando. Aguarde, por favor.",
     "lonely": "Não existe nada aqui.",
+    "emptyRecentTitle": "Nenhum arquivo recente",
+    "emptyRecentSub": "Os arquivos que você abrir aparecerão aqui.",
+    "emptyStarredTitle": "Nenhum favorito ainda",
+    "emptyStarredSub": "Marque arquivos e pastas como favoritos para encontrá-los rapidamente.",
+    "emptyTrashTitle": "Lixeira vazia",
+    "emptyTrashSub": "Arquivos movidos para a lixeira aparecem aqui antes de serem removidos.",
+    "star": "Favoritar",
+    "unstar": "Desfavoritar",
+    "moveToTrash": "Mover para Lixeira",
     "metadata": "Metadados",
     "multipleSelectionEnabled": "Seleção múltipla ativada",
     "name": "Nome",
@@ -356,7 +365,15 @@
   "success": {
     "linkCopied": "Link copiado!"
   },
+  "trash": {
+    "restore": "Restaurar",
+    "deletePermanent": "Excluir permanentemente",
+    "emptyTrash": "Esvaziar Lixeira",
+    "confirmEmpty": "Excluir permanentemente todos os itens da lixeira? Essa ação não pode ser desfeita.",
+    "deletedAt": "Excluído"
+  },
   "time": {
+    "justNow": "Agora mesmo",
     "days": "Dias",
     "hours": "Horas",
     "minutes": "Minutos",

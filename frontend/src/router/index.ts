@@ -12,6 +12,9 @@ import Settings from "@/views/Settings.vue";
 import GlobalSettings from "@/views/settings/Global.vue";
 import ProfileSettings from "@/views/settings/Profile.vue";
 import Shares from "@/views/settings/Shares.vue";
+import Recents from "@/views/Recents.vue";
+import Starred from "@/views/Starred.vue";
+import Trash from "@/views/Trash.vue";
 import Errors from "@/views/Errors.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useSourceStore } from "@/stores/source";
@@ -32,6 +35,9 @@ const titles = {
   User: "settings.user",
   Sources: "settings.sources",
   Source: "settings.source",
+  Recents: "sidebar.recent",
+  Starred: "sidebar.starred",
+  Trash: "sidebar.trash",
   Forbidden: "errors.forbidden",
   NotFound: "errors.notFound",
   InternalServerError: "errors.internal",
@@ -67,6 +73,24 @@ const routes = [
         component: Files,
       },
     ],
+  },
+  {
+    path: "/recent",
+    component: Layout,
+    meta: { requiresAuth: true },
+    children: [{ path: "", name: "Recents", component: Recents }],
+  },
+  {
+    path: "/starred",
+    component: Layout,
+    meta: { requiresAuth: true },
+    children: [{ path: "", name: "Starred", component: Starred }],
+  },
+  {
+    path: "/trash",
+    component: Layout,
+    meta: { requiresAuth: true },
+    children: [{ path: "", name: "Trash", component: Trash }],
   },
   {
     path: "/settings",

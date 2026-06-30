@@ -1,38 +1,34 @@
 <template>
   <div id="editor-container">
     <header-bar>
-      <action icon="close" :label="t('buttons.close')" @action="close()" />
-      <title>{{ fileStore.req?.name ?? "" }}</title>
+      <span class="fb-preview-type">{{ editorTypeLabel }}</span>
+      <title>{{ fileName }}</title>
 
-      <action
-        icon="add"
-        @action="increaseFontSize"
-        :label="t('buttons.increaseFontSize')"
-      />
-      <span class="editor-font-size">{{ fontSize }}px</span>
-      <action
-        icon="remove"
-        @action="decreaseFontSize"
-        :label="t('buttons.decreaseFontSize')"
-      />
-
-      <action
-        v-if="authStore.user?.perm.modify"
-        id="save-button"
-        icon="save"
-        :label="t('buttons.save')"
-        @action="save()"
-      />
-
-      <action
-        icon="preview"
-        :label="t('buttons.preview')"
-        @action="preview()"
-        v-show="isMarkdownFile"
-      />
+      <template #actions>
+        <action
+          v-if="authStore.user?.perm.modify && fileStore.req?.type !== 'textImmutable'"
+          id="save-button"
+          fb-icon="save"
+          size="18px"
+          :label="t('buttons.save')"
+          @action="save()"
+        />
+        <action
+          v-if="isMarkdownFile"
+          fb-icon="eye"
+          size="18px"
+          :label="isPreview ? t('buttons.editAsText') : t('buttons.preview')"
+          @action="togglePreview()"
+        />
+        <action
+          fb-icon="x"
+          size="18px"
+          :label="t('buttons.close')"
+          @action="close()"
+        />
+      </template>
     </header-bar>
 
-    <!-- preview container -->
     <div class="loading delayed" v-if="layoutStore.loading">
       <div class="spinner">
         <div class="bounce1"></div>
@@ -41,31 +37,6 @@
       </div>
     </div>
     <template v-else>
-      <div class="editor-header">
-        <Breadcrumbs :base="filesBase" noLink />
-
-        <div>
-          <button
-            :disabled="isSelectionEmpty"
-            @click="executeEditorCommand('copy')"
-          >
-            <span><i class="material-icons">content_copy</i></span>
-          </button>
-          <button
-            :disabled="isSelectionEmpty"
-            @click="executeEditorCommand('cut')"
-          >
-            <span><i class="material-icons">content_cut</i></span>
-          </button>
-          <button @click="executeEditorCommand('paste')">
-            <span><i class="material-icons">content_paste</i></span>
-          </button>
-          <button @click="executeEditorCommand('openCommandPalette')">
-            <span><i class="material-icons">more_vert</i></span>
-          </button>
-        </div>
-      </div>
-
       <div
         v-show="isPreview && isMarkdownFile"
         id="preview-container"
@@ -86,7 +57,6 @@ import "ace-builds/src-noconflict/ext-language_tools";
 import modelist from "ace-builds/src-noconflict/ext-modelist";
 import DOMPurify from "dompurify";
 
-import Breadcrumbs from "@/components/Breadcrumbs.vue";
 import Action from "@/components/header/Action.vue";
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import { useAuthStore } from "@/stores/auth";
@@ -118,53 +88,33 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
-const filesBase = computed(() => `/files/${route.params.sourceId ?? 0}`);
-
 const editor = ref<Ace.Editor | null>(null);
 const fontSize = ref(parseInt(localStorage.getItem("editorFontSize") || "14"));
 
-const isPreview = ref(
-  fileStore.req?.name.endsWith(".md") ||
-    fileStore.req?.name.endsWith(".markdown")
-);
+// Start directly in edit mode (never open in preview first — #2).
+const isPreview = ref(false);
 const previewContent = ref("");
+
 const isMarkdownFile =
-  fileStore.req?.name.endsWith(".md") ||
-  fileStore.req?.name.endsWith(".markdown");
+  (fileStore.req?.extension.toLowerCase() === ".md" ||
+    fileStore.req?.extension.toLowerCase() === ".markdown") ??
+  false;
+
 const katexOptions = {
   output: "mathml" as const,
   throwOnError: false,
 };
 marked.use(markedKatex(katexOptions));
 
-const isSelectionEmpty = ref(true);
+const fileName = computed(() => fileStore.req?.name ?? "");
 
-const executeEditorCommand = (name: string) => {
-  if (name == "paste") {
-    read()
-      .then((data) => {
-        editor.value?.execCommand("paste", {
-          text: data,
-        });
-      })
-      .catch((e) => {
-        if (
-          document.queryCommandSupported &&
-          document.queryCommandSupported("paste")
-        ) {
-          document.execCommand("paste");
-        } else {
-          console.warn("the clipboard api is not supported", e);
-        }
-      });
-    return;
-  }
-  if (name == "copy" || name == "cut") {
-    const selectedText = editor.value?.getCopyText();
-    copy({ text: selectedText });
-  }
-  editor.value?.execCommand(name);
-};
+const editorTypeLabel = computed(() => {
+  if (!fileStore.req) return "";
+  if (isMarkdownFile) return "Markdown";
+  const modeName = modelist.getModeForPath(fileStore.req.name).mode as string;
+  const lang = modeName.split("/").pop() ?? "";
+  return lang.charAt(0).toUpperCase() + lang.slice(1) || "Text";
+});
 
 onMounted(() => {
   window.addEventListener("keydown", keyEvent);
@@ -194,7 +144,6 @@ onMounted(() => {
     initEditor(fileContent);
   } else {
     const unwatch = watchEffect(() => {
-      // Initialize editor when layout is loaded
       if (!layoutStore.loading) {
         setTimeout(() => {
           initEditor(fileContent);
@@ -214,7 +163,6 @@ onBeforeUnmount(() => {
 onBeforeRouteUpdate((to, from, next) => {
   if (editor.value?.session.getUndoManager().isClean()) {
     next();
-
     return;
   }
 
@@ -250,11 +198,6 @@ const initEditor = (fileContent: string) => {
     '"SF Mono", "Monaco", "Menlo", "Ubuntu Mono", "Cascadia Code", "Consolas", "Liberation Mono", monospace'
   );
   editor.value.focus();
-
-  const selection = editor.value?.getSelection();
-  selection.on("changeSelection", function () {
-    isSelectionEmpty.value = selection.isEmpty();
-  });
 };
 
 const keyEvent = (event: KeyboardEvent) => {
@@ -277,8 +220,6 @@ const keyEvent = (event: KeyboardEvent) => {
 const handlePageChange = (event: BeforeUnloadEvent) => {
   if (!editor.value?.session.getUndoManager().isClean()) {
     event.preventDefault();
-    // returnValue is now depecrated, though keeping in for legacy browser support
-    // https://developer.mozilla.org/en-US/docs/Web/API/BeforeUnloadEvent/returnValue
     event.returnValue = true;
   }
 };
@@ -295,20 +236,6 @@ const save = async (throwError?: boolean) => {
     buttons.done(button);
     $showError(e);
     if (throwError) throw e;
-  }
-};
-
-const increaseFontSize = () => {
-  fontSize.value += 1;
-  editor.value?.setFontSize(fontSize.value);
-  localStorage.setItem("editorFontSize", fontSize.value.toString());
-};
-
-const decreaseFontSize = () => {
-  if (fontSize.value > 1) {
-    fontSize.value -= 1;
-    editor.value?.setFontSize(fontSize.value);
-    localStorage.setItem("editorFontSize", fontSize.value.toString());
   }
 };
 
@@ -338,42 +265,21 @@ const finishClose = () => {
   router.push({ path: uri });
 };
 
-const preview = () => {
+const togglePreview = () => {
   isPreview.value = !isPreview.value;
 };
 </script>
 
 <style scoped>
-.editor-font-size {
-  margin: 0 0.5em;
-  color: var(--fg);
-}
-
-.editor-header {
+#editor-container {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  height: 100%;
 }
 
-.editor-header > div > button {
-  background: transparent;
-  color: var(--action);
-  border: none;
-  outline: none;
-  opacity: 0.8;
-  cursor: pointer;
-}
-
-.editor-header > div > button:hover:not(:disabled) {
-  opacity: 1;
-}
-
-.editor-header > div > button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.editor-header > div > button > span > i {
-  font-size: 1.2rem;
+#editor,
+#preview-container {
+  flex: 1;
+  overflow: auto;
 }
 </style>

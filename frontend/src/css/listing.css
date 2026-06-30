@@ -870,3 +870,36 @@ html[dir="rtl"] #listing {
 #listing #multiple-selection i {
   color: var(--iconSecondary);
 }
+
+/* ---- Star badge (visual indicator on starred items) ---- */
+.fb-star-badge {
+  position: absolute;
+  padding: 3px;
+  color: var(--accent);
+  display: none;
+  line-height: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Mosaic: file card — top-right corner of the thumb area */
+#listing.mosaic .item:not([data-dir="true"]) .fb-star-badge {
+  display: flex;
+  top: 8px;
+  right: 8px;
+}
+/* Mosaic: folder chip — vertically centered, right edge */
+#listing.mosaic .item[data-dir="true"] .fb-star-badge {
+  display: flex;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 10px;
+  bottom: auto;
+}
+/* List: absolute on the right, vertically centered */
+#listing.list .item .fb-star-badge {
+  display: flex;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 14px;
+}

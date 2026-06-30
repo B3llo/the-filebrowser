@@ -529,12 +529,23 @@
               @action="layoutStore.showDetails = true"
             />
             <action
+              :fbIcon="'star'"
+              :label="isStarredContextItem ? t('files.unstar') : t('files.star')"
+              @action="toggleStar"
+            />
+            <action
               v-if="isContextMenuOnFolder"
               :fbIcon="'palette'"
               :label="t('contextMenu.color')"
               @action="openColorPicker"
             />
             <hr class="fb-menu-divider" />
+            <action
+              v-if="headerButtons.delete"
+              :fbIcon="'trash'"
+              :label="t('files.moveToTrash')"
+              @action="moveToTrash"
+            />
             <action
               v-if="headerButtons.delete"
               :fbIcon="'delete'"
@@ -631,6 +642,8 @@ import { enableExec } from "@/utils/constants";
 import * as upload from "@/utils/upload";
 import { throttle } from "lodash-es";
 import { Base64 } from "js-base64";
+import { isStarred, toggleStarred, starVersion } from "@/utils/starred";
+import { useSourceStore } from "@/stores/source";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import Action from "@/components/header/Action.vue";
@@ -674,6 +687,7 @@ const clipboardStore = useClipboardStore();
 const authStore = useAuthStore();
 const fileStore = useFileStore();
 const layoutStore = useLayoutStore();
+const sourceStore = useSourceStore();
 
 const { req } = storeToRefs(fileStore);
 
@@ -1433,6 +1447,54 @@ const hideContextMenu = () => {
   isContextMenuVisible.value = false;
 };
 
+const isStarredContextItem = computed(() => {
+  starVersion.value; // subscribe so it re-evaluates after toggleStarred
+  const items = fileStore.req?.items;
+  if (!items || fileStore.selected.length === 0) return false;
+  const item = items[fileStore.selected[0]];
+  return item ? isStarred(item.url) : false;
+});
+
+const toggleStar = () => {
+  hideContextMenu();
+  const items = fileStore.req?.items;
+  if (!items || fileStore.selected.length === 0) return;
+  const item = items[fileStore.selected[0]];
+  if (!item) return;
+  toggleStarred({ url: item.url, name: item.name, type: item.type });
+};
+
+const moveToTrash = async () => {
+  hideContextMenu();
+  const items = fileStore.req?.items;
+  if (!items || fileStore.selected.length === 0) return;
+
+  const trashBase = `${filesBase.value}/.Trash/`;
+
+  // Ensure .Trash/ exists (create if missing; ignore error if already exists).
+  try {
+    await api.post(trashBase);
+  } catch {
+    // Already exists or creation failed — the move will surface any real error.
+  }
+
+  const timestamp = Date.now();
+  const moveItems = fileStore.selected
+    .map((idx) => items[idx])
+    .filter(Boolean)
+    .map((item) => ({
+      from: item.url,
+      to: `${filesBase.value}/.Trash/${timestamp}_${item.name}${item.isDir ? "/" : ""}`,
+    }));
+
+  try {
+    await api.move(moveItems);
+    fileStore.reload = true;
+  } catch (e: any) {
+    $showError(e);
+  }
+};
+
 const openColorPicker = () => {
   // Position the color picker to the right of the context menu
   const menuWidth = 214; // approximate context menu width
@@ -1503,11 +1565,6 @@ const handleColorRemove = async () => {
   }
   showColorPicker.value = false;
   hideContextMenu();
-};
-
-const applyFolderColors = () => {
-  // Colors are now applied reactively via folderColorClass in ListingItem.vue
-  // This function is kept as a no-op for compatibility
 };
 
 const getCurrentFolderColor = (): string | undefined => {

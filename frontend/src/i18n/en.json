@@ -108,10 +108,15 @@
     "emptyFolderSub": "Drag files here or use the New button to get started.",
     "emptySearchTitle": "No results for \u201c{query}\u201d",
     "emptySearchSub": "Try a different name or check another folder.",
+    "emptyRecentTitle": "No recent files",
+    "emptyRecentSub": "Files you open will appear here.",
     "emptyStarredTitle": "No starred items yet",
     "emptyStarredSub": "Star files and folders to find them quickly later.",
     "emptyTrashTitle": "Trash is empty",
-    "emptyTrashSub": "Items you delete will appear here before being removed.",
+    "emptyTrashSub": "Files moved to trash appear here before being removed permanently.",
+    "star": "Star",
+    "unstar": "Unstar",
+    "moveToTrash": "Move to Trash",
     "emptySharedTitle": "Nothing shared yet",
     "emptySharedSub": "Files shared with you will show up here.",
     "metadata": "Metadata",
@@ -368,7 +373,15 @@
   "success": {
     "linkCopied": "Link copied!"
   },
+  "trash": {
+    "restore": "Restore",
+    "deletePermanent": "Delete permanently",
+    "emptyTrash": "Empty Trash",
+    "confirmEmpty": "Permanently delete all items in Trash? This cannot be undone.",
+    "deletedAt": "Deleted"
+  },
   "time": {
+    "justNow": "Just now",
     "days": "Days",
     "hours": "Hours",
     "minutes": "Minutes",

@@ -41,7 +41,7 @@ import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
 
-const props = defineProps<{
+defineProps<{
   currentColor?: string;
 }>();
 
@@ -127,7 +127,9 @@ const removeColor = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
   padding: 0;
 }
 
@@ -136,7 +138,9 @@ const removeColor = () => {
 }
 
 .fb-folder-color-btn.active {
-  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent);
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--accent);
 }
 
 .fb-folder-color-icon {
@@ -154,7 +158,9 @@ const removeColor = () => {
   color: var(--dim);
   font-size: 12px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .fb-folder-color-remove:hover {

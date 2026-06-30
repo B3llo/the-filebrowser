@@ -46,24 +46,28 @@
         </button>
       </li>
       <li>
-        <span
-          class="fb-nav-item fb-nav-item--placeholder"
-          aria-disabled="true"
-          :title="$t('sidebar.comingSoon', 'Coming soon')"
+        <button
+          class="fb-nav-item"
+          :class="{ 'is-active': $route.path === '/recent' }"
+          @click="toRecent"
+          :aria-label="$t('sidebar.recent')"
+          :title="$t('sidebar.recent')"
         >
           <fb-icon name="clock" size="18px" />
           <span>{{ $t("sidebar.recent", "Recent") }}</span>
-        </span>
+        </button>
       </li>
       <li>
-        <span
-          class="fb-nav-item fb-nav-item--placeholder"
-          aria-disabled="true"
-          :title="$t('sidebar.comingSoon', 'Coming soon')"
+        <button
+          class="fb-nav-item"
+          :class="{ 'is-active': $route.path === '/starred' }"
+          @click="toStarred"
+          :aria-label="$t('sidebar.starred')"
+          :title="$t('sidebar.starred')"
         >
           <fb-icon name="star" size="18px" />
           <span>{{ $t("sidebar.starred", "Starred") }}</span>
-        </span>
+        </button>
       </li>
       <li>
         <button
@@ -76,14 +80,16 @@
         </button>
       </li>
       <li>
-        <span
-          class="fb-nav-item fb-nav-item--placeholder"
-          aria-disabled="true"
-          :title="$t('sidebar.comingSoon', 'Coming soon')"
+        <button
+          class="fb-nav-item"
+          :class="{ 'is-active': $route.path === '/trash' }"
+          @click="toTrash"
+          :aria-label="$t('sidebar.trash')"
+          :title="$t('sidebar.trash')"
         >
           <fb-icon name="trash" size="18px" />
           <span>{{ $t("sidebar.trash", "Trash") }}</span>
-        </span>
+        </button>
       </li>
     </ul>
 
@@ -286,6 +292,18 @@ export default {
     },
     openSettingsModal() {
       this.openSettings();
+      this.closeHovers();
+    },
+    toRecent() {
+      this.$router.push({ path: "/recent" });
+      this.closeHovers();
+    },
+    toStarred() {
+      this.$router.push({ path: "/starred" });
+      this.closeHovers();
+    },
+    toTrash() {
+      this.$router.push({ path: "/trash" });
       this.closeHovers();
     },
     toShares() {

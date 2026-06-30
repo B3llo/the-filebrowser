@@ -42,3 +42,16 @@
   line-height: 1.5;
   margin: 0;
 }
+
+.fb-tbtn--danger {
+  color: var(--danger, #e53e3e) !important;
+}
+
+.fb-tbtn--danger:hover {
+  background: rgba(229, 62, 62, 0.1) !important;
+}
+
+.fb-source-tabs {
+  display: flex;
+  gap: 4px;
+}

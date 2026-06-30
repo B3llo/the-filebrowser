@@ -130,6 +130,12 @@
         <time :datetime="modified">{{ humanTime() }}</time>
       </p>
     </div>
+
+    <span v-if="isItemStarred" class="fb-star-badge" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M11.48 3.5a.6.6 0 0 1 1.04 0l2.36 4.78 5.27.77a.6.6 0 0 1 .33 1.02l-3.81 3.72.9 5.25a.6.6 0 0 1-.87.63L12 17.5l-4.71 2.47a.6.6 0 0 1-.87-.63l.9-5.25-3.81-3.72a.6.6 0 0 1 .33-1.02l5.27-.77z"/>
+      </svg>
+    </span>
   </div>
 </template>
 
@@ -137,6 +143,7 @@
 import { useAuthStore } from "@/stores/auth";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
+import { isStarred, starVersion } from "@/utils/starred";
 
 import { enableThumbs } from "@/utils/constants";
 import { filesize } from "@/utils";
@@ -197,6 +204,11 @@ const folderColorClass = computed(() => {
   if (!props.isDir || !props.path) return "";
   const color = authStore.user?.folderColors?.[props.path];
   return color ? `folder-color-${color}` : "";
+});
+
+const isItemStarred = computed(() => {
+  starVersion.value; // reactive dependency
+  return isStarred(props.url);
 });
 
 const canDrop = computed(() => {
