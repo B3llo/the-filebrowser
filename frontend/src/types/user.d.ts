@@ -18,6 +18,7 @@ interface IUser {
   sorting?: Sorting;
   aceEditorTheme: string;
   folderColors?: Record<string, string>;
+  theme?: UserTheme;
 }
 
 type ViewModeType = "list" | "mosaic" | "mosaic gallery";
@@ -44,6 +45,7 @@ interface IUserForm {
   redirectAfterCopyMove?: boolean;
   dateFormat?: boolean;
   folderColors?: Record<string, string>;
+  theme?: UserTheme;
 }
 
 interface Permissions {

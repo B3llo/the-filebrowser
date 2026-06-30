@@ -47,6 +47,7 @@ type User struct {
 	DateFormat            bool              `json:"dateFormat"`
 	AceEditorTheme        string            `json:"aceEditorTheme"`
 	FolderColors          map[string]string `json:"folderColors"`
+	Theme                 string            `json:"theme"`
 }
 
 // GetRules implements rules.Provider.

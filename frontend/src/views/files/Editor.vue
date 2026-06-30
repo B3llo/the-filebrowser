@@ -6,7 +6,10 @@
 
       <template #actions>
         <action
-          v-if="authStore.user?.perm.modify && fileStore.req?.type !== 'textImmutable'"
+          v-if="
+            authStore.user?.perm.modify &&
+            fileStore.req?.type !== 'textImmutable'
+          "
           id="save-button"
           fb-icon="save"
           size="18px"
@@ -75,7 +78,6 @@ import {
 } from "vue";
 import { useI18n } from "vue-i18n";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
-import { read, copy } from "@/utils/clipboard";
 
 const $showError = inject<IToastError>("$showError")!;
 

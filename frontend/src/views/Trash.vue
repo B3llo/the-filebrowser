@@ -33,7 +33,10 @@
       </div>
     </div>
 
-    <div v-else-if="!fileStore.req || fileStore.req.items.length === 0" class="fb-empty">
+    <div
+      v-else-if="!fileStore.req || fileStore.req.items.length === 0"
+      class="fb-empty"
+    >
       <div class="fb-empty-icon">
         <fb-icon name="trash" size="40px" />
       </div>
@@ -92,14 +95,18 @@
       </div>
     </div>
 
-    <context-menu
-      :show="ctxVisible"
-      :pos="ctxPos"
-      @hide="ctxVisible = false"
-    >
-      <action :fbIcon="'arrow-back'" :label="$t('trash.restore')" @action="restoreSelected" />
+    <context-menu :show="ctxVisible" :pos="ctxPos" @hide="ctxVisible = false">
+      <action
+        :fbIcon="'arrow-back'"
+        :label="$t('trash.restore')"
+        @action="restoreSelected"
+      />
       <hr class="fb-menu-divider" />
-      <action :fbIcon="'delete'" :label="$t('trash.deletePermanent')" @action="deleteSelected" />
+      <action
+        :fbIcon="'delete'"
+        :label="$t('trash.deletePermanent')"
+        @action="deleteSelected"
+      />
     </context-menu>
   </div>
 </template>
@@ -135,11 +142,11 @@ const viewMode = computed(() => {
   return m === "mosaic gallery" ? "mosaic" : m;
 });
 
-const trashDirs = computed(
-  () => (fileStore.req?.items ?? []).filter((i) => i.isDir)
+const trashDirs = computed(() =>
+  (fileStore.req?.items ?? []).filter((i) => i.isDir)
 );
-const trashFiles = computed(
-  () => (fileStore.req?.items ?? []).filter((i) => !i.isDir)
+const trashFiles = computed(() =>
+  (fileStore.req?.items ?? []).filter((i) => !i.isDir)
 );
 
 onMounted(() => loadTrash());
@@ -169,8 +176,7 @@ const loadTrash = async () => {
 };
 
 /** Strip the timestamp prefix that "Move to Trash" added. */
-const cleanName = (trashName: string): string =>
-  trashName.replace(/^\d+_/, "");
+const cleanName = (trashName: string): string => trashName.replace(/^\d+_/, "");
 
 // ---- Context menu ----
 const ctxVisible = ref(false);
@@ -180,14 +186,15 @@ const onContextMenu = (event: MouseEvent) => {
   event.preventDefault();
   const target = event.target as HTMLElement;
   const item = target.closest(".item") as HTMLElement | null;
-  if (!item) { ctxVisible.value = false; return; }
+  if (!item) {
+    ctxVisible.value = false;
+    return;
+  }
 
   // Select the right-clicked item by finding its index in the listing.
   const items = fileStore.req?.items ?? [];
   const itemUrl = item.getAttribute("data-path")
-    ? items.find(
-        (it) => it.path === item.getAttribute("data-path")
-      )
+    ? items.find((it) => it.path === item.getAttribute("data-path"))
     : null;
   if (itemUrl) {
     fileStore.selected = [itemUrl.index];

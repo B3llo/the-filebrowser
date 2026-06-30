@@ -146,6 +146,14 @@
       <div class="fb-sidebar-footer-actions">
         <button
           class="fb-icon-btn"
+          @click="toggleTheme"
+          :aria-label="$t('settings.toggleTheme')"
+          :title="$t('settings.toggleTheme')"
+        >
+          <fb-icon :name="isDark ? 'sun' : 'moon'" size="16px" />
+        </button>
+        <button
+          class="fb-icon-btn"
           @click="openSettingsModal"
           :aria-label="$t('sidebar.settings')"
           :title="$t('sidebar.settings')"
@@ -186,7 +194,12 @@ import {
   loginPage,
   logoURL,
 } from "@/utils/constants";
-import { files as api } from "@/api";
+import { files as api, users } from "@/api";
+import {
+  toggleTheme as toggleThemeUtil,
+  getTheme,
+  getMediaPreference,
+} from "@/utils/theme";
 import ProgressBar from "@/components/ProgressBar.vue";
 import FbIcon from "@/components/FbIcon.vue";
 import prettyBytes from "pretty-bytes";
@@ -236,6 +249,12 @@ export default {
     disableUsedPercentage: () => disableUsedPercentage,
     logoURL: () => logoURL,
     canLogout: () => !noAuth && (loginPage || logoutPage !== "/login"),
+    isDark() {
+      const t = this.user?.theme;
+      if (t === "dark") return true;
+      if (t === "light") return false;
+      return getMediaPreference() === "dark";
+    },
   },
   methods: {
     ...mapActions(useLayoutStore, [
@@ -315,6 +334,16 @@ export default {
       this.closeHovers();
     },
     logout: auth.logout,
+    async toggleTheme() {
+      toggleThemeUtil();
+      const newTheme = getTheme();
+      if (this.user) {
+        const data = { id: this.user.id, theme: newTheme };
+        await users.update(data, ["theme"]).catch(() => {});
+        const authStore = useAuthStore();
+        authStore.updateUser(data);
+      }
+    },
   },
   watch: {
     $route: {

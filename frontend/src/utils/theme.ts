@@ -13,6 +13,7 @@ export const setTheme = (theme: UserTheme) => {
   } else {
     html.className = theme;
   }
+  localStorage.setItem("fb-theme", theme);
 };
 
 export const toggleTheme = (): void => {

@@ -8,11 +8,17 @@
 import { ref, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { setHtmlLocale } from "./i18n";
-import { getMediaPreference, getTheme, setTheme } from "./utils/theme";
+import { getMediaPreference, setTheme } from "./utils/theme";
+import { useAuthStore } from "./stores/auth";
 
 const { locale } = useI18n();
+const authStore = useAuthStore();
 
-const userTheme = ref<UserTheme>(getTheme() || getMediaPreference());
+// Priority: localStorage (instant) > backend user.theme > OS preference
+const cached = localStorage.getItem("fb-theme") as UserTheme;
+const userTheme = ref<UserTheme>(
+  cached || authStore.user?.theme || getMediaPreference()
+);
 
 onMounted(() => {
   setTheme(userTheme.value);

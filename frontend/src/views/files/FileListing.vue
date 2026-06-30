@@ -530,7 +530,9 @@
             />
             <action
               :fbIcon="'star'"
-              :label="isStarredContextItem ? t('files.unstar') : t('files.star')"
+              :label="
+                isStarredContextItem ? t('files.unstar') : t('files.star')
+              "
               @action="toggleStar"
             />
             <action
@@ -643,7 +645,6 @@ import * as upload from "@/utils/upload";
 import { throttle } from "lodash-es";
 import { Base64 } from "js-base64";
 import { isStarred, toggleStarred, starVersion } from "@/utils/starred";
-import { useSourceStore } from "@/stores/source";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import Action from "@/components/header/Action.vue";
@@ -687,7 +688,6 @@ const clipboardStore = useClipboardStore();
 const authStore = useAuthStore();
 const fileStore = useFileStore();
 const layoutStore = useLayoutStore();
-const sourceStore = useSourceStore();
 
 const { req } = storeToRefs(fileStore);
 

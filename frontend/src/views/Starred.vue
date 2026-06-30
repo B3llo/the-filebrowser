@@ -12,12 +12,7 @@
       <p class="fb-empty-sub">{{ $t("files.emptyStarredSub") }}</p>
     </div>
 
-    <div
-      v-else
-      id="listing"
-      class="file-icons"
-      :class="viewMode"
-    >
+    <div v-else id="listing" class="file-icons" :class="viewMode">
       <div>
         <div class="fb-col-header">
           <div>

@@ -219,7 +219,7 @@ import { useLayoutStore } from "@/stores/layout";
 import { useAuthStore } from "@/stores/auth";
 import { getTheme, setTheme } from "@/utils/theme";
 import { users as api } from "@/api";
-import { computed, inject, ref, onMounted } from "vue";
+import { computed, inject, ref, onMounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 
@@ -247,7 +247,20 @@ onMounted(() => {
     currentDensity.value = density;
     document.documentElement.setAttribute("data-density", density);
   }
+  // Sync theme with localStorage or backend
+  const cached = localStorage.getItem("fb-theme") as UserTheme;
+  currentTheme.value = cached || authStore.user?.theme || getTheme();
 });
+
+// Keep in sync when theme is changed externally (e.g. sidebar toggle)
+watch(
+  () => authStore.user?.theme,
+  (newTheme) => {
+    if (newTheme) {
+      currentTheme.value = newTheme;
+    }
+  }
+);
 
 function close() {
   layoutStore.closeSettings();
@@ -258,9 +271,15 @@ function openAllSettings() {
   router.push({ path: "/settings" });
 }
 
-function applyTheme(theme: UserTheme) {
+async function applyTheme(theme: UserTheme) {
   currentTheme.value = theme;
   setTheme(theme);
+  // Persist to backend
+  if (authStore.user) {
+    const data = { id: authStore.user.id, theme };
+    await api.update(data, ["theme"]).catch($showError);
+    authStore.updateUser(data);
+  }
 }
 
 function setDensity(density: "comfortable" | "compact") {

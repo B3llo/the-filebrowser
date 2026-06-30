@@ -330,6 +330,7 @@
       "light": "Claro",
       "title": "Tema"
     },
+    "toggleTheme": "Alternar tema",
     "user": "Usuário",
     "userCommands": "Comandos",
     "userCommandsHelp": "Uma lista, separada com espaços, de comandos disponíveis para este usuário. Exemplo:",
