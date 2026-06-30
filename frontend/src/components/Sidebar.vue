@@ -104,12 +104,11 @@
     </ul>
 
     <!-- Storage meter -->
-    <div
-      v-if="isLoggedIn && !disableUsedPercentage"
-      class="fb-sidebar-storage"
-    >
+    <div v-if="isLoggedIn && !disableUsedPercentage" class="fb-sidebar-storage">
       <div class="fb-sidebar-storage-header">
-        <span class="fb-sidebar-storage-label">{{ $t('sidebar.storage') }}</span>
+        <span class="fb-sidebar-storage-label">{{
+          $t("sidebar.storage")
+        }}</span>
         <span class="fb-sidebar-storage-pct">{{ usage.usedPercentage }}%</span>
       </div>
       <progress-bar :val="usage.usedPercentage" size="small" />
@@ -130,8 +129,12 @@
           {{ userInitial }}
         </div>
         <div class="fb-sidebar-user-info">
-          <span class="fb-sidebar-username">{{ user.displayName || user.username }}</span>
-          <span v-if="user.perm.admin" class="fb-sidebar-role">{{ $t('settings.admin') }}</span>
+          <span class="fb-sidebar-username">{{
+            user.displayName || user.username
+          }}</span>
+          <span v-if="user.perm.admin" class="fb-sidebar-role">{{
+            $t("settings.admin")
+          }}</span>
         </div>
       </button>
       <div class="fb-sidebar-footer-actions">

@@ -69,35 +69,6 @@ func previewExtensionSupported(ext string) bool {
 	return supportedExts[strings.ToLower(ext)]
 }
 
-// getPreviewLanguage returns the syntax highlighting language for code files
-func getPreviewLanguage(ext string) string {
-	langMap := map[string]string{
-		".js": "javascript", ".mjs": "javascript", ".cjs": "javascript",
-		".ts": "typescript", ".tsx": "typescript", ".jsx": "javascript",
-		".py": "python",
-		".go": "go",
-		".rs": "rust",
-		".java": "java", ".kt": "kotlin",
-		".c": "c", ".cpp": "cpp", ".h": "c", ".hpp": "cpp",
-		".cs": "csharp",
-		".php": "php",
-		".rb": "ruby",
-		".swift": "swift",
-		".dart": "dart",
-		".lua": "lua",
-		".pl": "perl", ".r": "r",
-		".scala": "scala", ".clj": "clojure",
-		".sh": "bash", ".bat": "batch", ".ps1": "powershell",
-		".html": "html", ".htm": "html", ".css": "css",
-		".scss": "scss", ".sass": "sass",
-		".json": "json", ".xml": "xml",
-		".yaml": "yaml", ".yml": "yaml", ".toml": "toml",
-		".sql": "sql", ".graphql": "graphql",
-		".md": "markdown", ".markdown": "markdown",
-	}
-	return langMap[strings.ToLower(ext)]
-}
-
 func previewHandler(imgSvc ImgService, fileCache FileCache, enableThumbnails, resizePreview bool) handleFunc {
 	return withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
 		if !d.user.Perm.Download {
@@ -334,7 +305,7 @@ func handleTextPreview(w http.ResponseWriter, r *http.Request, file *files.FileI
 }
 
 // handleRangeRequest handles HTTP range requests for media files
-func handleRangeRequest(w http.ResponseWriter, r *http.Request, fd io.ReadSeeker, fileSize int64, contentType, rangeHeader string) (int, error) {
+func handleRangeRequest(w http.ResponseWriter, _ *http.Request, fd io.ReadSeeker, fileSize int64, contentType, rangeHeader string) (int, error) {
 	// Parse range header (e.g., "bytes=0-1023")
 	rangeSpec := strings.TrimPrefix(rangeHeader, "bytes=")
 	parts := strings.Split(rangeSpec, "-")
@@ -390,7 +361,9 @@ func handleRangeRequest(w http.ResponseWriter, r *http.Request, fd io.ReadSeeker
 	w.WriteHeader(http.StatusPartialContent)
 
 	// Serve the range
-	io.CopyN(w, fd, contentLength)
+	if _, err := io.CopyN(w, fd, contentLength); err != nil {
+		return http.StatusInternalServerError, err
+	}
 	return 0, nil
 }
 

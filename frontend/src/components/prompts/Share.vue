@@ -84,28 +84,50 @@
     <template v-else>
       <div class="card-content">
         <p>{{ $t("settings.shareDuration") }}</p>
-        <div class="input-group input">
-          <vue-number-input
-            center
-            controls
-            size="small"
-            :max="2147483647"
+        <div class="fb-share-duration">
+          <input
+            class="input fb-share-duration-input"
+            type="number"
             :min="0"
+            :max="2147483647"
+            v-model.number="time"
             @keyup.enter="submit"
-            v-model="time"
             tabindex="1"
           />
-          <select
-            class="right"
-            v-model="unit"
-            :aria-label="$t('time.unit')"
-            tabindex="2"
-          >
-            <option value="seconds">{{ $t("time.seconds") }}</option>
-            <option value="minutes">{{ $t("time.minutes") }}</option>
-            <option value="hours">{{ $t("time.hours") }}</option>
-            <option value="days">{{ $t("time.days") }}</option>
-          </select>
+          <div class="fb-settings-seg fb-share-duration-seg">
+            <button
+              class="fb-settings-seg-btn"
+              :class="{ 'fb-settings-seg-btn--active': unit === 'seconds' }"
+              @click="unit = 'seconds'"
+              tabindex="2"
+            >
+              {{ $t("time.seconds") }}
+            </button>
+            <button
+              class="fb-settings-seg-btn"
+              :class="{ 'fb-settings-seg-btn--active': unit === 'minutes' }"
+              @click="unit = 'minutes'"
+              tabindex="2"
+            >
+              {{ $t("time.minutes") }}
+            </button>
+            <button
+              class="fb-settings-seg-btn"
+              :class="{ 'fb-settings-seg-btn--active': unit === 'hours' }"
+              @click="unit = 'hours'"
+              tabindex="2"
+            >
+              {{ $t("time.hours") }}
+            </button>
+            <button
+              class="fb-settings-seg-btn"
+              :class="{ 'fb-settings-seg-btn--active': unit === 'days' }"
+              @click="unit = 'days'"
+              tabindex="2"
+            >
+              {{ $t("time.days") }}
+            </button>
+          </div>
         </div>
         <p>{{ $t("prompts.optionalPassword") }}</p>
         <input

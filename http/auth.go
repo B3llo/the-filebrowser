@@ -36,7 +36,7 @@ type userInfo struct {
 	HideDotfiles          bool              `json:"hideDotfiles"`
 	DateFormat            bool              `json:"dateFormat"`
 	Username              string            `json:"username"`
-	Displayname           string            `json:"displayName"`
+	DisplayName           string            `json:"displayName"`
 	AceEditorTheme        string            `json:"aceEditorTheme"`
 }
 
@@ -236,7 +236,7 @@ func printToken(w http.ResponseWriter, _ *http.Request, d *data, user *users.Use
 			HideDotfiles:          user.HideDotfiles,
 			DateFormat:            user.DateFormat,
 			Username:              user.Username,
-			Displayname:           user.Displayname,
+			DisplayName:           user.DisplayName,
 			AceEditorTheme:        user.AceEditorTheme,
 		},
 		RegisteredClaims: jwt.RegisteredClaims{

@@ -2,7 +2,13 @@ import { useAuthStore } from "@/stores/auth";
 import { useLayoutStore } from "@/stores/layout";
 import { baseURL } from "@/utils/constants";
 import { upload as postTus, useTus } from "./tus";
-import { createURL, fetchURL, getActiveSourceId, removePrefix, StatusError } from "./utils";
+import {
+  createURL,
+  fetchURL,
+  getActiveSourceId,
+  removePrefix,
+  StatusError,
+} from "./utils";
 import { isEncodableResponse, makeRawResource } from "@/utils/encodings";
 
 export async function fetch(url: string, signal?: AbortSignal) {

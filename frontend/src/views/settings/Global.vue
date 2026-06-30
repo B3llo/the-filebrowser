@@ -4,293 +4,287 @@
     class="fb-settings-section"
     v-else-if="!layoutStore.loading && settings !== null"
   >
-    <div class="dashboard row">
-      <div class="column">
-        <form class="card" @submit.prevent="save">
-          <div class="card-title">
-            <h2>{{ t("settings.globalSettings") }}</h2>
-          </div>
+    <div class="fb-settings-stack">
+      <form class="card" @submit.prevent="save">
+        <div class="card-title">
+          <h2>{{ t("settings.globalSettings") }}</h2>
+        </div>
 
-          <div class="card-content">
-            <div class="fb-settings-checkbox-list">
-              <div class="fb-settings-checkbox-item">
-                <input type="checkbox" v-model="settings.signup" id="signup" />
-                <label for="signup">{{ t("settings.allowSignup") }}</label>
-              </div>
-              <div class="fb-settings-checkbox-item">
-                <input
-                  type="checkbox"
-                  v-model="settings.createUserDir"
-                  id="createUserDir"
-                />
-                <label for="createUserDir">{{
-                  t("settings.createUserDir")
-                }}</label>
-              </div>
-              <div class="fb-settings-checkbox-item">
-                <input
-                  type="checkbox"
-                  v-model="settings.hideLoginButton"
-                  id="hideLoginButton"
-                />
-                <label for="hideLoginButton">{{
-                  t("settings.hideLoginButton")
-                }}</label>
-              </div>
+        <div class="card-content">
+          <div class="fb-settings-checkbox-list">
+            <div class="fb-settings-checkbox-item">
+              <input type="checkbox" v-model="settings.signup" id="signup" />
+              <label for="signup">{{ t("settings.allowSignup") }}</label>
             </div>
-
-            <div class="fb-settings-divider"></div>
-
-            <div class="fb-settings-field">
-              <label class="fb-settings-field-label" for="userHomeBasePath">{{
-                t("settings.userHomeBasePath")
-              }}</label>
+            <div class="fb-settings-checkbox-item">
               <input
-                class="input input--block"
-                type="text"
-                v-model="settings.userHomeBasePath"
-                id="userHomeBasePath"
+                type="checkbox"
+                v-model="settings.createUserDir"
+                id="createUserDir"
               />
-            </div>
-
-            <div class="fb-settings-field">
-              <label
-                class="fb-settings-field-label"
-                for="minimumPasswordLength"
-                >{{ t("settings.minimumPasswordLength") }}</label
-              >
-              <vue-number-input
-                controls
-                v-model.number="settings.minimumPasswordLength"
-                id="minimumPasswordLength"
-                :min="1"
-              />
-            </div>
-
-            <div class="fb-settings-divider"></div>
-
-            <h3>{{ t("settings.rules") }}</h3>
-            <p class="small">{{ t("settings.globalRules") }}</p>
-            <rules v-model:rules="settings.rules" />
-
-            <div
-              v-if="enableExec"
-              class="fb-settings-field"
-              style="margin-top: 20px"
-            >
-              <h3>{{ t("settings.executeOnShell") }}</h3>
-              <p class="small">{{ t("settings.executeOnShellDescription") }}</p>
-              <input
-                class="input input--block"
-                type="text"
-                placeholder="bash -c, cmd /c, ..."
-                v-model="shellValue"
-              />
-            </div>
-
-            <div class="fb-settings-divider"></div>
-
-            <h3>{{ t("settings.branding") }}</h3>
-
-            <i18n-t
-              keypath="settings.brandingHelp"
-              tag="p"
-              class="small"
-              scope="global"
-            >
-              <a
-                class="link"
-                target="_blank"
-                href="https://filebrowser.org/customization.html#custom-branding"
-                >{{ t("settings.documentation") }}</a
-              >
-            </i18n-t>
-
-            <div class="fb-settings-checkbox-list" style="margin-top: 12px">
-              <div class="fb-settings-checkbox-item">
-                <input
-                  type="checkbox"
-                  v-model="settings.branding.disableExternal"
-                  id="branding-links"
-                />
-                <label for="branding-links">{{
-                  t("settings.disableExternalLinks")
-                }}</label>
-              </div>
-              <div class="fb-settings-checkbox-item">
-                <input
-                  type="checkbox"
-                  v-model="settings.branding.disableUsedPercentage"
-                  id="branding-used-disk"
-                />
-                <label for="branding-used-disk">{{
-                  t("settings.disableUsedDiskPercentage")
-                }}</label>
-              </div>
-            </div>
-
-            <div class="fb-settings-field" style="margin-top: 16px">
-              <label class="fb-settings-field-label" for="theme">{{
-                t("settings.themes.title")
+              <label for="createUserDir">{{
+                t("settings.createUserDir")
               }}</label>
-              <themes
-                class="input input--block input--select"
-                v-model:theme="settings.branding.theme"
-                id="theme"
-              ></themes>
             </div>
-
-            <div class="fb-settings-field">
-              <label class="fb-settings-field-label" for="branding-name">{{
-                t("settings.instanceName")
-              }}</label>
+            <div class="fb-settings-checkbox-item">
               <input
-                class="input input--block"
-                type="text"
-                v-model="settings.branding.name"
-                id="branding-name"
+                type="checkbox"
+                v-model="settings.hideLoginButton"
+                id="hideLoginButton"
               />
-            </div>
-
-            <div class="fb-settings-field">
-              <label class="fb-settings-field-label" for="branding-files">{{
-                t("settings.brandingDirectoryPath")
+              <label for="hideLoginButton">{{
+                t("settings.hideLoginButton")
               }}</label>
-              <input
-                class="input input--block"
-                type="text"
-                v-model="settings.branding.files"
-                id="branding-files"
-              />
-            </div>
-
-            <div class="fb-settings-divider"></div>
-
-            <h3>{{ t("settings.tusUploads") }}</h3>
-
-            <p class="small">{{ t("settings.tusUploadsHelp") }}</p>
-
-            <div class="tusConditionalSettings" style="margin-top: 12px">
-              <div class="fb-settings-field">
-                <label class="fb-settings-field-label" for="tus-chunkSize">{{
-                  t("settings.tusUploadsChunkSize")
-                }}</label>
-                <input
-                  class="input input--block"
-                  type="text"
-                  v-model="formattedChunkSize"
-                  id="tus-chunkSize"
-                />
-              </div>
-
-              <div class="fb-settings-field">
-                <label class="fb-settings-field-label" for="tus-retryCount">{{
-                  t("settings.tusUploadsRetryCount")
-                }}</label>
-                <vue-number-input
-                  controls
-                  v-model.number="settings.tus.retryCount"
-                  id="tus-retryCount"
-                  :min="0"
-                />
-              </div>
             </div>
           </div>
 
-          <div class="card-action">
-            <input class="button" type="submit" :value="t('buttons.update')" />
-          </div>
-        </form>
-      </div>
+          <div class="fb-settings-divider"></div>
 
-      <div class="column">
-        <form class="card" @submit.prevent="save">
-          <div class="card-title">
-            <h2>{{ t("settings.userDefaults") }}</h2>
-          </div>
-
-          <div class="card-content">
-            <p class="small">{{ t("settings.defaultUserDescription") }}</p>
-
-            <user-form
-              :isNew="false"
-              :isDefault="true"
-              v-model:user="settings.defaults"
+          <div class="fb-settings-field">
+            <label class="fb-settings-field-label" for="userHomeBasePath">{{
+              t("settings.userHomeBasePath")
+            }}</label>
+            <input
+              class="input input--block"
+              type="text"
+              v-model="settings.userHomeBasePath"
+              id="userHomeBasePath"
             />
           </div>
 
-          <div class="card-action">
-            <input class="button" type="submit" :value="t('buttons.update')" />
-          </div>
-        </form>
-      </div>
-
-      <div class="column" v-if="enableExec">
-        <form class="card" @submit.prevent="save">
-          <div class="card-title">
-            <h2>{{ t("settings.commandRunner") }}</h2>
-          </div>
-
-          <div class="card-content">
-            <i18n-t
-              keypath="settings.commandRunnerHelp"
-              tag="p"
-              class="small"
-              scope="global"
+          <div class="fb-settings-field">
+            <label
+              class="fb-settings-field-label"
+              for="minimumPasswordLength"
+              >{{ t("settings.minimumPasswordLength") }}</label
             >
-              <code>FILE</code>
-              <code>SCOPE</code>
-              <a
-                class="link"
-                target="_blank"
-                href="https://filebrowser.org/command-execution.html#hook-runner"
-                >{{ t("settings.documentation") }}</a
-              >
-            </i18n-t>
+            <vue-number-input
+              controls
+              v-model.number="settings.minimumPasswordLength"
+              id="minimumPasswordLength"
+              :min="1"
+            />
+          </div>
 
-            <div
-              v-for="(command, key) in settings.commands"
-              :key="key"
-              class="collapsible"
+          <div class="fb-settings-divider"></div>
+
+          <h3>{{ t("settings.rules") }}</h3>
+          <p class="small">{{ t("settings.globalRules") }}</p>
+          <rules v-model:rules="settings.rules" />
+
+          <div
+            v-if="enableExec"
+            class="fb-settings-field"
+            style="margin-top: 20px"
+          >
+            <h3>{{ t("settings.executeOnShell") }}</h3>
+            <p class="small">{{ t("settings.executeOnShellDescription") }}</p>
+            <input
+              class="input input--block"
+              type="text"
+              placeholder="bash -c, cmd /c, ..."
+              v-model="shellValue"
+            />
+          </div>
+
+          <div class="fb-settings-divider"></div>
+
+          <h3>{{ t("settings.branding") }}</h3>
+
+          <i18n-t
+            keypath="settings.brandingHelp"
+            tag="p"
+            class="small"
+            scope="global"
+          >
+            <a
+              class="link"
+              target="_blank"
+              href="https://filebrowser.org/customization.html#custom-branding"
+              >{{ t("settings.documentation") }}</a
             >
-              <input :id="key" type="checkbox" />
-              <label :for="key">
-                <p
-                  style="
-                    margin: 0;
-                    font-size: 14px;
-                    font-weight: 550;
-                    color: var(--text);
-                  "
-                >
-                  {{ capitalize(key) }}
-                </p>
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  style="width: 16px; height: 16px; color: var(--dim)"
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </label>
-              <div class="collapse">
-                <textarea
-                  class="input input--block input--textarea"
-                  v-model.trim="commandObject[key]"
-                ></textarea>
-              </div>
+          </i18n-t>
+
+          <div class="fb-settings-checkbox-list" style="margin-top: 12px">
+            <div class="fb-settings-checkbox-item">
+              <input
+                type="checkbox"
+                v-model="settings.branding.disableExternal"
+                id="branding-links"
+              />
+              <label for="branding-links">{{
+                t("settings.disableExternalLinks")
+              }}</label>
+            </div>
+            <div class="fb-settings-checkbox-item">
+              <input
+                type="checkbox"
+                v-model="settings.branding.disableUsedPercentage"
+                id="branding-used-disk"
+              />
+              <label for="branding-used-disk">{{
+                t("settings.disableUsedDiskPercentage")
+              }}</label>
             </div>
           </div>
 
-          <div class="card-action">
-            <input class="button" type="submit" :value="t('buttons.update')" />
+          <div class="fb-settings-field" style="margin-top: 16px">
+            <label class="fb-settings-field-label" for="theme">{{
+              t("settings.themes.title")
+            }}</label>
+            <themes
+              class="input input--block input--select"
+              v-model:theme="settings.branding.theme"
+              id="theme"
+            ></themes>
           </div>
-        </form>
-      </div>
+
+          <div class="fb-settings-field">
+            <label class="fb-settings-field-label" for="branding-name">{{
+              t("settings.instanceName")
+            }}</label>
+            <input
+              class="input input--block"
+              type="text"
+              v-model="settings.branding.name"
+              id="branding-name"
+            />
+          </div>
+
+          <div class="fb-settings-field">
+            <label class="fb-settings-field-label" for="branding-files">{{
+              t("settings.brandingDirectoryPath")
+            }}</label>
+            <input
+              class="input input--block"
+              type="text"
+              v-model="settings.branding.files"
+              id="branding-files"
+            />
+          </div>
+
+          <div class="fb-settings-divider"></div>
+
+          <h3>{{ t("settings.tusUploads") }}</h3>
+
+          <p class="small">{{ t("settings.tusUploadsHelp") }}</p>
+
+          <div class="tusConditionalSettings" style="margin-top: 12px">
+            <div class="fb-settings-field">
+              <label class="fb-settings-field-label" for="tus-chunkSize">{{
+                t("settings.tusUploadsChunkSize")
+              }}</label>
+              <input
+                class="input input--block"
+                type="text"
+                v-model="formattedChunkSize"
+                id="tus-chunkSize"
+              />
+            </div>
+
+            <div class="fb-settings-field">
+              <label class="fb-settings-field-label" for="tus-retryCount">{{
+                t("settings.tusUploadsRetryCount")
+              }}</label>
+              <vue-number-input
+                controls
+                v-model.number="settings.tus.retryCount"
+                id="tus-retryCount"
+                :min="0"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="card-action">
+          <input class="button" type="submit" :value="t('buttons.update')" />
+        </div>
+      </form>
+
+      <form class="card" @submit.prevent="save">
+        <div class="card-title">
+          <h2>{{ t("settings.userDefaults") }}</h2>
+        </div>
+
+        <div class="card-content">
+          <p class="small">{{ t("settings.defaultUserDescription") }}</p>
+
+          <user-form
+            :isNew="false"
+            :isDefault="true"
+            v-model:user="settings.defaults"
+          />
+        </div>
+
+        <div class="card-action">
+          <input class="button" type="submit" :value="t('buttons.update')" />
+        </div>
+      </form>
+
+      <form class="card" v-if="enableExec" @submit.prevent="save">
+        <div class="card-title">
+          <h2>{{ t("settings.commandRunner") }}</h2>
+        </div>
+
+        <div class="card-content">
+          <i18n-t
+            keypath="settings.commandRunnerHelp"
+            tag="p"
+            class="small"
+            scope="global"
+          >
+            <code>FILE</code>
+            <code>SCOPE</code>
+            <a
+              class="link"
+              target="_blank"
+              href="https://filebrowser.org/command-execution.html#hook-runner"
+              >{{ t("settings.documentation") }}</a
+            >
+          </i18n-t>
+
+          <div
+            v-for="(command, key) in settings.commands"
+            :key="key"
+            class="collapsible"
+          >
+            <input :id="key" type="checkbox" />
+            <label :for="key">
+              <p
+                style="
+                  margin: 0;
+                  font-size: 14px;
+                  font-weight: 550;
+                  color: var(--text);
+                "
+              >
+                {{ capitalize(key) }}
+              </p>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="width: 16px; height: 16px; color: var(--dim)"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </label>
+            <div class="collapse">
+              <textarea
+                class="input input--block input--textarea"
+                v-model.trim="commandObject[key]"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-action">
+          <input class="button" type="submit" :value="t('buttons.update')" />
+        </div>
+      </form>
     </div>
   </div>
 </template>

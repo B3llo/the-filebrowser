@@ -193,7 +193,7 @@ table tr:hover td {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  max-width: 460px;
+  max-width: 560px;
   width: 90%;
   max-height: 95%;
   z-index: 100;
@@ -354,12 +354,40 @@ body.rtl .card .card-action {
   display: flex;
 }
 
-.card#share .input-group * {
-  border: none;
-}
-
 .card#share .input-group input {
   flex: 1;
+}
+
+/* Share duration — number input + segmented control */
+.fb-share-duration {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fb-share-duration-input {
+  width: 100px;
+  flex-shrink: 0;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+.fb-share-duration-input::-webkit-outer-spin-button,
+.fb-share-duration-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.fb-share-duration-seg {
+  flex: 1;
+  min-width: 0;
+}
+
+.fb-share-duration-seg .fb-settings-seg-btn {
+  flex: 1;
+  padding: 0 8px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 .overlay {

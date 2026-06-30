@@ -40,7 +40,6 @@ import { files as api } from "@/api";
 import { storeToRefs } from "pinia";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
-import { useSourceStore } from "@/stores/source";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import DetailsPanel from "@/components/DetailsPanel.vue";
@@ -118,7 +117,6 @@ const isPreviewableText = (extension: string, type: string) => {
 
 const layoutStore = useLayoutStore();
 const fileStore = useFileStore();
-const sourceStore = useSourceStore();
 
 const { reload } = storeToRefs(fileStore);
 

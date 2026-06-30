@@ -202,8 +202,8 @@ const router = createRouter({
 });
 
 router.beforeResolve(async (to, from, next) => {
-  const title = i18n.global.t(titles[to.name as keyof typeof titles]);
-  document.title = title + " - " + name;
+  const titleKey = to.name ? titles[to.name as keyof typeof titles] : undefined;
+  document.title = (titleKey ? i18n.global.t(titleKey) : name) + " - " + name;
 
   const authStore = useAuthStore();
   const sourceStore = useSourceStore();

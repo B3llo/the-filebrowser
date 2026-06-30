@@ -2,8 +2,6 @@ import { defineStore } from "pinia";
 import { sources as sourcesApi } from "@/api";
 import { setActiveSourceId } from "@/api/utils";
 
-const SOURCE_COOKIE = "source";
-
 function writeSourceCookie(id: string) {
   document.cookie = `source=${id}; Path=/; SameSite=Strict;`;
 }
@@ -59,8 +57,7 @@ export const useSourceStore = defineStore("source", {
       // the default (first) source.
       const cookieId = readSourceCookie();
       const valid =
-        cookieId !== "" &&
-        this.sources.some((s) => String(s.id) === cookieId);
+        cookieId !== "" && this.sources.some((s) => String(s.id) === cookieId);
       const id = valid ? cookieId! : this.defaultId;
       this.setActive(id);
     },
@@ -86,8 +83,6 @@ export const useSourceStore = defineStore("source", {
 });
 
 function readSourceCookie(): string {
-  const match = document.cookie.match(
-    /(?:^|;\s*)source\s*=\s*([^;]+)/
-  );
+  const match = document.cookie.match(/(?:^|;\s*)source\s*=\s*([^;]+)/);
   return match ? match[1] : "";
 }

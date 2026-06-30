@@ -52,7 +52,9 @@ const props = defineProps<{
 
 // The root crumb is the active source's name (e.g. "Documents", "Photos"),
 // falling back to "My Files" for the implicit legacy source.
-const rootLabel = computed(() => sourceStore.active?.name ?? t("sidebar.myFiles"));
+const rootLabel = computed(
+  () => sourceStore.active?.name ?? t("sidebar.myFiles")
+);
 
 const items = computed(() => {
   const relativePath = route.path.replace(props.base, "");

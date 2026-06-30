@@ -85,12 +85,18 @@
 
 /* Section container */
 .fb-settings-section {
-  max-width: 720px;
   margin-bottom: 32px;
 }
 
 .fb-settings-section:last-child {
   margin-bottom: 0;
+}
+
+/* Vertical stack — used when cards should stack instead of grid */
+.fb-settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 /* Section header */
