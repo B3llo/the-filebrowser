@@ -66,6 +66,7 @@ type User struct {
 	Theme                 string            `json:"theme"`
 	Starred               []StarredFile     `json:"starred"`
 	Recents               []RecentFile      `json:"recents"`
+	Avatar                string            `json:"avatar"`
 }
 
 // GetRules implements rules.Provider.

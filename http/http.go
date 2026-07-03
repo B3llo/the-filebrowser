@@ -19,6 +19,7 @@ type modifyRequest struct {
 func NewHandler(
 	imgSvc ImgService,
 	fileCache FileCache,
+	avatarStore FileCache,
 	uploadCache UploadCache,
 	store *storage.Storage,
 	server *settings.Server,
@@ -77,6 +78,10 @@ func NewHandler(
 	api.PathPrefix("/tus").Handler(monkey(tusDeleteHandler(uploadCache), "/api/tus")).Methods("DELETE")
 
 	api.PathPrefix("/usage").Handler(monkey(diskUsage, "/api/usage")).Methods("GET")
+
+	api.Handle("/avatar", monkey(avatarPostHandler(imgSvc, avatarStore), "")).Methods("POST")
+	api.Handle("/avatar", monkey(avatarDeleteHandler(avatarStore), "")).Methods("DELETE")
+	api.PathPrefix("/avatar/{id:[0-9]+}").Handler(monkey(avatarGetHandler(avatarStore), "/api/avatar")).Methods("GET")
 
 	api.Handle("/shares", monkey(shareListHandler, "")).Methods("GET")
 	api.PathPrefix("/share").Handler(monkey(shareGetsHandler, "/api/share")).Methods("GET")

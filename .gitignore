@@ -1,4 +1,5 @@
 *.db
+/avatars
 *.bak
 _old
 rice-box.go

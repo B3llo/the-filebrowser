@@ -627,6 +627,7 @@
             move: headerButtons.move,
             rename: headerButtons.rename,
             delete: headerButtons.delete,
+            star: true,
           }"
           :download="download"
         />
@@ -732,13 +733,15 @@ const items = computed(() => {
   const dirs: ResourceItem[] = [];
   const files: ResourceItem[] = [];
 
-  fileStore.req?.items.forEach((item) => {
-    if (item.isDir) {
-      dirs.push(item);
-    } else {
-      files.push(item);
-    }
-  });
+  fileStore.req?.items
+    .filter((item) => item.name !== ".Trash")
+    .forEach((item) => {
+      if (item.isDir) {
+        dirs.push(item);
+      } else {
+        files.push(item);
+      }
+    });
 
   return { dirs, files };
 });

@@ -25,6 +25,20 @@
       </template>
     </header-bar>
 
+    <SelectionBar
+      v-if="fileStore.selected.length > 0"
+      :header-buttons="{
+        download: false,
+        share: false,
+        move: false,
+        rename: false,
+        delete: true,
+        star: false,
+      }"
+      :download="deletePermanently"
+      :delete-action="deletePermanently"
+    />
+
     <div v-if="loading" class="loading">
       <div class="spinner">
         <div class="bounce1"></div>
@@ -108,6 +122,26 @@
         @action="deleteSelected"
       />
     </context-menu>
+
+    <ConfirmDialog
+      v-if="showDeleteDialog"
+      :message="t('prompts.deleteMessageMultiple', { count: pendingDeleteItems.length })"
+      :confirm-text="t('buttons.delete')"
+      :cancel-text="t('buttons.cancel')"
+      :danger="true"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+    />
+
+    <ConfirmDialog
+      v-if="showEmptyDialog"
+      :message="t('trash.confirmEmpty')"
+      :confirm-text="t('trash.emptyTrash')"
+      :cancel-text="t('buttons.cancel')"
+      :danger="true"
+      @confirm="executeEmptyTrash"
+      @cancel="cancelEmptyTrash"
+    />
   </div>
 </template>
 
@@ -124,6 +158,8 @@ import FbIcon from "@/components/FbIcon.vue";
 import Item from "@/components/files/ListingItem.vue";
 import ContextMenu from "@/components/ContextMenu.vue";
 import Action from "@/components/header/Action.vue";
+import SelectionBar from "@/components/SelectionBar.vue";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
 
 const $showError = inject<IToastError>("$showError")!;
 const { t } = useI18n();
@@ -133,6 +169,10 @@ const authStore = useAuthStore();
 
 const loading = ref(false);
 const activeSourceId = ref(String(sourceStore.activeId));
+
+const showDeleteDialog = ref(false);
+const showEmptyDialog = ref(false);
+const pendingDeleteItems = ref<any[]>([]);
 
 const filesBase = computed(() => `/files/${activeSourceId.value}`);
 const trashPath = computed(() => `${filesBase.value}/.Trash/`);
@@ -236,8 +276,37 @@ const deleteSelected = async () => {
   }
 };
 
-const confirmEmptyTrash = async () => {
-  if (!window.confirm(t("trash.confirmEmpty"))) return;
+const deletePermanently = () => {
+  const items = fileStore.req?.items ?? [];
+  pendingDeleteItems.value = items.filter((item) =>
+    fileStore.selected.includes(item.index)
+  );
+  showDeleteDialog.value = true;
+};
+
+const confirmDelete = async () => {
+  showDeleteDialog.value = false;
+  try {
+    await Promise.all(pendingDeleteItems.value.map((item) => api.remove(item.url)));
+    fileStore.selected = [];
+    pendingDeleteItems.value = [];
+    await loadTrash();
+  } catch (e: any) {
+    $showError(e);
+  }
+};
+
+const cancelDelete = () => {
+  showDeleteDialog.value = false;
+  pendingDeleteItems.value = [];
+};
+
+const confirmEmptyTrash = () => {
+  showEmptyDialog.value = true;
+};
+
+const executeEmptyTrash = async () => {
+  showEmptyDialog.value = false;
   const items = fileStore.req?.items ?? [];
   try {
     await Promise.all(items.map((item) => api.remove(item.url)));
@@ -245,5 +314,9 @@ const confirmEmptyTrash = async () => {
   } catch (e: any) {
     $showError(e);
   }
+};
+
+const cancelEmptyTrash = () => {
+  showEmptyDialog.value = false;
 };
 </script>

@@ -185,6 +185,18 @@ user created with the credentials from options "username" and "password".`,
 			return fmt.Errorf("failed to initialize upload cache: %w", err)
 		}
 
+		// Avatars are user data, not a regenerable cache, so unlike the thumbnail
+		// fileCache above they must always persist regardless of "cacheDir" being set.
+		databasePath, err := filepath.Abs(v.GetString("database"))
+		if err != nil {
+			return err
+		}
+		avatarsDir := filepath.Join(filepath.Dir(databasePath), "avatars")
+		if err := os.MkdirAll(avatarsDir, 0700); err != nil {
+			return fmt.Errorf("can't make directory %s: %w", avatarsDir, err)
+		}
+		avatarStore := diskcache.New(afero.NewOsFs(), avatarsDir)
+
 		server, err := getServerSettings(v, st.Storage)
 		if err != nil {
 			return err
@@ -236,7 +248,7 @@ user created with the credentials from options "username" and "password".`,
 			panic(err)
 		}
 
-		handler, err := fbhttp.NewHandler(imageService, fileCache, uploadCache, st.Storage, server, assetsFs)
+		handler, err := fbhttp.NewHandler(imageService, fileCache, avatarStore, uploadCache, st.Storage, server, assetsFs)
 		if err != nil {
 			return err
 		}

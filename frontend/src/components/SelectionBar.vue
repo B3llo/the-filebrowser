@@ -40,6 +40,7 @@
       <span>{{ t("buttons.rename") }}</span>
     </button>
     <button
+      v-if="headerButtons.star"
       class="fb-act"
       aria-disabled="true"
       style="opacity: 0.38; pointer-events: none"
@@ -52,7 +53,7 @@
       v-if="headerButtons.delete"
       class="fb-act fb-act--danger"
       data-danger="true"
-      @click="layoutStore.showHover('delete')"
+      @click="onDelete"
     >
       <FbIcon name="delete" size="16px" />
       <span>{{ t("buttons.delete") }}</span>
@@ -67,15 +68,17 @@ import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
 import FbIcon from "@/components/FbIcon.vue";
 
-defineProps<{
+const props = defineProps<{
   headerButtons: {
     download?: boolean;
     share?: boolean;
     move?: boolean;
     rename?: boolean;
     delete?: boolean;
+    star?: boolean;
   };
   download: () => void;
+  deleteAction?: () => void;
 }>();
 
 const { t } = useI18n();
@@ -91,5 +94,13 @@ const selectionLabel = computed(() => {
 
 const clearSelection = () => {
   fileStore.selected = [];
+};
+
+const onDelete = () => {
+  if (props.deleteAction) {
+    props.deleteAction();
+  } else {
+    layoutStore.showHover("delete");
+  }
 };
 </script>

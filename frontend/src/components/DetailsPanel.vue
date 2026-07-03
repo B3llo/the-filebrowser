@@ -169,9 +169,7 @@
       <!-- Who has access -->
       <div class="fb-details-section-title">Who has access</div>
       <div class="fb-details-access">
-        <div class="fb-details-access-avatar">
-          {{ userInitials }}
-        </div>
+        <AvatarBadge :user="authStore.user" :size="30" />
         <div class="fb-details-access-info">Private to you</div>
         <button class="fb-details-access-manage">Manage</button>
       </div>
@@ -192,6 +190,7 @@ import { enableThumbs } from "@/utils/constants";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import FbIcon from "@/components/FbIcon.vue";
+import AvatarBadge from "@/components/AvatarBadge.vue";
 import * as pdfjsLib from "pdfjs-dist";
 import dayjs from "dayjs";
 
@@ -391,17 +390,6 @@ const location = computed(() => {
 const itemTags = computed((): string[] => {
   // Tags not yet available from API
   return [];
-});
-
-const userInitials = computed(() => {
-  const user = authStore.user;
-  if (!user) return "U";
-  const name = user.displayName || user.username || "";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase() || "U";
 });
 
 const openItem = () => {

@@ -79,7 +79,7 @@ app.provide("$showSuccess", (message: string) => {
         message: message,
       },
     },
-    { ...toastConfig, rtl: isRtl() }
+    { ...toastConfig, rtl: isRtl(), id: "success" }
   );
 });
 

@@ -133,7 +133,15 @@
       </div>
       <progress-bar :val="usage.usedPercentage" size="small" />
       <div class="fb-sidebar-storage-detail">
-        {{ $t("sidebar.diskUsed", { used: usage.used, total: usage.total }) }}
+        {{
+          activeSourceName
+            ? $t("sidebar.diskUsedFor", {
+                used: usage.used,
+                total: usage.total,
+                source: activeSourceName,
+              })
+            : $t("sidebar.diskUsed", { used: usage.used, total: usage.total })
+        }}
       </div>
     </div>
 
@@ -145,9 +153,7 @@
         :aria-label="$t('settings.profileSettings')"
         :title="$t('settings.profileSettings')"
       >
-        <div class="fb-sidebar-avatar" aria-hidden="true">
-          {{ userInitial }}
-        </div>
+        <AvatarBadge :user="user" :size="30" />
         <div class="fb-sidebar-user-info">
           <span class="fb-sidebar-username">{{
             user.displayName || user.username
@@ -216,6 +222,7 @@ import {
 } from "@/utils/theme";
 import ProgressBar from "@/components/ProgressBar.vue";
 import FbIcon from "@/components/FbIcon.vue";
+import AvatarBadge from "@/components/AvatarBadge.vue";
 import prettyBytes from "pretty-bytes";
 
 const USAGE_DEFAULT = { used: "0 B", total: "0 B", usedPercentage: 0 };
@@ -229,13 +236,14 @@ export default {
   components: {
     ProgressBar,
     FbIcon,
+    AvatarBadge,
   },
   inject: ["$showError"],
   computed: {
     ...mapState(useAuthStore, ["user", "isLoggedIn"]),
     ...mapState(useFileStore, ["isFiles", "reload"]),
     ...mapState(useLayoutStore, ["currentPromptName", "sidebarCollapsed"]),
-    ...mapState(useSourceStore, ["sources", "hasMultiple", "activeId"]),
+    ...mapState(useSourceStore, ["sources", "hasMultiple", "activeId", "active"]),
     sourceList() {
       // Once sources are loaded they replace the navigation; while loading on
       // first paint, show the implicit "My Files" so the sidebar is never empty.
@@ -252,9 +260,8 @@ export default {
     activeRouteSourceId() {
       return this.$route.params?.sourceId;
     },
-    userInitial() {
-      const name = this.user?.displayName || this.user?.username;
-      return name?.[0]?.toUpperCase() ?? "?";
+    activeSourceName() {
+      return this.active?.name ?? "";
     },
     signup: () => signup,
     hideLoginButton: () => hideLoginButton,
@@ -606,21 +613,6 @@ export default {
 
 .fb-sidebar-user:hover {
   background: var(--hover);
-}
-
-.fb-sidebar-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--on-accent);
-  font-size: 13px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  user-select: none;
 }
 
 .fb-sidebar-user-info {

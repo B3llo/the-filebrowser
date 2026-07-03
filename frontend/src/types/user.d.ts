@@ -35,6 +35,7 @@ interface IUser {
   theme?: UserTheme;
   starred?: IStarredFile[];
   recents?: IRecentFile[];
+  avatar?: string;
 }
 
 type ViewModeType = "list" | "mosaic" | "mosaic gallery";
@@ -62,6 +63,7 @@ interface IUserForm {
   dateFormat?: boolean;
   folderColors?: Record<string, string>;
   theme?: UserTheme;
+  avatar?: string;
 }
 
 interface Permissions {

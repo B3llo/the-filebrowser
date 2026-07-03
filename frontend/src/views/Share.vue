@@ -278,6 +278,7 @@
                 move: false,
                 rename: false,
                 delete: false,
+                star: false,
               }"
               :download="download"
             />

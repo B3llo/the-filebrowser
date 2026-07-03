@@ -4,6 +4,7 @@
       <img :src="logoURL" alt="File Browser" />
       <h1>{{ name }}</h1>
       <p v-if="reason != null" class="logout-message">
+        <FbIcon name="clock" size="16px" />
         {{ t(`login.logout_reasons.${reason}`) }}
       </p>
       <div v-if="error !== ''" class="wrong">{{ error }}</div>
@@ -65,6 +66,7 @@ import {
 import { inject, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
+import FbIcon from "@/components/FbIcon.vue";
 
 // Define refs
 const createMode = ref<boolean>(false);

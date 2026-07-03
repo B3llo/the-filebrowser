@@ -40,6 +40,7 @@ type userInfo struct {
 	AceEditorTheme        string            `json:"aceEditorTheme"`
 	FolderColors          map[string]string `json:"folderColors"`
 	Theme                 string            `json:"theme"`
+	Avatar                string            `json:"avatar"`
 }
 
 type authToken struct {
@@ -242,6 +243,7 @@ func printToken(w http.ResponseWriter, _ *http.Request, d *data, user *users.Use
 			AceEditorTheme:        user.AceEditorTheme,
 			FolderColors:          user.FolderColors,
 			Theme:                 user.Theme,
+			Avatar:                user.Avatar,
 		},
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

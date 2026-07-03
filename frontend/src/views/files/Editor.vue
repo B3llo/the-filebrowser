@@ -80,6 +80,7 @@ import { useI18n } from "vue-i18n";
 import { onBeforeRouteUpdate, useRoute, useRouter } from "vue-router";
 
 const $showError = inject<IToastError>("$showError")!;
+const $showSuccess = inject<IToastSuccess>("$showSuccess")!;
 
 const fileStore = useFileStore();
 const authStore = useAuthStore();
@@ -234,6 +235,7 @@ const save = async (throwError?: boolean) => {
     await api.put(route.path, editor.value?.getValue());
     editor.value?.session.getUndoManager().markClean();
     buttons.success(button);
+    $showSuccess(t("files.fileSaved"));
   } catch (e: any) {
     buttons.done(button);
     $showError(e);

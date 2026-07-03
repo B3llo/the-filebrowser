@@ -79,6 +79,18 @@
     "cyan": "Ciano",
     "remove": "Remover cor"
   },
+  "avatarPresets": {
+    "aria": "Aria",
+    "kip": "Kip",
+    "nova": "Nova",
+    "ruko": "Ruko",
+    "mochi": "Mochi",
+    "byte": "Byte",
+    "zap": "Zap",
+    "echo": "Echo",
+    "pixel": "Pixel",
+    "sparx": "Sparx"
+  },
   "download": {
     "downloadFile": "Baixar arquivo",
     "downloadFolder": "Baixar pasta",
@@ -96,6 +108,7 @@
   "files": {
     "body": "Corpo",
     "closePreview": "Fechar pré-visualização",
+    "fileSaved": "Arquivo salvo com sucesso",
     "files": "Arquivos",
     "folders": "Pastas",
     "home": "Início",
@@ -237,6 +250,9 @@
     "hideLoginButton": "Hide the login button from public pages",
     "appearance": "Aparência",
     "appearanceDesc": "Interface clara ou escura",
+    "avatar": "Avatar",
+    "uploadPhoto": "Enviar foto",
+    "removeAvatar": "Remover avatar",
     "avoidChanges": "(deixe em branco para manter)",
     "branding": "Customização",
     "brandingDirectoryPath": "Diretório de customização",
@@ -346,6 +362,7 @@
   "sidebar": {
     "comingSoon": "Em breve",
     "diskUsed": "{used} de {total} usado",
+    "diskUsedFor": "{used} de {total} usados em {source}",
     "help": "Ajuda",
     "hugoNew": "Hugo New",
     "login": "Login",

@@ -1,4 +1,4 @@
-import { fetchURL, fetchJSON, StatusError } from "./utils";
+import { fetchURL, fetchJSON, StatusError, createURL } from "./utils";
 
 export async function getAll() {
   return fetchJSON<IUser[]>(`/api/users`, {});
@@ -52,4 +52,24 @@ export async function remove(
       ...(currentPassword != null ? { current_password: currentPassword } : {}),
     }),
   });
+}
+
+export async function uploadAvatar(file: File) {
+  await fetchURL(`/api/avatar`, {
+    method: "POST",
+    body: file,
+  });
+}
+
+export async function removeAvatar() {
+  await fetchURL(`/api/avatar`, {
+    method: "DELETE",
+  });
+}
+
+// bust lets callers force a fresh fetch right after an upload, since the
+// server always serves the same URL for a given user id (Cache-Control is
+// short-lived but a same-second reload could still hit the browser cache).
+export function avatarURL(id: number, bust?: number): string {
+  return createURL(`api/avatar/${id}`, bust ? { v: bust } : {});
 }

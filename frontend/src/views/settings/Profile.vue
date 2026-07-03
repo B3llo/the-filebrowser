@@ -1,5 +1,36 @@
 <template>
   <div class="fb-settings-section">
+    <div class="card">
+      <div class="card-title">
+        <h2>{{ t("settings.avatar") }}</h2>
+      </div>
+      <div class="card-content">
+        <AvatarPicker
+          :current-avatar="pendingAvatar ?? authStore.user?.avatar"
+          :user="authStore.user"
+          @select="onSelectAvatarPreset"
+          @upload="onUploadAvatar"
+          @remove="onRemoveAvatar"
+        />
+        <div v-if="pendingAvatar !== null" class="fb-avatar-actions">
+          <button
+            type="button"
+            class="button button--flat"
+            @click="saveAvatar"
+          >
+            {{ t("buttons.save") }}
+          </button>
+          <button
+            type="button"
+            class="button button--flat button--grey"
+            @click="cancelAvatarChange"
+          >
+            {{ t("buttons.cancel") }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="dashboard row">
       <div class="column">
         <form class="card" @submit="updateSettings">
@@ -166,6 +197,8 @@ import { useLayoutStore } from "@/stores/layout";
 import { users as api } from "@/api";
 import AceEditorTheme from "@/components/settings/AceEditorTheme.vue";
 import Languages from "@/components/settings/Languages.vue";
+import AvatarPicker from "@/components/AvatarPicker.vue";
+import { bumpAvatarBust } from "@/utils/avatarBust";
 import { computed, inject, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { authMethod, noAuth } from "@/utils/constants";
@@ -188,6 +221,8 @@ const redirectAfterCopyMove = ref<boolean>(false);
 const dateFormat = ref<boolean>(false);
 const locale = ref<string>("");
 const aceEditorTheme = ref<string>("");
+const pendingAvatar = ref<string | null>(null);
+const pendingAvatarFile = ref<File | null>(null);
 
 const passwordClass = computed(() => {
   const baseClass = "input input--block";
@@ -246,6 +281,47 @@ const updatePassword = async (event: Event) => {
     password.value = passwordConf.value = "";
   }
 };
+const onSelectAvatarPreset = (id: string) => {
+  pendingAvatar.value = `preset:${id}`;
+  pendingAvatarFile.value = null;
+};
+
+const onUploadAvatar = (file: File) => {
+  pendingAvatar.value = "custom";
+  pendingAvatarFile.value = file;
+};
+
+const onRemoveAvatar = () => {
+  pendingAvatar.value = "";
+  pendingAvatarFile.value = null;
+};
+
+const saveAvatar = async () => {
+  if (authStore.user === null || pendingAvatar.value === null) return;
+  try {
+    if (pendingAvatarFile.value) {
+      await api.uploadAvatar(pendingAvatarFile.value);
+      bumpAvatarBust();
+    } else if (pendingAvatar.value === "") {
+      await api.removeAvatar();
+    } else {
+      const data = { id: authStore.user.id, avatar: pendingAvatar.value };
+      await api.update(data, ["avatar"]);
+    }
+    authStore.updateUser({ id: authStore.user.id, avatar: pendingAvatar.value });
+    $showSuccess(t("settings.settingsUpdated"));
+    pendingAvatar.value = null;
+    pendingAvatarFile.value = null;
+  } catch (e: any) {
+    $showError(e);
+  }
+};
+
+const cancelAvatarChange = () => {
+  pendingAvatar.value = null;
+  pendingAvatarFile.value = null;
+};
+
 const updateSettings = async (event: Event) => {
   event.preventDefault();
 
