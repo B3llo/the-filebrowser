@@ -423,11 +423,11 @@ func extractArchive(afs afero.Fs, src string, fileMode, dirMode os.FileMode) err
 		return fmt.Errorf("format does not support extraction")
 	}
 
-	file.Seek(0, io.SeekStart)
+	file.Seek(0, io.SeekStart) //nolint: errcheck
 
 	dstDir := path.Clean(path.Dir(src))
 
-	return extractor.Extract(context.Background(), file, func(ctx context.Context, info archives.FileInfo) error {
+	return extractor.Extract(context.Background(), file, func(_ context.Context, info archives.FileInfo) error {
 		if info.LinkTarget != "" || info.Mode()&os.ModeSymlink != 0 {
 			return fmt.Errorf("refusing to extract link entry: %q", info.NameInArchive)
 		}

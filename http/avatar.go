@@ -50,7 +50,7 @@ func avatarPostHandler(imgSvc ImgService, avatarStore FileCache) handleFunc {
 }
 
 func avatarDeleteHandler(avatarStore FileCache) handleFunc {
-	return withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
+	return withUser(func(_ http.ResponseWriter, r *http.Request, d *data) (int, error) {
 		if err := avatarStore.Delete(r.Context(), avatarCacheKey(d.user.ID)); err != nil {
 			return http.StatusInternalServerError, err
 		}
@@ -65,7 +65,7 @@ func avatarDeleteHandler(avatarStore FileCache) handleFunc {
 }
 
 func avatarGetHandler(avatarStore FileCache) handleFunc {
-	return withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
+	return withUser(func(w http.ResponseWriter, r *http.Request, _ *data) (int, error) {
 		id, err := getUserID(r)
 		if err != nil {
 			return http.StatusBadRequest, err

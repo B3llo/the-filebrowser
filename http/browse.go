@@ -9,7 +9,7 @@ import (
 // browseHandler lists immediate subdirectories at the given host path.
 // Admin-only: admins can already type arbitrary paths when creating sources,
 // so this adds discoverability, not new capability.
-var browseHandler = withAdmin(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
+var browseHandler = withAdmin(func(w http.ResponseWriter, r *http.Request, _ *data) (int, error) {
 	rawPath := r.URL.Query().Get("path")
 	if rawPath == "" {
 		rawPath = "/"
