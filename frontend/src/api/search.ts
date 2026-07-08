@@ -1,4 +1,4 @@
-import { fetchURL, removePrefix, StatusError } from "./utils";
+import { fetchURL, getActiveSourceId, removePrefix, StatusError } from "./utils";
 import url from "../utils/url";
 
 export default async function search(
@@ -39,7 +39,7 @@ export default async function search(
         for (const line of lines) {
           if (line) {
             const item = JSON.parse(line) as ResourceItem;
-            item.url = `/files${base}` + url.encodePath(item.path);
+            item.url = `/files/${getActiveSourceId()}${base}` + url.encodePath(item.path);
             if (item.isDir) {
               item.url += "/";
             }
@@ -55,7 +55,7 @@ export default async function search(
       for (const line of lines) {
         if (line) {
           const item = JSON.parse(line) as ResourceItem;
-          item.url = `/files${base}` + url.encodePath(item.path);
+          item.url = `/files/${getActiveSourceId()}${base}` + url.encodePath(item.path);
           if (item.isDir) {
             item.url += "/";
           }
