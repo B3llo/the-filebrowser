@@ -5,6 +5,7 @@
       <button
         v-for="(segment, i) in breadcrumbs"
         :key="i"
+        type="button"
         class="fb-dir-picker-crumb"
         :class="{ 'is-current': i === breadcrumbs.length - 1 }"
         @click="navigateTo(segment.path)"
@@ -33,6 +34,7 @@
       <button
         v-for="dir in filteredDirs"
         :key="dir.path"
+        type="button"
         class="fb-dir-picker-item"
         @click="navigateTo(dir.path)"
       >
@@ -45,7 +47,7 @@
     <!-- Selected path display + confirm -->
     <div class="fb-dir-picker-footer">
       <span class="fb-dir-picker-selected">{{ currentPath }}</span>
-      <button class="fb-btn fb-btn--sm fb-btn--primary" @click="select">
+      <button type="button" class="fb-btn fb-btn--sm fb-btn--primary" @click="select">
         {{ $t("browse.selectFolder", "Select") }}
       </button>
     </div>

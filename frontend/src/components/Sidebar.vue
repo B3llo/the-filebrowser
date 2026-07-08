@@ -239,6 +239,40 @@ import prettyBytes from "pretty-bytes";
 
 const USAGE_DEFAULT = { used: "0 B", total: "0 B", usedPercentage: 0 };
 
+// The sidebar source-size meter doesn't need to be exact. Cache the recursive
+// dirSize result briefly so switching sources / reloading doesn't re-walk the
+// tree every time. The details panel remains the exact source of truth.
+const SOURCE_SIZE_TTL_MS = 60_000;
+
+function readCachedSourceSize(id) {
+  try {
+    const raw = localStorage.getItem(`fb:sourceSize:${id}`);
+    if (!raw) return null;
+    const cached = JSON.parse(raw);
+    if (
+      typeof cached?.size !== "number" ||
+      typeof cached?.ts !== "number" ||
+      Date.now() - cached.ts > SOURCE_SIZE_TTL_MS
+    ) {
+      return null;
+    }
+    return cached.size;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedSourceSize(id, size) {
+  try {
+    localStorage.setItem(
+      `fb:sourceSize:${id}`,
+      JSON.stringify({ size, ts: Date.now() }),
+    );
+  } catch {
+    // Ignore quota / private-mode failures — caching is best-effort.
+  }
+}
+
 export default {
   name: "sidebar",
   setup() {
@@ -331,11 +365,10 @@ export default {
       this.usageAbortController.abort();
     },
     async fetchUsage() {
-      let path = this.$route.path;
-      if (!path.includes("/files")) {
-        path = `/files/${this.activeId}/`;
-      }
-      path = path.endsWith("/") ? path : path + "/";
+      // Always report the whole-disk usage of the active source's root — not
+      // the folder the user happens to be browsing. Re-fetched only on source
+      // switch, so the meter stays stable while navigating within a source.
+      const path = `/files/${this.activeId}/`;
       let usageStats = USAGE_DEFAULT;
       if (this.disableUsedPercentage) {
         return Object.assign(this.usage, usageStats);
@@ -362,10 +395,19 @@ export default {
         this.loadingSourceDirSize = false;
         return;
       }
+      // Serve a cached value when fresh enough — the sidebar meter trades
+      // exactness for not re-walking the tree on every source switch / reload.
+      const cached = readCachedSourceSize(source.id);
+      if (cached !== null) {
+        this.sourceDirSize = cached;
+        this.loadingSourceDirSize = false;
+        return;
+      }
       this.loadingSourceDirSize = true;
       try {
         const res = await api.dirSize(`/files/${source.id}/`);
         this.sourceDirSize = res.size;
+        writeCachedSourceSize(source.id, res.size);
       } catch {
         this.sourceDirSize = null;
       } finally {
@@ -416,13 +458,13 @@ export default {
   watch: {
     $route: {
       handler() {
-        this.fetchUsage();
         this.closeHovers();
       },
       immediate: true,
     },
     active: {
       handler() {
+        this.fetchUsage();
         this.fetchSourceDirSize();
       },
       immediate: true,

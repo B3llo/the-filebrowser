@@ -161,7 +161,7 @@
 
         <!-- Select multiple toggle -->
         <button
-          class="fb-tbtn"
+          class="fb-tbtn fb-tbtn--bordered"
           :class="{ 'fb-tbtn--active': fileStore.multiple }"
           :aria-label="t('buttons.selectMultiple')"
           :title="t('buttons.selectMultiple')"

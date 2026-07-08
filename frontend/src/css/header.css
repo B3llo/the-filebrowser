@@ -128,6 +128,49 @@ header > * {
   box-shadow: var(--shadow-panel);
 }
 
+/* Local search input (for Recents/Starred views) */
+.fb-local-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--hover);
+  border-radius: 10px;
+  padding: 0 10px;
+  height: 36px;
+  flex: 0 0 auto;
+  color: var(--dim);
+}
+
+.fb-local-search input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13.5px;
+  color: var(--text);
+  width: 180px;
+}
+
+.fb-local-search input::placeholder {
+  color: var(--faint);
+}
+
+.fb-local-search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--dim);
+  padding: 2px;
+  border-radius: 6px;
+}
+
+.fb-local-search-clear:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
 /* New button dropdown */
 .fb-new-btn-wrap {
   position: relative;

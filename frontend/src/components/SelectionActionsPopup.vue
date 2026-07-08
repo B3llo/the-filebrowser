@@ -44,7 +44,7 @@
         @click="handleStar"
       >
         <FbIcon name="star" size="16px" />
-        <span>{{ t("buttons.star", "Star") }}</span>
+        <span>{{ allSelectedStarred ? t("files.unstar", "Unstar") : t("buttons.star", "Star") }}</span>
       </button>
       <div class="fb-menu-divider"></div>
       <button
@@ -98,11 +98,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
-import { toggleStarred } from "@/utils/starred";
+import { toggleStarred, isStarred, starVersion } from "@/utils/starred";
 import FbIcon from "@/components/FbIcon.vue";
 
 const props = defineProps<{
@@ -228,6 +228,16 @@ const handleStar = () => {
   }
   closePopup();
 };
+
+const allSelectedStarred = computed(() => {
+  starVersion.value;
+  const items = fileStore.req?.items;
+  if (!items || fileStore.selected.length === 0) return false;
+  return fileStore.selected.every((idx) => {
+    const item = items[idx];
+    return item ? isStarred(item.url) : false;
+  });
+});
 
 const handleRestore = () => {
   if (props.restore) {
