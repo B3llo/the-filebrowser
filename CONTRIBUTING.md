@@ -1,17 +1,5 @@
 # Contributing
 
-## Foundation First
-
-Before contributing, read [`FOUNDATION.md`](FOUNDATION.md). It defines the identity, philosophy, non-goals, and long-term direction of this project.
-
-When contributing code, design, documentation, or roadmap proposals, evaluate the work against these rules:
-
-* FileBrowser is a file manager for existing filesystems.
-* The filesystem is the source of truth.
-* User files must never become trapped inside the application.
-* The core product should remain lightweight, familiar, performant, and beautiful.
-* Features that add significant complexity should be considered as plugins or optional modules first.
-
 If you're interested in contributing to this project, this is the best place to start. Before contributing to this project, please take a bit of time to read our [Code of Conduct](code-of-conduct.md). Also, note that this project is open-source and licensed under [Apache License 2.0](LICENSE).
 
 ## Project Structure
@@ -137,3 +125,4 @@ After implementing the interface you should:
 3. Add it to the [`authBackend.Get`](https://github.com/filebrowser/filebrowser/blob/master/storage/bolt/auth.go).
 
 If you need to add more flags, please update the function `addConfigFlags`.
+
