@@ -195,6 +195,7 @@ const props = defineProps<{
   modified: string;
   index: number;
   readOnly?: boolean;
+  noOpen?: boolean;
   path?: string;
   preview?: string;
 }>();
@@ -606,6 +607,7 @@ const click = (event: Event | KeyboardEvent) => {
 };
 
 const open = () => {
+  if (props.noOpen) return;
   router.push({ path: props.url });
 };
 

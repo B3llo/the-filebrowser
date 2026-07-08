@@ -78,6 +78,14 @@
       </button>
       <div class="fb-menu-divider"></div>
       <button
+        v-if="headerButtons.restore"
+        class="fb-sel-action-item"
+        @click="handleRestore"
+      >
+        <FbIcon name="arrow-back" size="16px" />
+        <span>{{ t("trash.restore") }}</span>
+      </button>
+      <button
         v-if="headerButtons.delete"
         class="fb-sel-action-item fb-sel-action--danger"
         @click="handleDelete"
@@ -105,8 +113,11 @@ const props = defineProps<{
     rename?: boolean;
     copy?: boolean;
     delete?: boolean;
+    restore?: boolean;
   };
   download: () => void;
+  restore?: () => void;
+  deleteAction?: () => void;
 }>();
 
 const { t } = useI18n();
@@ -218,8 +229,19 @@ const handleStar = () => {
   closePopup();
 };
 
+const handleRestore = () => {
+  if (props.restore) {
+    props.restore();
+  }
+  closePopup();
+};
+
 const handleDelete = () => {
-  layoutStore.showHover("delete");
+  if (props.deleteAction) {
+    props.deleteAction();
+  } else {
+    layoutStore.showHover("delete");
+  }
   closePopup();
 };
 

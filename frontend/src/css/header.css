@@ -17,6 +17,18 @@ header > * {
   flex: 0 0 auto;
 }
 
+/* Toolbar title — used across views (My Files, Recent, Starred, Trash, Shares) */
+.fb-toolbar-title {
+  font-size: 1.1em;
+  font-weight: 650;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
 /* Toolbar utility classes used across views */
 .fb-tbtn {
   display: inline-flex;

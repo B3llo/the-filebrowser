@@ -47,6 +47,14 @@
       <FbIcon name="star" size="16px" />
       <span>{{ t("buttons.star", "Star") }}</span>
     </button>
+    <button
+      v-if="headerButtons.restore"
+      class="fb-act"
+      @click="onRestore"
+    >
+      <FbIcon name="arrow-back" size="16px" />
+      <span>{{ t("trash.restore") }}</span>
+    </button>
     <div class="fb-sel-spacer" />
     <button
       v-if="headerButtons.delete"
@@ -76,9 +84,11 @@ const props = defineProps<{
     rename?: boolean;
     delete?: boolean;
     star?: boolean;
+    restore?: boolean;
   };
   download: () => void;
   deleteAction?: () => void;
+  restoreAction?: () => void;
 }>();
 
 const { t } = useI18n();
@@ -112,6 +122,12 @@ const onDelete = () => {
     props.deleteAction();
   } else {
     layoutStore.showHover("delete");
+  }
+};
+
+const onRestore = () => {
+  if (props.restoreAction) {
+    props.restoreAction();
   }
 };
 </script>

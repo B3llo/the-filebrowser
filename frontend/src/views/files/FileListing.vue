@@ -1,6 +1,20 @@
 <template>
   <div>
-    <header-bar showBreadcrumb :base="filesBase">
+    <header-bar :showBreadcrumb="!isTrash" :base="filesBase">
+      <template v-if="isTrash" #default>
+        <span class="fb-toolbar-title">{{ $t("sidebar.trash") }}</span>
+        <div v-if="sourceStore.sources.length > 1" class="fb-source-tabs" style="flex: 0 0 auto;">
+          <button
+            v-for="src in sourceStore.sources"
+            :key="src.id"
+            class="fb-tbtn"
+            :class="{ 'fb-tbtn--active': String(src.id) === (props.sourceId ?? String(sourceStore.activeId)) }"
+            @click="emit('switch-source', String(src.id))"
+          >
+            {{ src.name }}
+          </button>
+        </div>
+      </template>
       <template #actions>
         <!-- Inline search — 280px dropdown -->
         <Search ref="searchRef" />
@@ -16,7 +30,7 @@
 
         <!-- Shell toggle -->
         <action
-          v-if="headerButtons.shell"
+          v-if="!isTrash && headerButtons.shell"
           icon="code"
           :label="t('buttons.shell')"
           @action="layoutStore.toggleShell"
@@ -169,22 +183,53 @@
         </button>
 
         <!-- Selection actions popup -->
-        <SelectionActionsPopup
-          v-if="!isMobile"
-          :header-buttons="{
-            download: headerButtons.download,
-            share: headerButtons.share,
-            move: headerButtons.move,
-            rename: headerButtons.rename,
-            delete: headerButtons.delete,
-          }"
-          :download="download"
-        />
+        <template v-if="!isTrash">
+          <SelectionActionsPopup
+            v-if="!isMobile"
+            :header-buttons="{
+              download: headerButtons.download,
+              share: headerButtons.share,
+              move: headerButtons.move,
+              rename: headerButtons.rename,
+              delete: headerButtons.delete,
+            }"
+            :download="download"
+          />
+        </template>
+        <template v-else>
+          <SelectionActionsPopup
+            v-if="!isMobile"
+            :header-buttons="{ restore: true, delete: true }"
+            :download="noop"
+            :restore="trashRestore"
+            :delete-action="trashDeletePermanent"
+          />
+
+          <button
+            v-if="fileStore.selectedCount > 0"
+            class="fb-tbtn fb-tbtn--danger"
+            :title="t('trash.deletePermanent')"
+            @click="trashDeletePermanent"
+          >
+            <FbIcon name="delete" size="17px" />
+            <span>{{ t("trash.deletePermanent") }}</span>
+          </button>
+
+          <button
+            v-if="fileStore.req && fileStore.req.items.length > 0"
+            class="fb-tbtn fb-tbtn--danger"
+            :title="$t('trash.emptyTrash')"
+            @click="emit('empty-trash')"
+          >
+            {{ $t("trash.emptyTrash") }}
+          </button>
+        </template>
 
         <!-- New button dropdown -->
         <div
+          v-if="!isTrash"
           class="fb-new-btn-wrap"
-          v-if="headerButtons.upload || authStore.user?.perm.create"
+          v-show="headerButtons.upload || authStore.user?.perm.create"
         >
           <button
             class="fb-tbtn fb-tbtn--accent"
@@ -271,7 +316,6 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 style="width: 16px; height: 16px"
-                aria-hidden="true"
               >
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <path d="M17 8l-5-5-5 5" />
@@ -285,21 +329,40 @@
 
     </header-bar>
 
-    <SelectionBar
-      v-if="!isMobile && fileStore.multiple && fileStore.selectedCount > 0"
-      :header-buttons="{
-        download: headerButtons.download,
-        share: headerButtons.share,
-        move: headerButtons.move,
-        rename: headerButtons.rename,
-        delete: headerButtons.delete,
-        star: true,
-      }"
-      :download="download"
-    />
+    <template v-if="!isTrash">
+      <SelectionBar
+        v-if="!isMobile && fileStore.multiple && fileStore.selectedCount > 0"
+        :header-buttons="{
+          download: headerButtons.download,
+          share: headerButtons.share,
+          move: headerButtons.move,
+          rename: headerButtons.rename,
+          delete: headerButtons.delete,
+          star: true,
+        }"
+        :download="download"
+      />
+    </template>
+    <template v-else>
+      <SelectionBar
+        v-if="fileStore.selected.length > 0"
+        :header-buttons="{
+          download: false,
+          share: false,
+          move: false,
+          rename: false,
+          delete: true,
+          star: false,
+          restore: true,
+        }"
+        :download="noop"
+        :delete-action="trashDeletePermanent"
+        :restore-action="trashRestore"
+      />
+    </template>
 
     <div
-      v-if="isMobile"
+      v-if="isMobile && !isTrash"
       id="file-selection"
       :class="{
         'file-selection-margin-bottom': fileStore.multiple,
@@ -444,10 +507,10 @@
                 role="button"
                 tabindex="0"
                 @click="sort('modified')"
-                :title="t('files.sortByLastModified')"
-                :aria-label="t('files.sortByLastModified')"
+                :title="isTrash ? t('trash.deletedAt') : t('files.sortByLastModified')"
+                :aria-label="isTrash ? t('trash.deletedAt') : t('files.sortByLastModified')"
               >
-                <span>{{ t("files.lastModified") }}</span>
+                <span>{{ isTrash ? t("trash.deletedAt") : t("files.lastModified") }}</span>
                 <FbIcon :name="modifiedIcon" size="14px" />
               </p>
             </div>
@@ -467,13 +530,14 @@
             v-for="item in dirs"
             :key="base64(item.name)"
             v-bind:index="item.index"
-            v-bind:name="item.name"
+            v-bind:name="isTrash ? cleanName(item.name) : item.name"
             v-bind:isDir="item.isDir"
             v-bind:url="item.url"
             v-bind:modified="item.modified"
             v-bind:type="item.type"
             v-bind:size="item.size"
             v-bind:path="item.path"
+            v-bind:noOpen="isTrash || undefined"
           >
           </item>
         </div>
@@ -491,7 +555,7 @@
             v-for="item in files"
             :key="base64(item.name)"
             v-bind:index="item.index"
-            v-bind:name="item.name"
+            v-bind:name="isTrash ? cleanName(item.name) : item.name"
             v-bind:isDir="item.isDir"
             v-bind:url="item.url"
             v-bind:modified="item.modified"
@@ -499,6 +563,7 @@
             v-bind:size="item.size"
             v-bind:path="item.path"
             v-bind:preview="item.preview"
+            v-bind:noOpen="isTrash || undefined"
           >
           </item>
         </div>
@@ -507,7 +572,21 @@
           :pos="contextMenuPos"
           @hide="hideContextMenu"
         >
-          <template v-if="isContextMenuOnItem">
+          <template v-if="isTrash">
+            <action
+              :fbIcon="'arrow-back'"
+              :label="$t('trash.restore')"
+              @action="trashRestore"
+            />
+            <hr class="fb-menu-divider" />
+            <action
+              :fbIcon="'delete'"
+              :label="$t('trash.deletePermanent')"
+              @action="trashDeletePermanent"
+              :danger="true"
+            />
+          </template>
+          <template v-else-if="isContextMenuOnItem">
             <action
               v-if="headerButtons.share"
               :fbIcon="'share'"
@@ -650,6 +729,7 @@ import { useClipboardStore } from "@/stores/clipboard";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
 import { useExtractStore } from "@/stores/extract";
+import { useSourceStore } from "@/stores/source";
 
 import { users, files as api } from "@/api";
 import { enableExec } from "@/utils/constants";
@@ -683,6 +763,24 @@ import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { removePrefix } from "@/api/utils";
 
+const props = defineProps<{
+  isTrash?: boolean;
+  sourceId?: string;
+  searchQuery?: string;
+  sortBy?: string;
+  sortAsc?: boolean;
+}>();
+
+const emit = defineEmits<{
+  "update:searchQuery": [value: string];
+  "update:sortBy": [value: string];
+  "update:sortAsc": [value: boolean];
+  restore: [];
+  "delete-permanent": [];
+  "empty-trash": [];
+  "switch-source": [id: string];
+}>();
+
 const showLimit = ref<number>(50);
 const dragCounter = ref<number>(0);
 const width = ref<number>(window.innerWidth);
@@ -710,12 +808,15 @@ const authStore = useAuthStore();
 const fileStore = useFileStore();
 const layoutStore = useLayoutStore();
 const extractStore = useExtractStore();
+const sourceStore = useSourceStore();
 
 const { req } = storeToRefs(fileStore);
 
 const route = useRoute();
 
-const filesBase = computed(() => `/files/${route.params.sourceId ?? 0}`);
+const filesBase = computed(() =>
+  props.isTrash ? `/files/${props.sourceId ?? sourceStore.activeId}` : `/files/${route.params.sourceId ?? 0}`
+);
 
 onBeforeRouteUpdate(() => {
   hideContextMenu();
@@ -727,23 +828,27 @@ const listing = ref<HTMLElement | null>(null);
 const searchRef = ref<InstanceType<typeof Search> | null>(null);
 
 const nameSorted = computed(() =>
-  fileStore.req ? fileStore.req.sorting.by === "name" : false
+  props.isTrash ? props.sortBy === "name" : fileStore.req ? fileStore.req.sorting.by === "name" : false
 );
 
 const sizeSorted = computed(() =>
-  fileStore.req ? fileStore.req.sorting.by === "size" : false
+  props.isTrash ? props.sortBy === "size" : fileStore.req ? fileStore.req.sorting.by === "size" : false
 );
 
 const modifiedSorted = computed(() =>
-  fileStore.req ? fileStore.req.sorting.by === "modified" : false
+  props.isTrash ? props.sortBy === "modified" : fileStore.req ? fileStore.req.sorting.by === "modified" : false
 );
 
 const ascOrdered = computed(() =>
-  fileStore.req ? fileStore.req.sorting.asc : false
+  props.isTrash ? !!props.sortAsc : fileStore.req ? fileStore.req.sorting.asc : false
 );
 
-const currentSortBy = computed(() => fileStore.req?.sorting.by ?? "name");
-const currentSortAsc = computed(() => fileStore.req?.sorting.asc ?? true);
+const currentSortBy = computed(() =>
+  props.isTrash ? (props.sortBy ?? "name") : (fileStore.req?.sorting.by ?? "name")
+);
+const currentSortAsc = computed(() =>
+  props.isTrash ? (props.sortAsc ?? true) : (fileStore.req?.sorting.asc ?? true)
+);
 
 const dirs = computed(() => items.value.dirs.slice(0, showLimit.value));
 
@@ -751,7 +856,32 @@ const items = computed(() => {
   const dirs: ResourceItem[] = [];
   const files: ResourceItem[] = [];
 
-  fileStore.req?.items
+  const q = props.isTrash && props.searchQuery ? props.searchQuery.toLowerCase().trim() : "";
+  let source = fileStore.req?.items ?? [];
+
+  if (q) {
+    source = source.filter((item) =>
+      cleanName(item.name).toLowerCase().includes(q)
+    );
+  }
+
+  if (props.isTrash) {
+    const by = props.sortBy ?? "name";
+    const asc = props.sortAsc ?? true;
+    source = [...source].sort((a, b) => {
+      let cmp = 0;
+      if (by === "name") {
+        cmp = cleanName(a.name).localeCompare(cleanName(b.name));
+      } else if (by === "modified") {
+        cmp = new Date(a.modified).getTime() - new Date(b.modified).getTime();
+      } else if (by === "size") {
+        cmp = a.size - b.size;
+      }
+      return asc ? cmp : -cmp;
+    });
+  }
+
+  source
     .filter((item) => item.name !== ".Trash")
     .forEach((item) => {
       if (item.isDir) {
@@ -865,9 +995,11 @@ onMounted(() => {
   window.addEventListener("keydown", keyEvent);
   window.addEventListener("scroll", scrollEvent, true);
   window.addEventListener("resize", windowsResize);
-  document.addEventListener("click", closeNewMenu);
+  if (!props.isTrash) {
+    document.addEventListener("click", closeNewMenu);
+  }
 
-  if (!authStore.user?.perm.create) return;
+  if (props.isTrash || !authStore.user?.perm.create) return;
   document.addEventListener("dragover", preventDefault);
   document.addEventListener("dragenter", dragEnter);
   document.addEventListener("dragleave", dragLeave);
@@ -879,9 +1011,11 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", keyEvent);
   window.removeEventListener("scroll", scrollEvent, true);
   window.removeEventListener("resize", windowsResize);
-  document.removeEventListener("click", closeNewMenu);
+  if (!props.isTrash) {
+    document.removeEventListener("click", closeNewMenu);
+  }
 
-  if (authStore.user && !authStore.user?.perm.create) return;
+  if (props.isTrash || !authStore.user?.perm.create) return;
   document.removeEventListener("dragover", preventDefault);
   document.removeEventListener("dragenter", dragEnter);
   document.removeEventListener("dragleave", dragLeave);
@@ -911,8 +1045,12 @@ const keyEvent = (event: KeyboardEvent) => {
   if (event.key === "Delete") {
     if (!authStore.user?.perm.delete || fileStore.selectedCount == 0) return;
 
-    // Show delete prompt.
-    layoutStore.showHover("delete");
+    if (props.isTrash) {
+      emit("delete-permanent");
+    } else {
+      // Show delete prompt.
+      layoutStore.showHover("delete");
+    }
   }
 
   if (event.key === "F2") {
@@ -1266,6 +1404,20 @@ const resetOpacity = () => {
 };
 
 const sort = async (by: string, explicitAsc?: boolean) => {
+  if (props.isTrash) {
+    let asc = false;
+    if (explicitAsc !== undefined) {
+      asc = explicitAsc;
+    } else if (props.sortBy === by) {
+      asc = !props.sortAsc;
+    } else {
+      asc = true;
+    }
+    emit("update:sortBy", by);
+    emit("update:sortAsc", asc);
+    return;
+  }
+
   let asc = false;
 
   if (explicitAsc !== undefined) {
@@ -1383,6 +1535,14 @@ const closeSortMenu = () => {
 };
 
 const handleSortMenuClick = async (by: string) => {
+  if (props.isTrash) {
+    const curBy = props.sortBy ?? "name";
+    const curAsc = props.sortAsc ?? true;
+    const asc = curBy === by ? !curAsc : true;
+    sortMenuOpen.value = false;
+    await sort(by, asc);
+    return;
+  }
   const cur = fileStore.req?.sorting;
   if (!cur) return;
   const asc = cur.by === by ? !cur.asc : true;
@@ -1472,7 +1632,17 @@ const showContextMenu = (event: MouseEvent) => {
   const target = event.target as HTMLElement;
   isContextMenuOnItem.value = !!target.closest(".item");
   isContextMenuOnFolder.value = !!target.closest('[data-dir="true"]');
-  if (!isContextMenuOnItem.value) {
+  if (props.isTrash && isContextMenuOnItem.value) {
+    const itemEl = target.closest(".item") as HTMLElement | null;
+    const itemPath = itemEl?.getAttribute("data-path");
+    const items = fileStore.req?.items ?? [];
+    const found = itemPath
+      ? items.find((it) => it.path === itemPath)
+      : null;
+    if (found && !fileStore.selected.includes(found.index)) {
+      fileStore.selected = [found.index];
+    }
+  } else if (!isContextMenuOnItem.value) {
     fileStore.selected = [];
     isContextMenuOnFolder.value = false;
   }
@@ -1629,6 +1799,20 @@ const handleEmptyAreaClick = (e: MouseEvent) => {
   if (target.dataset.clearOnClick === "true") {
     fileStore.selected = [];
   }
+};
+
+const cleanName = (trashName: string): string => trashName.replace(/^\d+_/, "");
+
+const noop = () => {};
+
+const trashRestore = () => {
+  hideContextMenu();
+  emit("restore");
+};
+
+const trashDeletePermanent = () => {
+  hideContextMenu();
+  emit("delete-permanent");
 };
 </script>
 <style scoped>
