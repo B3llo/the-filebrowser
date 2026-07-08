@@ -123,8 +123,8 @@
     <div>
       <p class="name">{{ name }}</p>
 
-      <p v-if="isDir" class="size" data-order="-1">&mdash;</p>
-      <p v-else class="size" :data-order="humanSize()">{{ humanSize() }}</p>
+      <p v-if="!hideSize && isDir" class="size" data-order="-1">&mdash;</p>
+      <p v-else-if="!hideSize" class="size" :data-order="humanSize()">{{ humanSize() }}</p>
 
       <p class="modified">
         <time :datetime="modified">{{ humanTime() }}</time>
@@ -199,6 +199,7 @@ const props = defineProps<{
   onOpen?: (url: string, isDir: boolean) => void;
   path?: string;
   preview?: string;
+  hideSize?: boolean;
 }>();
 
 const authStore = useAuthStore();
@@ -238,13 +239,21 @@ const canDrop = computed(() => {
   return true;
 });
 
+const sourceId = computed(() => {
+  const parts = props.url.split("/");
+  if (parts[1] === "files" && parts.length >= 3) {
+    return parts[2];
+  }
+  return undefined;
+});
+
 const thumbnailUrl = computed(() => {
   const file = {
     path: props.path,
     modified: props.modified,
   };
 
-  return api.getPreviewURL(file as Resource, "thumb");
+  return api.getPreviewURL(file as Resource, "thumb", sourceId.value);
 });
 
 // Thumbnail lazy-load with concurrency limiting

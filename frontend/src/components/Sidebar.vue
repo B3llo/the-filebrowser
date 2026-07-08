@@ -129,19 +129,31 @@
         <span class="fb-sidebar-storage-label">{{
           $t("sidebar.storage")
         }}</span>
-        <span class="fb-sidebar-storage-pct">{{ usage.usedPercentage }}%</span>
       </div>
-      <progress-bar :val="usage.usedPercentage" size="small" />
-      <div class="fb-sidebar-storage-detail">
-        {{
-          activeSourceName
-            ? $t("sidebar.diskUsedFor", {
-                used: usage.used,
-                total: usage.total,
-                source: activeSourceName,
-              })
-            : $t("sidebar.diskUsed", { used: usage.used, total: usage.total })
-        }}
+      <div class="fb-sidebar-source-row">
+        <span class="fb-sidebar-row-label">
+          <fb-icon name="folder" size="14px" />
+          {{ activeSourceName || $t("sidebar.myFiles") }}
+        </span>
+        <span class="fb-sidebar-row-value">{{ sourceSizeFormatted }}</span>
+      </div>
+      <div class="fb-sidebar-disk-row">
+        <span class="fb-sidebar-row-label">
+          <fb-icon name="home" size="14px" />
+          {{ $t("sidebar.disk") }}
+        </span>
+        <span class="fb-sidebar-row-value">
+          {{ usage.usedPercentage }}% · {{ usage.total }}
+        </span>
+      </div>
+      <div class="fb-sidebar-storage-bar">
+        <progress-bar
+          :val="usage.usedPercentage"
+          :size="3"
+          :bg-color="'var(--hover)'"
+          :bar-color="'var(--accent)'"
+          :bar-border-radius="3"
+        />
       </div>
     </div>
 
@@ -195,7 +207,7 @@
 </template>
 
 <script>
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
 import { mapActions, mapState } from "pinia";
 import { useAuthStore } from "@/stores/auth";
 import { useFileStore } from "@/stores/file";
@@ -231,7 +243,14 @@ export default {
   name: "sidebar",
   setup() {
     const usage = reactive(USAGE_DEFAULT);
-    return { usage, usageAbortController: new AbortController() };
+    const sourceDirSize = ref(null);
+    const loadingSourceDirSize = ref(false);
+    return {
+      usage,
+      sourceDirSize,
+      loadingSourceDirSize,
+      usageAbortController: new AbortController(),
+    };
   },
   components: {
     ProgressBar,
@@ -278,6 +297,11 @@ export default {
     },
     isAdmin() {
       return this.user?.perm?.admin ?? false;
+    },
+    sourceSizeFormatted() {
+      if (this.sourceDirSize === null) return "—";
+      if (this.loadingSourceDirSize) return "…";
+      return prettyBytes(this.sourceDirSize, { binary: true });
     },
   },
   methods: {
@@ -329,6 +353,25 @@ export default {
         return Object.assign(this.usage, usageStats);
       }
     },
+    async fetchSourceDirSize() {
+      const source = this.active;
+      // Skip the implicit source (id=0 / no explicit path): computing its size
+      // would walk the user's entire default scope, which can be very slow.
+      if (!source || source.path === undefined || source.path === "") {
+        this.sourceDirSize = null;
+        this.loadingSourceDirSize = false;
+        return;
+      }
+      this.loadingSourceDirSize = true;
+      try {
+        const res = await api.dirSize(`/files/${source.id}/`);
+        this.sourceDirSize = res.size;
+      } catch {
+        this.sourceDirSize = null;
+      } finally {
+        this.loadingSourceDirSize = false;
+      }
+    },
     toRoot() {
       const sourceStore = useSourceStore();
       this.$router.push({ path: `${sourceStore.filesBase}/` });
@@ -375,6 +418,12 @@ export default {
       handler() {
         this.fetchUsage();
         this.closeHovers();
+      },
+      immediate: true,
+    },
+    active: {
+      handler() {
+        this.fetchSourceDirSize();
       },
       immediate: true,
     },
@@ -574,15 +623,38 @@ export default {
   color: var(--text);
 }
 
-.fb-sidebar-storage-pct {
-  font-size: 11px;
-  color: var(--dim);
+.fb-sidebar-source-row,
+.fb-sidebar-disk-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  font-size: 12.5px;
+  margin-top: 2px;
 }
 
-.fb-sidebar-storage-detail {
-  margin-top: 6px;
-  font-size: 11.5px;
+.fb-sidebar-row-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fb-sidebar-row-value {
   color: var(--dim);
+  font-weight: 500;
+  flex-shrink: 0;
+  margin-left: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fb-sidebar-storage-bar {
+  margin-top: 8px;
 }
 
 /* User footer */

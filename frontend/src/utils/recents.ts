@@ -12,7 +12,7 @@ export interface RecentFile {
 }
 
 const KEY = "fb-recent-files";
-const MAX = 12;
+const MAX = 30;
 
 export function getRecents(): RecentFile[] {
   try {

@@ -12,12 +12,11 @@
       <p class="fb-empty-sub">{{ $t("files.emptyRecentSub") }}</p>
     </div>
 
-    <div v-else id="listing" class="file-icons" :class="viewMode">
+    <div v-else id="listing" class="file-icons no-size-col" :class="viewMode">
       <div>
         <div class="fb-col-header">
           <div>
             <p class="name">{{ $t("files.name") }}</p>
-            <p class="size">{{ $t("files.size") }}</p>
             <p class="modified">{{ $t("files.lastModified") }}</p>
           </div>
         </div>
@@ -36,6 +35,7 @@
           :size="0"
           :modified="toISO(it.at)"
           :path="toPath(it.url)"
+          hideSize
         />
       </div>
 
@@ -52,6 +52,7 @@
           :size="0"
           :modified="toISO(it.at)"
           :path="toPath(it.url)"
+          hideSize
         />
       </div>
     </div>
@@ -95,5 +96,15 @@ const dirs = computed(() => items.value.filter((i) => i.type === "dir"));
 const files = computed(() => items.value.filter((i) => i.type !== "dir"));
 
 const toISO = (ms: number) => new Date(ms).toISOString();
-const toPath = (url: string) => removePrefix(url);
+const toPath = (url: string) => removePrefix(decodeURIComponent(url));
 </script>
+
+<style scoped>
+#listing.no-size-col.list .item > div:last-of-type,
+#listing.no-size-col.list .fb-col-header > div {
+  grid-template-columns: 1fr 168px;
+}
+#listing.no-size-col.list .size {
+  display: none;
+}
+</style>

@@ -45,10 +45,13 @@ func resolveActiveSource(r *http.Request, d *data) {
 	d.user.Fs = files.NewFs(afero.NewOsFs(), src.Path, d.server.FollowExternalSymlinks)
 }
 
-// activeSourceID parses the active source id from the request (header first,
-// then cookie). It returns 0 (the implicit source) when absent or unparseable.
+// activeSourceID parses the active source id from the request (query param first,
+// then header, then cookie). It returns 0 (the implicit source) when absent or unparseable.
 func activeSourceID(r *http.Request) uint {
-	raw := r.Header.Get(sourceHeader)
+	raw := r.URL.Query().Get("source")
+	if raw == "" {
+		raw = r.Header.Get(sourceHeader)
+	}
 	if raw == "" {
 		if c, err := r.Cookie(sourceCookie); err == nil {
 			raw = c.Value

@@ -1661,17 +1661,22 @@ const isStarredContextItem = computed(() => {
   starVersion.value; // subscribe so it re-evaluates after toggleStarred
   const items = fileStore.req?.items;
   if (!items || fileStore.selected.length === 0) return false;
-  const item = items[fileStore.selected[0]];
-  return item ? isStarred(item.url) : false;
+  return fileStore.selected.some((idx) => {
+    const item = items[idx];
+    return item ? isStarred(item.url) : false;
+  });
 });
 
 const toggleStar = () => {
   hideContextMenu();
   const items = fileStore.req?.items;
   if (!items || fileStore.selected.length === 0) return;
-  const item = items[fileStore.selected[0]];
-  if (!item) return;
-  toggleStarred({ url: item.url, name: item.name, type: item.type });
+  for (const idx of fileStore.selected) {
+    const item = items[idx];
+    if (item) {
+      toggleStarred({ url: item.url, name: item.name, type: item.type });
+    }
+  }
 };
 
 const moveToTrash = async () => {

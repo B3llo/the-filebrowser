@@ -232,11 +232,15 @@ export function getDownloadURL(file: ResourceItem, inline: any) {
   return createURL("api/raw" + file.path, params);
 }
 
-export function getPreviewURL(file: ResourceItem, size: string) {
-  const params = {
+export function getPreviewURL(file: ResourceItem, size: string, sourceId?: string) {
+  const params: { inline: string; key: number; source?: string } = {
     inline: "true",
     key: Date.parse(file.modified),
   };
+
+  if (sourceId) {
+    params.source = sourceId;
+  }
 
   return createURL("api/preview/" + size + file.path, params);
 }

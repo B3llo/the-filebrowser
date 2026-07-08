@@ -372,6 +372,7 @@
   },
   "sidebar": {
     "comingSoon": "Coming soon",
+    "disk": "Disk",
     "diskUsed": "{used} of {total} used",
     "diskUsedFor": "{used} of {total} used on {source}",
     "help": "Help",
