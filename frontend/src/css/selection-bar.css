@@ -8,9 +8,6 @@
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   animation: fbfade 0.14s ease-out;
-  position: sticky;
-  top: 60px;
-  z-index: 99;
   flex-shrink: 0;
 }
 

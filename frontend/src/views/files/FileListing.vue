@@ -133,6 +133,17 @@
           </div>
         </div>
 
+        <!-- Select multiple toggle -->
+        <button
+          class="fb-tbtn"
+          :class="{ 'fb-tbtn--active': fileStore.multiple }"
+          :aria-label="t('buttons.selectMultiple')"
+          :title="t('buttons.selectMultiple')"
+          @click="toggleMultipleSelection"
+        >
+          <FbIcon name="select-all" size="18px" />
+        </button>
+
         <!-- Details panel toggle — split-panel icon -->
         <button
           class="fb-tbtn fb-tbtn--bordered"
@@ -272,17 +283,20 @@
         </div>
       </template>
 
-      <!-- Select multiple toggle (always visible) -->
-      <button
-        class="fb-tbtn"
-        :class="{ 'fb-tbtn--active': fileStore.multiple }"
-        :aria-label="t('buttons.selectMultiple')"
-        :title="t('buttons.selectMultiple')"
-        @click="toggleMultipleSelection"
-      >
-        <FbIcon name="select-all" size="18px" />
-      </button>
     </header-bar>
+
+    <SelectionBar
+      v-if="!isMobile && fileStore.multiple && fileStore.selectedCount > 0"
+      :header-buttons="{
+        download: headerButtons.download,
+        share: headerButtons.share,
+        move: headerButtons.move,
+        rename: headerButtons.rename,
+        delete: headerButtons.delete,
+        star: true,
+      }"
+      :download="download"
+    />
 
     <div
       v-if="isMobile"
@@ -625,18 +639,6 @@
           multiple
         />
 
-        <SelectionBar
-          v-if="fileStore.multiple && fileStore.selectedCount > 0"
-          :header-buttons="{
-            download: headerButtons.download,
-            share: headerButtons.share,
-            move: headerButtons.move,
-            rename: headerButtons.rename,
-            delete: headerButtons.delete,
-            star: true,
-          }"
-          :download="download"
-        />
       </div>
     </template>
   </div>

@@ -42,8 +42,7 @@
     <button
       v-if="headerButtons.star"
       class="fb-act"
-      aria-disabled="true"
-      style="opacity: 0.38; pointer-events: none"
+      @click="handleStar"
     >
       <FbIcon name="star" size="16px" />
       <span>{{ t("buttons.star", "Star") }}</span>
@@ -66,6 +65,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
+import { toggleStarred } from "@/utils/starred";
 import FbIcon from "@/components/FbIcon.vue";
 
 const props = defineProps<{
@@ -94,6 +94,14 @@ const selectionLabel = computed(() => {
 
 const clearSelection = () => {
   fileStore.selected = [];
+};
+
+const handleStar = () => {
+  const items = fileStore.req?.items;
+  if (!items || fileStore.selected.length === 0) return;
+  const item = items[fileStore.selected[0]];
+  if (!item) return;
+  toggleStarred({ url: item.url, name: item.name, type: item.type });
 };
 
 const onDelete = () => {

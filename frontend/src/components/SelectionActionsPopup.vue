@@ -40,8 +40,8 @@
         <span>{{ t("buttons.share") }}</span>
       </button>
       <button
-        class="fb-sel-action-item fb-sel-action--disabled"
-        aria-disabled="true"
+        class="fb-sel-action-item"
+        @click="handleStar"
       >
         <FbIcon name="star" size="16px" />
         <span>{{ t("buttons.star", "Star") }}</span>
@@ -94,6 +94,7 @@ import { ref, onMounted, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
+import { toggleStarred } from "@/utils/starred";
 import FbIcon from "@/components/FbIcon.vue";
 
 const props = defineProps<{
@@ -202,6 +203,15 @@ const handleSelectAll = () => {
   if (fileStore.req?.items) {
     fileStore.selected = fileStore.req.items.map((_, i) => i);
   }
+  closePopup();
+};
+
+const handleStar = () => {
+  const items = fileStore.req?.items;
+  if (!items || fileStore.selected.length === 0) return;
+  const item = items[fileStore.selected[0]];
+  if (!item) return;
+  toggleStarred({ url: item.url, name: item.name, type: item.type });
   closePopup();
 };
 
