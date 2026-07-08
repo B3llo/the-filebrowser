@@ -507,6 +507,12 @@
               @action="download"
               :counter="fileStore.selectedCount"
             />
+            <action
+              v-if="isContextMenuOnArchive && authStore.user?.perm.modify"
+              :fbIcon="'archive'"
+              :label="t('buttons.extract')"
+              @action="extractArchive"
+            />
             <hr class="fb-menu-divider" />
             <action
               v-if="headerButtons.rename"
@@ -641,6 +647,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useClipboardStore } from "@/stores/clipboard";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
+import { useExtractStore } from "@/stores/extract";
 
 import { users, files as api } from "@/api";
 import { enableExec } from "@/utils/constants";
@@ -648,6 +655,7 @@ import * as upload from "@/utils/upload";
 import { throttle } from "lodash-es";
 import { Base64 } from "js-base64";
 import { isStarred, toggleStarred, starVersion } from "@/utils/starred";
+import { fileKind } from "@/utils/fileKind";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import Action from "@/components/header/Action.vue";
@@ -681,6 +689,13 @@ const isContextMenuVisible = ref<boolean>(false);
 const contextMenuPos = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 const isContextMenuOnItem = ref<boolean>(false);
 const isContextMenuOnFolder = ref<boolean>(false);
+const isContextMenuOnArchive = computed(() => {
+  const items = fileStore.req?.items;
+  if (!items || fileStore.selected.length !== 1) return false;
+  const item = items[fileStore.selected[0]];
+  if (!item || item.isDir) return false;
+  return fileKind(item) === "archive";
+});
 const showColorPicker = ref<boolean>(false);
 const colorPickerPos = ref<{ x: number; y: number }>({ x: 0, y: 0 });
 const newMenuOpen = ref<boolean>(false);
@@ -692,6 +707,7 @@ const clipboardStore = useClipboardStore();
 const authStore = useAuthStore();
 const fileStore = useFileStore();
 const layoutStore = useLayoutStore();
+const extractStore = useExtractStore();
 
 const { req } = storeToRefs(fileStore);
 
@@ -1327,6 +1343,23 @@ const download = () => {
       api.download(format, ...files);
     },
   });
+};
+
+const extractArchive = async () => {
+  hideContextMenu();
+  const items = fileStore.req?.items;
+  if (!items || fileStore.selected.length !== 1) return;
+  const item = items[fileStore.selected[0]];
+  if (!item) return;
+  extractStore.start(item.url, item.name);
+  try {
+    await api.extract(item.url);
+    extractStore.finish(item.url);
+    fileStore.reload = true;
+  } catch (e: any) {
+    extractStore.fail(item.url);
+    $showError(e);
+  }
 };
 
 const setView = async (mode: ViewModeType) => {

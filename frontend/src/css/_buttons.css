@@ -136,6 +136,21 @@
   color: #fff;
 }
 
+/* Accent button — more prominent than default for primary actions */
+.button--accent {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 2px solid var(--accent);
+  font-weight: 600;
+  padding: 7px 14px;
+}
+
+.button--accent:hover {
+  background: var(--accent-press);
+  border-color: var(--accent-press);
+  color: var(--on-accent);
+}
+
 /* Legacy compatibility */
 .button--flat.button--grey {
   color: var(--faint);

@@ -70,3 +70,48 @@
   inset: 0;
   z-index: 60;
 }
+
+/* --- Mobile: render as a bottom sheet (slides up from the bottom) --- */
+@keyframes fbSheetUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 736px) {
+  .context-menu {
+    /* Inline top/left from JS positioning must be overridden for the sheet. */
+    top: auto !important;
+    left: 0 !important;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    padding: 8px 12px calc(12px + env(safe-area-inset-bottom));
+    animation: fbSheetUp 0.22s ease-out;
+    transform-origin: bottom center;
+  }
+
+  /* Drag handle affordance at the top of the sheet */
+  .context-menu::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-strong, oklch(0.78 0.01 100));
+    margin: 2px auto 8px;
+  }
+
+  .context-menu .action {
+    padding: 13px 10px;
+    font-size: 14.5px;
+  }
+}

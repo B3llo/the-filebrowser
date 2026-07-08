@@ -54,7 +54,8 @@
     "overrideAll": "대상 폴더의 모든 파일을 대체",
     "skipAll": "충돌하는 모든 파일을 건너뛰기",
     "renameAll": "모든 파일의 이름 변경 (복사본 생성)",
-    "singleDecision": "충돌하는 각 파일을 확인"
+    "singleDecision": "충돌하는 각 파일을 확인",
+    "extract": "Extract"
   },
   "download": {
     "downloadFile": "파일 다운로드",

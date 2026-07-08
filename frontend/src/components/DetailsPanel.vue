@@ -133,7 +133,7 @@
           <span class="fb-details-meta-key">Kind</span>
           <span class="fb-details-meta-val">{{ kindLabel }}</span>
         </div>
-        <div v-if="!selectedItem.isDir" class="fb-details-meta-row">
+        <div class="fb-details-meta-row">
           <span class="fb-details-meta-key">Size</span>
           <span class="fb-details-meta-val">{{ formattedSize }}</span>
         </div>
@@ -356,16 +356,46 @@ const kindLabel = computed(() => {
   });
 });
 
+const folderSize = ref<number | null>(null);
+const loadingFolderSize = ref(false);
+
+const formattedSize = computed(() => {
+  if (!selectedItem.value) return "—";
+  if (selectedItem.value.isDir) {
+    if (loadingFolderSize.value) return "…";
+    if (folderSize.value !== null) return filesize(folderSize.value);
+    return "—";
+  }
+  return filesize(selectedItem.value.size);
+});
+
+watch(
+  [() => selectedItem.value?.path, () => selectedItem.value?.isDir],
+  async ([path, isDir]) => {
+    folderSize.value = null;
+    if (!path || !isDir) return;
+    loadingFolderSize.value = true;
+    try {
+      const res = await api.dirSize(path);
+      folderSize.value = res.size;
+    } catch {
+      folderSize.value = null;
+    } finally {
+      loadingFolderSize.value = false;
+    }
+  },
+  { immediate: true }
+);
+
 const subLine = computed(() => {
   if (!selectedItem.value) return "";
   const type = kindLabel.value;
-  if (selectedItem.value.isDir) return type;
+  if (selectedItem.value.isDir) {
+    if (loadingFolderSize.value) return `${type}  ·  …`;
+    if (folderSize.value !== null) return `${type}  ·  ${filesize(folderSize.value)}`;
+    return type;
+  }
   return `${type}  ·  ${formattedSize.value}`;
-});
-
-const formattedSize = computed(() => {
-  if (!selectedItem.value || selectedItem.value.isDir) return "—";
-  return filesize(selectedItem.value.size);
 });
 
 const formattedModified = computed(() => {

@@ -18,6 +18,7 @@
     </main>
     <prompts></prompts>
     <upload-files></upload-files>
+    <extract-files></extract-files>
     <settings-modal></settings-modal>
     <command-palette></command-palette>
   </div>
@@ -32,6 +33,7 @@ import Sidebar from "@/components/Sidebar.vue";
 import Prompts from "@/components/prompts/Prompts.vue";
 import Shell from "@/components/Shell.vue";
 import UploadFiles from "@/components/prompts/UploadFiles.vue";
+import ExtractFiles from "@/components/prompts/ExtractFiles.vue";
 import SettingsModal from "@/components/SettingsModal.vue";
 import CommandPalette from "@/components/CommandPalette.vue";
 import { enableExec } from "@/utils/constants";

@@ -489,11 +489,6 @@ header > div div {
   position: relative;
 }
 
-header .search-button,
-header .menu-button {
-  display: none;
-}
-
 #more {
   display: none;
 }

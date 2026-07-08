@@ -103,7 +103,7 @@
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 736px) {
   .code-preview .code-content,
   .text-preview .text-content {
     font-size: 12px;

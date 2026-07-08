@@ -54,7 +54,8 @@
     "overrideAll": "Substituir todos os ficheiros na pasta de destino",
     "skipAll": "Ignorar todos os ficheiros em conflito",
     "renameAll": "Mudar o nome a todos os ficheiros (criar uma cópia)",
-    "singleDecision": "Decidir para cada ficheiro em conflito"
+    "singleDecision": "Decidir para cada ficheiro em conflito",
+    "extract": "Extract"
   },
   "download": {
     "downloadFile": "Descarregar Ficheiro",

@@ -54,7 +54,8 @@
     "overrideAll": "Zastąp wszystkie pliki w folderze docelowym",
     "skipAll": "Pomiń wszystkie pliki powodujące konflikty",
     "renameAll": "Zmień nazwy wszystkich plików (utwórz kopię)",
-    "singleDecision": "Podejmij decyzję dla każdego pliku powodującego konflikt"
+    "singleDecision": "Podejmij decyzję dla każdego pliku powodującego konflikt",
+    "extract": "Extract"
   },
   "download": {
     "downloadFile": "Pobierz plik",

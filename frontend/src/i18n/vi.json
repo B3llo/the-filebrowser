@@ -52,7 +52,8 @@
     "overrideAll": "Replace all files in destination folder",
     "skipAll": "Skip all conflicting files",
     "renameAll": "Rename all files (create a copy)",
-    "singleDecision": "Decide for each conflicting file"
+    "singleDecision": "Decide for each conflicting file",
+    "extract": "Extract"
   },
   "download": {
     "downloadFile": "Tải xuống tệp tin",

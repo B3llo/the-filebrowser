@@ -15,14 +15,14 @@
         <div v-if="pendingAvatar !== null" class="fb-avatar-actions">
           <button
             type="button"
-            class="button button--flat"
+            class="button button--accent"
             @click="saveAvatar"
           >
             {{ t("buttons.save") }}
           </button>
           <button
             type="button"
-            class="button button--flat button--grey"
+            class="button button--flat"
             @click="cancelAvatarChange"
           >
             {{ t("buttons.cancel") }}

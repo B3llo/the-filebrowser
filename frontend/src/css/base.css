@@ -33,10 +33,6 @@ video {
   width: 100%;
 }
 
-.mobile-only {
-  display: none !important;
-}
-
 .container {
   width: 95%;
   max-width: 960px;

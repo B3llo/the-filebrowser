@@ -54,7 +54,8 @@
     "overrideAll": "Zamijeni sve datoteke u destinacijskoj mapi",
     "skipAll": "Preskoči sve konfliktirajuće datoteke",
     "renameAll": "Preimenuj sve datoteke (stvori kopiju)",
-    "singleDecision": "Odluči za svaku konfliktirajuću datoteku"
+    "singleDecision": "Odluči za svaku konfliktirajuću datoteku",
+    "extract": "Extract"
   },
   "download": {
     "downloadFile": "Preuzmi Datoteku",

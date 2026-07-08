@@ -269,8 +269,8 @@ main .spinner .bounce2 {
   white-space: nowrap;
 }
 
-@media (min-width: 738px) {
-  #previewer header #dropdown .action i {
+@media (min-width: 737px) {
+  #previewer header .fb-toolbar-actions .action i {
     color: var(--text);
   }
 }

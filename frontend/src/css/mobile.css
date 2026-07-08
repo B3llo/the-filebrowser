@@ -51,7 +51,7 @@
     height: 100%;
     background-color: var(--borderPrimary);
   }
-  #dropdown {
+  .fb-toolbar-actions {
     position: fixed;
     top: 1em;
     right: 1em;
@@ -64,29 +64,29 @@
     z-index: 99999;
   }
 
-  html[dir="rtl"] #dropdown {
+  html[dir="rtl"] .fb-toolbar-actions {
     right: unset;
     left: 1em;
     transform-origin: top left;
   }
 
-  #dropdown > div {
+  .fb-toolbar-actions > div {
     display: block;
   }
-  #dropdown.active {
+  .fb-toolbar-actions.active {
     transform: scale(1);
   }
-  #dropdown .action {
+  .fb-toolbar-actions .action {
     display: flex;
     align-items: center;
     border-radius: 0;
     width: 100%;
   }
-  #dropdown .action span:not(.counter) {
+  .fb-toolbar-actions .action span:not(.counter) {
     display: inline-block;
     padding: 0.4em;
   }
-  #dropdown .counter {
+  .fb-toolbar-actions .counter {
     left: 2.25em;
   }
   #file-selection {
@@ -146,10 +146,6 @@
     height: 12px;
   }
 
-  header .search-button,
-  header .menu-button {
-    display: inherit;
-  }
   header img {
     display: none;
   }
@@ -182,5 +178,59 @@
   }
   #listing.list .item .modified {
     display: none;
+  }
+
+  /* --- Touch targets: enforce Apple HIG 44×44px minimum on mobile --- */
+  /* Toolbar buttons (search, view toggle, sort, details, mobile menu, more) */
+  .fb-tbtn,
+  .fb-toolbar-btn,
+  .fb-mobile-menu {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Sidebar nav items + footer action buttons */
+  .fb-nav-item {
+    min-height: 44px;
+    padding-block: 11px;
+  }
+
+  .fb-icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Details panel: action row + close button */
+  .fb-details-act {
+    min-height: 44px;
+  }
+
+  .fb-details-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Selection bar buttons */
+  .fb-act {
+    min-height: 44px;
+  }
+
+  /* Preview / Editor header actions (FbIcon buttons rendered as <button class="action">) */
+  #previewer header .action,
+  header .action {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Sort menu and "new" menu items in the listing */
+  .fb-sort-item,
+  .fb-new-menu-item {
+    min-height: 44px;
+  }
+
+  /* Custom toast close button */
+  .fb-upload-toast-close {
+    min-width: 44px;
+    min-height: 44px;
   }
 }

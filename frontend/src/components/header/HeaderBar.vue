@@ -1,5 +1,15 @@
 <template>
   <header class="fb-toolbar">
+    <!-- Mobile sidebar trigger (hamburger) — opens the sliding sidebar on <=736px -->
+    <button
+      class="fb-toolbar-btn fb-mobile-menu"
+      :aria-label="t('buttons.toggleSidebar')"
+      :title="t('buttons.toggleSidebar')"
+      @click="layoutStore.showHover('sidebar')"
+    >
+      <FbIcon name="menu" size="20px" />
+    </button>
+
     <!-- Logo (used by Preview/Editor which don't have a sidebar context on mobile) -->
     <img
       v-if="showLogo && !showBreadcrumb"
@@ -116,5 +126,16 @@ const ifActionsSlot = computed(() => !!slots.actions);
 .fb-toolbar-btn:hover {
   background: var(--hover);
   color: var(--text);
+}
+
+/* Mobile-only hamburger: opens the sliding sidebar. Hidden on desktop. */
+.fb-mobile-menu {
+  display: none;
+}
+
+@media (max-width: 736px) {
+  .fb-mobile-menu {
+    display: inline-flex;
+  }
 }
 </style>

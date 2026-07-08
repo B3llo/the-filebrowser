@@ -53,6 +53,17 @@
   padding: 0.5em 1em;
 }
 
+@media (max-width: 736px) {
+  .upload-files .card.floating {
+    right: 12px;
+    left: 12px;
+    bottom: 12px;
+    max-width: none;
+    width: auto;
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 @media (max-width: 450px) {
   .upload-files .card.floating {
     max-width: 100%;

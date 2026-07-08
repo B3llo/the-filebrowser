@@ -65,6 +65,7 @@ func NewHandler(
 	sources.Handle("/{id:[0-9]+}", monkey(sourceGetHandler, "")).Methods("GET")
 	sources.Handle("/{id:[0-9]+}", monkey(sourceDeleteHandler, "")).Methods("DELETE")
 
+	api.PathPrefix("/resources/dirsize").Handler(monkey(resourceDirSizeHandler, "/api/resources/dirsize")).Methods("GET")
 	api.PathPrefix("/resources/recursive").Handler(monkey(resourceGetRecursiveHandler, "/api/resources/recursive")).Methods("GET")
 	api.PathPrefix("/resources").Handler(monkey(resourceGetHandler, "/api/resources")).Methods("GET")
 	api.PathPrefix("/resources").Handler(monkey(resourceDeleteHandler(fileCache), "/api/resources")).Methods("DELETE")

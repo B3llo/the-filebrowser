@@ -18,6 +18,7 @@ import (
 	fberrors "github.com/filebrowser/filebrowser/v2/errors"
 	"github.com/filebrowser/filebrowser/v2/files"
 	"github.com/filebrowser/filebrowser/v2/fileutils"
+	"github.com/mholt/archives"
 	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/spf13/afero"
 )
@@ -211,17 +212,30 @@ var resourcePutHandler = withUser(func(w http.ResponseWriter, r *http.Request, d
 
 func resourcePatchHandler(fileCache FileCache) handleFunc {
 	return withUser(func(_ http.ResponseWriter, r *http.Request, d *data) (int, error) {
-		src := r.URL.Path
-		dst := r.URL.Query().Get("destination")
+		src := path.Clean("/" + r.URL.Path)
 		action := r.URL.Query().Get("action")
-		dst, err := url.QueryUnescape(dst)
-		dst = path.Clean("/" + dst)
-		src = path.Clean("/" + src)
-		if !d.Check(src) || !d.Check(dst) {
-			return http.StatusForbidden, nil
+
+		// extract has no destination: it unpacks the archive alongside src.
+		if action == "extract" {
+			if src == "/" || !d.Check(src) {
+				return http.StatusForbidden, nil
+			}
+
+			err := d.RunHook(func() error {
+				return patchAction(r.Context(), action, src, "", d, fileCache)
+			}, action, src, "", d.user)
+
+			return errToStatus(err), err
 		}
+
+		dst := r.URL.Query().Get("destination")
+		dst, err := url.QueryUnescape(dst)
 		if err != nil {
 			return errToStatus(err), err
+		}
+		dst = path.Clean("/" + dst)
+		if !d.Check(src) || !d.Check(dst) {
+			return http.StatusForbidden, nil
 		}
 		if dst == "/" || src == "/" {
 			return http.StatusForbidden, nil
@@ -345,6 +359,11 @@ func patchAction(ctx context.Context, action, src, dst string, d *data, fileCach
 		}
 
 		return fileutils.Copy(d.user.Fs, src, dst, d.settings.FileMode, d.settings.DirMode)
+	case "extract":
+		if !d.user.Perm.Modify && !d.user.Perm.Create {
+			return fberrors.ErrPermissionDenied
+		}
+		return extractArchive(d.user.Fs, src, d.settings.FileMode, d.settings.DirMode)
 	case "rename":
 		if !d.user.Perm.Rename {
 			return fberrors.ErrPermissionDenied
@@ -374,6 +393,89 @@ func patchAction(ctx context.Context, action, src, dst string, d *data, fileCach
 	default:
 		return fmt.Errorf("unsupported action %s: %w", action, fberrors.ErrInvalidRequestParams)
 	}
+}
+
+// extractArchive extracts a supported archive file (zip, tar, etc.) into the
+// same directory the archive lives in. It uses mholt/archives for format
+// detection and extraction.
+func extractArchive(afs afero.Fs, src string, fileMode, dirMode os.FileMode) error {
+	file, err := afs.Open(src)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	// Identify the archive format from the filename and stream.
+	// afero.File implements io.ReadAt, io.Seeker, io.Reader, so we can
+	// use the file directly as a ReaderAtSeeker.
+	format, _, err := archives.Identify(context.Background(), stat.Name(), file)
+	if err != nil {
+		return fmt.Errorf("unsupported archive format: %w", err)
+	}
+
+	extractor, ok := format.(archives.Extractor)
+	if !ok {
+		return fmt.Errorf("format does not support extraction")
+	}
+
+	file.Seek(0, io.SeekStart)
+
+	dstDir := path.Clean(path.Dir(src))
+
+	return extractor.Extract(context.Background(), file, func(ctx context.Context, info archives.FileInfo) error {
+		if info.LinkTarget != "" || info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("refusing to extract link entry: %q", info.NameInArchive)
+		}
+
+		raw := info.NameInArchive
+		if strings.HasPrefix(raw, "/") {
+			return fmt.Errorf("illegal file path in archive: %q", raw)
+		}
+		for _, seg := range strings.Split(raw, "/") {
+			if seg == ".." {
+				return fmt.Errorf("illegal file path in archive: %q", raw)
+			}
+		}
+
+		name := path.Clean(raw)
+		if name == "." || name == "" {
+			return nil
+		}
+
+		destPath := path.Join(dstDir, name)
+		if rel, err := filepath.Rel(dstDir, destPath); err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return fmt.Errorf("illegal file path in archive: %q", raw)
+		}
+
+		if info.IsDir() {
+			return afs.MkdirAll(destPath, dirMode)
+		}
+
+		parentDir := path.Dir(destPath)
+		if err := afs.MkdirAll(parentDir, dirMode); err != nil {
+			return err
+		}
+
+		srcContent, err := info.Open()
+		if err != nil {
+			return err
+		}
+		defer srcContent.Close()
+
+		dstFile, err := afs.OpenFile(destPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
+		if err != nil {
+			return err
+		}
+		defer dstFile.Close()
+
+		_, err = io.Copy(dstFile, srcContent)
+		return err
+	})
 }
 
 // RecursiveEntry is a single file/directory entry returned by the recursive listing endpoint.
@@ -473,4 +575,51 @@ var diskUsage = withUser(func(w http.ResponseWriter, r *http.Request, d *data) (
 		Total: usage.Total,
 		Used:  usage.Used,
 	})
+})
+
+// DirSizeResponse is the JSON payload for the directory size endpoint.
+type DirSizeResponse struct {
+	Size int64 `json:"size"`
+}
+
+// resourceDirSizeHandler walks the directory tree rooted at the request path
+// and returns the total recursive size of all files within it.
+var resourceDirSizeHandler = withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
+	rootPath := r.URL.Path
+	if rootPath == "" {
+		rootPath = "/"
+	}
+
+	info, err := d.user.Fs.Stat(rootPath)
+	if err != nil {
+		return errToStatus(err), err
+	}
+	if !info.IsDir() {
+		return http.StatusBadRequest, fmt.Errorf("path is not a directory")
+	}
+
+	var totalSize int64
+
+	err = afero.Walk(d.user.Fs, rootPath, func(fPath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil // skip entries we cannot read
+		}
+
+		if !d.Check(fPath) {
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if !info.IsDir() {
+			totalSize += info.Size()
+		}
+		return nil
+	})
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	return renderJSON(w, r, &DirSizeResponse{Size: totalSize})
 })

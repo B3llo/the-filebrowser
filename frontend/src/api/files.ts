@@ -209,9 +209,19 @@ export function copy(items: any[], overwrite = false, rename = false) {
   return moveCopy(items, true, overwrite, rename);
 }
 
+export async function extract(url: string) {
+	return resourceAction(`${url}?action=extract`, "PATCH");
+}
+
+export async function dirSize(url: string): Promise<{ size: number }> {
+	url = removePrefix(url);
+	const res = await fetchURL(`/api/resources/dirsize${url}`, {});
+	return res.json();
+}
+
 export async function checksum(url: string, algo: ChecksumAlg) {
-  const data = await resourceAction(`${url}?checksum=${algo}`, "GET");
-  return (await data.json()).checksums[algo];
+	const data = await resourceAction(`${url}?checksum=${algo}`, "GET");
+	return (await data.json()).checksums[algo];
 }
 
 export function getDownloadURL(file: ResourceItem, inline: any) {

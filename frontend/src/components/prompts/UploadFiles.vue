@@ -296,4 +296,15 @@ const closeToast = () => {
 .fb-upload-toast-leave-active {
   animation: fbfade 0.15s reverse;
 }
+
+/* Mobile: span the width minus safe margins */
+@media (max-width: 736px) {
+  .fb-upload-toast {
+    right: 12px;
+    left: 12px;
+    bottom: 12px;
+    width: auto;
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+}
 </style>
