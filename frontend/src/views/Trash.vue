@@ -16,6 +16,8 @@
             :search-query="searchQuery"
             :sort-by="sortBy"
             :sort-asc="sortAsc"
+            :trash-sub-path="trashSubPath"
+            :breadcrumb="breadcrumbSegments"
             @update:search-query="searchQuery = $event"
             @update:sort-by="sortBy = $event"
             @update:sort-asc="sortAsc = $event"
@@ -23,6 +25,7 @@
             @delete-permanent="deletePermanently"
             @empty-trash="confirmEmptyTrash"
             @switch-source="switchSource"
+            @navigate-to="navigateTo"
           />
         </div>
         <DetailsPanel v-if="layoutStore.showDetails" />
@@ -71,6 +74,7 @@ const layoutStore = useLayoutStore();
 
 const loading = ref(false);
 const activeSourceId = ref(String(sourceStore.activeId));
+const trashSubPath = ref("");
 
 const showDeleteDialog = ref(false);
 const showEmptyDialog = ref(false);
@@ -83,9 +87,26 @@ const sortAsc = ref(true);
 const filesBase = computed(() => `/files/${activeSourceId.value}`);
 const trashPath = computed(() => `${filesBase.value}/.Trash/`);
 
+const breadcrumbSegments = computed(() => {
+  const segs: { label: string; url: string }[] = [
+    { label: t("sidebar.trash"), url: trashPath.value },
+  ];
+  if (!trashSubPath.value) return segs;
+  const parts = trashSubPath.value.replace(/\/$/, "").split("/");
+  let accumulated = "";
+  for (const part of parts) {
+    accumulated += part + "/";
+    segs.push({ label: cleanName(part), url: trashPath.value + accumulated });
+  }
+  return segs;
+});
+
 onMounted(() => loadTrash());
 onUnmounted(() => { fileStore.updateRequest(null); });
-watch(activeSourceId, () => loadTrash());
+watch(activeSourceId, () => {
+  trashSubPath.value = "";
+  loadTrash();
+});
 
 const switchSource = (id: string) => {
   activeSourceId.value = id;
@@ -95,7 +116,7 @@ const loadTrash = async () => {
   loading.value = true;
   fileStore.updateRequest(null);
   try {
-    const res = await api.fetch(trashPath.value);
+    const res = await api.fetch(trashPath.value + trashSubPath.value);
     fileStore.updateRequest(res);
   } catch (e: any) {
     if (e instanceof StatusError && e.status === 404) {
@@ -109,6 +130,17 @@ const loadTrash = async () => {
 };
 
 const cleanName = (trashName: string): string => trashName.replace(/^\d+_/, "");
+
+const navigateTo = (url: string) => {
+  const base = trashPath.value;
+  if (url.startsWith(base)) {
+    const rel = url.slice(base.length);
+    trashSubPath.value = rel.startsWith("/") ? rel.slice(1) : rel;
+  } else {
+    trashSubPath.value = "";
+  }
+  loadTrash();
+};
 
 const restoreAllSelected = async () => {
   const items = fileStore.req?.items ?? [];

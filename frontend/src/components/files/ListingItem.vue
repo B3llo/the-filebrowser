@@ -196,6 +196,7 @@ const props = defineProps<{
   index: number;
   readOnly?: boolean;
   noOpen?: boolean;
+  onOpen?: (url: string, isDir: boolean) => void;
   path?: string;
   preview?: string;
 }>();
@@ -608,7 +609,11 @@ const click = (event: Event | KeyboardEvent) => {
 
 const open = () => {
   if (props.noOpen) return;
-  router.push({ path: props.url });
+  if (props.onOpen) {
+    props.onOpen(props.url, props.isDir);
+  } else {
+    router.push({ path: props.url });
+  }
 };
 
 const getExtension = (fileName: string): string => {

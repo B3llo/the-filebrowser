@@ -2,7 +2,19 @@
   <div>
     <header-bar :showBreadcrumb="!isTrash" :base="filesBase">
       <template v-if="isTrash" #default>
-        <span class="fb-toolbar-title">{{ $t("sidebar.trash") }}</span>
+        <div class="fb-toolbar-title fb-trash-breadcrumb" v-if="breadcrumb && breadcrumb.length > 0">
+          <button
+            v-for="(seg, i) in breadcrumb"
+            :key="i"
+            class="fb-trash-breadcrumb-item"
+            :class="{ 'fb-trash-breadcrumb-item--last': i === breadcrumb.length - 1 }"
+            @click="emit('navigate-to', seg.url)"
+          >
+            <span v-if="i > 0" class="fb-trash-breadcrumb-sep">/</span>
+            {{ seg.label }}
+          </button>
+        </div>
+        <span class="fb-toolbar-title" v-else>{{ $t("sidebar.trash") }}</span>
         <div v-if="sourceStore.sources.length > 1" class="fb-source-tabs" style="flex: 0 0 auto;">
           <button
             v-for="src in sourceStore.sources"
@@ -197,24 +209,6 @@
           />
         </template>
         <template v-else>
-          <SelectionActionsPopup
-            v-if="!isMobile"
-            :header-buttons="{ restore: true, delete: true }"
-            :download="noop"
-            :restore="trashRestore"
-            :delete-action="trashDeletePermanent"
-          />
-
-          <button
-            v-if="fileStore.selectedCount > 0"
-            class="fb-tbtn fb-tbtn--danger"
-            :title="t('trash.deletePermanent')"
-            @click="trashDeletePermanent"
-          >
-            <FbIcon name="delete" size="17px" />
-            <span>{{ t("trash.deletePermanent") }}</span>
-          </button>
-
           <button
             v-if="fileStore.req && fileStore.req.items.length > 0"
             class="fb-tbtn fb-tbtn--danger"
@@ -345,7 +339,7 @@
     </template>
     <template v-else>
       <SelectionBar
-        v-if="fileStore.selected.length > 0"
+        v-if="fileStore.multiple && fileStore.selected.length > 0"
         :header-buttons="{
           download: false,
           share: false,
@@ -537,7 +531,7 @@
             v-bind:type="item.type"
             v-bind:size="item.size"
             v-bind:path="item.path"
-            v-bind:noOpen="isTrash || undefined"
+            v-bind:onOpen="isTrash ? handleTrashOpen : undefined"
           >
           </item>
         </div>
@@ -563,7 +557,8 @@
             v-bind:size="item.size"
             v-bind:path="item.path"
             v-bind:preview="item.preview"
-            v-bind:noOpen="isTrash || undefined"
+            v-bind:noOpen="(isTrash && !item.isDir && !trashSubPath) || undefined"
+            v-bind:onOpen="isTrash ? handleTrashOpen : undefined"
           >
           </item>
         </div>
@@ -758,7 +753,7 @@ import {
   ref,
   watch,
 } from "vue";
-import { useRoute, onBeforeRouteUpdate } from "vue-router";
+import { useRoute, useRouter, onBeforeRouteUpdate } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { removePrefix } from "@/api/utils";
@@ -769,6 +764,8 @@ const props = defineProps<{
   searchQuery?: string;
   sortBy?: string;
   sortAsc?: boolean;
+  trashSubPath?: string;
+  breadcrumb?: { label: string; url: string }[];
 }>();
 
 const emit = defineEmits<{
@@ -779,6 +776,7 @@ const emit = defineEmits<{
   "delete-permanent": [];
   "empty-trash": [];
   "switch-source": [id: string];
+  "navigate-to": [url: string];
 }>();
 
 const showLimit = ref<number>(50);
@@ -813,6 +811,7 @@ const sourceStore = useSourceStore();
 const { req } = storeToRefs(fileStore);
 
 const route = useRoute();
+const router = useRouter();
 
 const filesBase = computed(() =>
   props.isTrash ? `/files/${props.sourceId ?? sourceStore.activeId}` : `/files/${route.params.sourceId ?? 0}`
@@ -1805,6 +1804,14 @@ const cleanName = (trashName: string): string => trashName.replace(/^\d+_/, "");
 
 const noop = () => {};
 
+const handleTrashOpen = (url: string, isDir: boolean) => {
+  if (isDir) {
+    emit("navigate-to", url);
+  } else {
+    router.push({ path: url });
+  }
+};
+
 const trashRestore = () => {
   hideContextMenu();
   emit("restore");
@@ -1818,6 +1825,45 @@ const trashDeletePermanent = () => {
 <style scoped>
 #listing {
   min-height: calc(100vh - 8rem);
+}
+
+.fb-trash-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.fb-trash-breadcrumb-item {
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.95em;
+  padding: 2px 4px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.fb-trash-breadcrumb-item:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.fb-trash-breadcrumb-item--last {
+  color: var(--text);
+  cursor: default;
+}
+
+.fb-trash-breadcrumb-item--last:hover {
+  background: none;
+}
+
+.fb-trash-breadcrumb-sep {
+  margin-right: 4px;
+  color: var(--border-strong);
 }
 
 .file-selection-margin-bottom {
