@@ -4,6 +4,8 @@
   <em>Browse, manage, and share your files from anywhere.</em>
 </p>
 
+<img width="1468" height="773" alt="image" src="https://github.com/user-attachments/assets/9d565805-bd09-4321-bf47-8842cd1e3ab9" />
+
 ---
 
 ## What is FileBrowser?
