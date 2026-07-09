@@ -12,10 +12,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/spf13/afero"
 
-	fberrors "github.com/filebrowser/filebrowser/v2/errors"
-	"github.com/filebrowser/filebrowser/v2/files"
-	"github.com/filebrowser/filebrowser/v2/sources"
-	"github.com/filebrowser/filebrowser/v2/users"
+	fberrors "github.com/B3llo/the-filebrowser/errors"
+	"github.com/B3llo/the-filebrowser/files"
+	"github.com/B3llo/the-filebrowser/sources"
+	"github.com/B3llo/the-filebrowser/users"
 )
 
 const (

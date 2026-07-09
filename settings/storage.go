@@ -1,9 +1,9 @@
 package settings
 
 import (
-	fberrors "github.com/filebrowser/filebrowser/v2/errors"
-	"github.com/filebrowser/filebrowser/v2/rules"
-	"github.com/filebrowser/filebrowser/v2/users"
+	fberrors "github.com/B3llo/the-filebrowser/errors"
+	"github.com/B3llo/the-filebrowser/rules"
+	"github.com/B3llo/the-filebrowser/users"
 )
 
 // StorageBackend is a settings storage backend.

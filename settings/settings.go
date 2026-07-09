@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/filebrowser/filebrowser/v2/rules"
+	"github.com/B3llo/the-filebrowser/rules"
 )
 
 const DefaultUsersHomeBasePath = "/users"
@@ -57,6 +57,7 @@ type Server struct {
 	Log                    string `json:"log"`
 	EnableThumbnails       bool   `json:"enableThumbnails"`
 	ResizePreview          bool   `json:"resizePreview"`
+	EnableVideoThumbnails  bool   `json:"enableVideoThumbnails"`
 	EnableExec             bool   `json:"enableExec"`
 	TypeDetectionByHeader  bool   `json:"typeDetectionByHeader"`
 	ImageResolutionCal     bool   `json:"imageResolutionCalculation"`

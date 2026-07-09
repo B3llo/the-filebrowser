@@ -7,8 +7,8 @@ import (
 	"github.com/asdine/storm/v3"
 	"github.com/asdine/storm/v3/q"
 
-	fberrors "github.com/filebrowser/filebrowser/v2/errors"
-	"github.com/filebrowser/filebrowser/v2/share"
+	fberrors "github.com/B3llo/the-filebrowser/errors"
+	"github.com/B3llo/the-filebrowser/share"
 )
 
 type shareBackend struct {

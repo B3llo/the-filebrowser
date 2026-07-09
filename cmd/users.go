@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/filebrowser/filebrowser/v2/settings"
-	"github.com/filebrowser/filebrowser/v2/users"
+	"github.com/B3llo/the-filebrowser/settings"
+	"github.com/B3llo/the-filebrowser/users"
 )
 
 func init() {

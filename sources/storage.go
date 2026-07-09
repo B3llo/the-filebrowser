@@ -3,7 +3,7 @@ package sources
 import (
 	"errors"
 
-	fberrors "github.com/filebrowser/filebrowser/v2/errors"
+	fberrors "github.com/B3llo/the-filebrowser/errors"
 )
 
 // StorageBackend is the interface to implement for a sources storage.

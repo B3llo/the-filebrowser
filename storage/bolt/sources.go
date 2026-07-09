@@ -7,8 +7,8 @@ import (
 
 	"github.com/asdine/storm/v3"
 
-	fberrors "github.com/filebrowser/filebrowser/v2/errors"
-	"github.com/filebrowser/filebrowser/v2/sources"
+	fberrors "github.com/B3llo/the-filebrowser/errors"
+	"github.com/B3llo/the-filebrowser/sources"
 )
 
 type sourcesBackend struct {

@@ -7,14 +7,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
 
-	"github.com/filebrowser/filebrowser/v2/files"
-	"github.com/filebrowser/filebrowser/v2/img"
+	"github.com/B3llo/the-filebrowser/files"
+	"github.com/B3llo/the-filebrowser/img"
 )
 
 /*
@@ -28,6 +30,11 @@ type PreviewSize int
 type ImgService interface {
 	FormatFromExtension(ext string) (img.Format, error)
 	Resize(ctx context.Context, in io.Reader, width, height int, out io.Writer, options ...img.Option) error
+}
+
+type VideoService interface {
+	Available() bool
+	ExtractFrame(ctx context.Context, realPath string) ([]byte, error)
 }
 
 type FileCache interface {
@@ -69,7 +76,8 @@ func previewExtensionSupported(ext string) bool {
 	return supportedExts[strings.ToLower(ext)]
 }
 
-func previewHandler(imgSvc ImgService, fileCache FileCache, enableThumbnails, resizePreview bool) handleFunc {
+func previewHandler(imgSvc ImgService, fileCache FileCache, videoSvc VideoService,
+	enableThumbnails, resizePreview, enableVideoThumbnails bool) handleFunc {
 	return withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
 		if !d.user.Perm.Download {
 			return http.StatusAccepted, nil
@@ -99,7 +107,7 @@ func previewHandler(imgSvc ImgService, fileCache FileCache, enableThumbnails, re
 		case "image":
 			return handleImagePreview(w, r, imgSvc, fileCache, file, previewSize, enableThumbnails, resizePreview)
 		case "video":
-			return handleVideoPreview(w, r, file)
+			return handleVideoPreview(w, r, imgSvc, fileCache, videoSvc, file, previewSize, enableVideoThumbnails)
 		case "audio":
 			return handleAudioPreview(w, r, file)
 		case "pdf":
@@ -199,8 +207,67 @@ func createPreview(imgSvc ImgService, fileCache FileCache,
 	return buf.Bytes(), nil
 }
 
-// handleVideoPreview serves video files with range request support for seeking
-func handleVideoPreview(w http.ResponseWriter, r *http.Request, file *files.FileInfo) (int, error) {
+// handleVideoPreview serves a static JPEG thumbnail (extracted via ffmpeg and
+// cached) for PreviewSizeThumb requests when video thumbnails are available;
+// any other case (Big/player, feature disabled, ffmpeg unavailable, or any
+// generation error) falls back to streaming the raw video as before.
+func handleVideoPreview(w http.ResponseWriter, r *http.Request, imgSvc ImgService, fileCache FileCache,
+	videoSvc VideoService, file *files.FileInfo, previewSize PreviewSize, enableVideoThumbnails bool) (int, error) {
+	if previewSize != PreviewSizeThumb || !enableVideoThumbnails || videoSvc == nil || !videoSvc.Available() {
+		return serveRawVideo(w, r, file)
+	}
+
+	cacheKey := previewCacheKey(file, previewSize)
+	thumb, ok, err := fileCache.Load(r.Context(), cacheKey)
+	if err != nil {
+		return errToStatus(err), err
+	}
+	if !ok {
+		thumb, err = createVideoThumbnail(r.Context(), imgSvc, videoSvc, fileCache, file, previewSize)
+		if err != nil {
+			log.Printf("[WARN] video thumbnail generation failed for %q: %v — falling back to raw stream", file.RealPath(), err)
+			return serveRawVideo(w, r, file)
+		}
+	}
+
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.Header().Set("Cache-Control", "private")
+	http.ServeContent(w, r, file.Name, file.ModTime, bytes.NewReader(thumb))
+	return 0, nil
+}
+
+func createVideoThumbnail(ctx context.Context, imgSvc ImgService, videoSvc VideoService, fileCache FileCache,
+	file *files.FileInfo, previewSize PreviewSize) ([]byte, error) {
+	realPath := file.RealPath()
+	if info, err := os.Stat(realPath); err != nil || info.IsDir() {
+		return nil, fmt.Errorf("video source not addressable on local disk: %w", err)
+	}
+
+	jpegFrame, err := videoSvc.ExtractFrame(ctx, realPath)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := &bytes.Buffer{}
+	options := []img.Option{
+		img.WithMode(img.ResizeModeFill), img.WithQuality(img.QualityLow), img.WithFormat(img.FormatJpeg),
+	}
+	if err := imgSvc.Resize(ctx, bytes.NewReader(jpegFrame), 256, 256, buf, options...); err != nil {
+		return nil, err
+	}
+
+	go func() {
+		cacheKey := previewCacheKey(file, previewSize)
+		if err := fileCache.Store(context.Background(), cacheKey, buf.Bytes()); err != nil {
+			log.Printf("[WARN] failed to cache video thumbnail: %v", err)
+		}
+	}()
+
+	return buf.Bytes(), nil
+}
+
+// serveRawVideo streams a video file with range request support for seeking.
+func serveRawVideo(w http.ResponseWriter, r *http.Request, file *files.FileInfo) (int, error) {
 	fd, err := file.Fs.Open(file.Path)
 	if err != nil {
 		return errToStatus(err), err

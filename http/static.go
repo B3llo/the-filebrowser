@@ -15,10 +15,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/filebrowser/filebrowser/v2/auth"
-	"github.com/filebrowser/filebrowser/v2/settings"
-	"github.com/filebrowser/filebrowser/v2/storage"
-	"github.com/filebrowser/filebrowser/v2/version"
+	"github.com/B3llo/the-filebrowser/auth"
+	"github.com/B3llo/the-filebrowser/settings"
+	"github.com/B3llo/the-filebrowser/storage"
+	"github.com/B3llo/the-filebrowser/version"
 )
 
 func handleWithStaticData(w http.ResponseWriter, _ *http.Request, d *data, fSys fs.FS, file, contentType string) (int, error) {
@@ -47,6 +47,7 @@ func handleWithStaticData(w http.ResponseWriter, _ *http.Request, d *data, fSys 
 		"Theme":                 d.settings.Branding.Theme,
 		"EnableThumbs":          d.server.EnableThumbnails,
 		"ResizePreview":         d.server.ResizePreview,
+		"EnableVideoThumbs":     d.server.EnableVideoThumbnails,
 		"EnableExec":            d.server.EnableExec,
 		"TusSettings":           d.settings.Tus,
 		"HideLoginButton":       d.settings.HideLoginButton,

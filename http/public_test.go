@@ -7,13 +7,13 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/B3llo/the-filebrowser/files"
+	"github.com/B3llo/the-filebrowser/rules"
+	"github.com/B3llo/the-filebrowser/settings"
+	"github.com/B3llo/the-filebrowser/share"
+	"github.com/B3llo/the-filebrowser/storage/bolt"
+	"github.com/B3llo/the-filebrowser/users"
 	"github.com/asdine/storm/v3"
-	"github.com/filebrowser/filebrowser/v2/files"
-	"github.com/filebrowser/filebrowser/v2/rules"
-	"github.com/filebrowser/filebrowser/v2/settings"
-	"github.com/filebrowser/filebrowser/v2/share"
-	"github.com/filebrowser/filebrowser/v2/storage/bolt"
-	"github.com/filebrowser/filebrowser/v2/users"
 	"github.com/spf13/afero"
 )
 

@@ -22,14 +22,15 @@ import (
 	"github.com/spf13/viper"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 
-	"github.com/filebrowser/filebrowser/v2/auth"
-	"github.com/filebrowser/filebrowser/v2/diskcache"
-	"github.com/filebrowser/filebrowser/v2/frontend"
-	fbhttp "github.com/filebrowser/filebrowser/v2/http"
-	"github.com/filebrowser/filebrowser/v2/img"
-	"github.com/filebrowser/filebrowser/v2/settings"
-	"github.com/filebrowser/filebrowser/v2/storage"
-	"github.com/filebrowser/filebrowser/v2/users"
+	"github.com/B3llo/the-filebrowser/auth"
+	"github.com/B3llo/the-filebrowser/diskcache"
+	"github.com/B3llo/the-filebrowser/frontend"
+	fbhttp "github.com/B3llo/the-filebrowser/http"
+	"github.com/B3llo/the-filebrowser/img"
+	"github.com/B3llo/the-filebrowser/settings"
+	"github.com/B3llo/the-filebrowser/storage"
+	"github.com/B3llo/the-filebrowser/users"
+	"github.com/B3llo/the-filebrowser/video"
 )
 
 var (
@@ -91,6 +92,9 @@ func init() {
 	flags.String("cacheDir", "", "file cache directory (disabled if empty)")
 	flags.String("redisCacheUrl", "", "redis cache URL (for multi-instance deployments), e.g. redis://user:pass@host:port")
 	flags.Int("imageProcessors", 4, "image processors count")
+	flags.String("ffmpegPath", "", "path to ffmpeg binary (autodetected via PATH if empty)")
+	flags.Int("videoProcessors", 1, "concurrent ffmpeg video thumbnail extractions")
+	flags.Duration("videoThumbnailTimeout", 15*time.Second, "max time allowed per ffmpeg thumbnail extraction")
 	addServerFlags(flags)
 }
 
@@ -108,6 +112,7 @@ func addServerFlags(flags *pflag.FlagSet) {
 	flags.String("tokenExpirationTime", "2h", "user session timeout")
 	flags.Bool("disableThumbnails", false, "disable image thumbnails")
 	flags.Bool("disablePreviewResize", false, "disable resize of image previews")
+	flags.Bool("disableVideoThumbnails", false, "disable ffmpeg-based video thumbnails")
 	flags.Bool("disableExec", true, "disables Command Runner feature")
 	flags.Bool("disableTypeDetectionByHeader", false, "disables type detection by reading file headers")
 	flags.Bool("disableImageResolutionCalc", false, "disables image resolution calculation by reading image files")
@@ -248,7 +253,21 @@ user created with the credentials from options "username" and "password".`,
 			panic(err)
 		}
 
-		handler, err := fbhttp.NewHandler(imageService, fileCache, avatarStore, uploadCache, st.Storage, server, assetsFs)
+		// build video service; ffmpeg absence degrades gracefully to raw video
+		// streaming + client-side frame capture, it never blocks startup.
+		ffmpegPath := video.Detect(v.GetString("ffmpegPath"))
+		if server.EnableVideoThumbnails && ffmpegPath == "" {
+			log.Println("WARNING: video thumbnails enabled but ffmpeg was not found — " +
+				"disabling video thumbnail generation (raw stream + client-side capture will be used instead)")
+			server.EnableVideoThumbnails = false
+		}
+		videoWorkersCount := v.GetInt("videoProcessors")
+		if videoWorkersCount < 1 {
+			return errors.New("video processors count could not be < 1")
+		}
+		videoService := video.New(ffmpegPath, videoWorkersCount, v.GetDuration("videoThumbnailTimeout"))
+
+		handler, err := fbhttp.NewHandler(imageService, fileCache, avatarStore, uploadCache, videoService, st.Storage, server, assetsFs)
 		if err != nil {
 			return err
 		}
@@ -352,6 +371,10 @@ func getServerSettings(v *viper.Viper, st *storage.Storage) (*settings.Server, e
 
 	if v.IsSet("disablePreviewResize") {
 		server.ResizePreview = !v.GetBool("disablePreviewResize")
+	}
+
+	if v.IsSet("disableVideoThumbnails") {
+		server.EnableVideoThumbnails = !v.GetBool("disableVideoThumbnails")
 	}
 
 	if v.IsSet("disableTypeDetectionByHeader") {
@@ -480,6 +503,7 @@ func quickSetup(v *viper.Viper, s *storage.Storage) error {
 		TokenExpirationTime:    v.GetString("tokenExpirationTime"),
 		EnableThumbnails:       !v.GetBool("disableThumbnails"),
 		ResizePreview:          !v.GetBool("disablePreviewResize"),
+		EnableVideoThumbnails:  !v.GetBool("disableVideoThumbnails"),
 		EnableExec:             !v.GetBool("disableExec"),
 		TypeDetectionByHeader:  !v.GetBool("disableTypeDetectionByHeader"),
 		ImageResolutionCal:     !v.GetBool("disableImageResolutionCalc"),

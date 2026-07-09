@@ -30,10 +30,7 @@
     @contextmenu="contextMenu"
   >
     <div>
-      <img
-        v-if="!readOnly && type === 'image' && isThumbsEnabled"
-        ref="thumbImgRef"
-      />
+      <img v-if="hasImageThumb" ref="thumbImgRef" />
       <canvas
         v-else-if="hasVideoThumb"
         ref="videoCanvas"
@@ -73,7 +70,7 @@
 
       <!-- Play icon overlay for video thumbnails -->
       <div
-        v-if="hasVideoThumb"
+        v-if="isVideoItem"
         class="fb-video-play-overlay"
         aria-hidden="true"
       >
@@ -157,7 +154,7 @@ import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
 import { isStarred, starVersion } from "@/utils/starred";
 
-import { enableThumbs } from "@/utils/constants";
+import { enableThumbs, enableVideoThumbs } from "@/utils/constants";
 import { filesize } from "@/utils";
 import { fileKind, extLabel } from "@/utils/fileKind";
 import dayjs from "dayjs";
@@ -293,12 +290,32 @@ const kind = computed(() =>
   fileKind({ isDir: props.isDir, type: props.type, name: props.name })
 );
 
-const hasImageThumb = computed(
-  () => !props.readOnly && props.type === "image" && isThumbsEnabled.value
+// Server-generated static JPEG thumbnail for video (reuses the same <img>
+// lazy-load path as images). Falls back to client-side capture below when
+// the server didn't generate one (flag off or ffmpeg unavailable).
+const hasServerVideoThumb = computed(
+  () =>
+    !props.readOnly &&
+    props.type === "video" &&
+    isThumbsEnabled.value &&
+    enableVideoThumbs
 );
 
-const hasVideoThumb = computed(
+const hasImageThumb = computed(
+  () =>
+    !props.readOnly &&
+    isThumbsEnabled.value &&
+    (props.type === "image" || hasServerVideoThumb.value)
+);
+
+const isVideoItem = computed(
   () => !props.readOnly && props.type === "video" && isThumbsEnabled.value
+);
+
+// Client-side <video>+canvas capture fallback, only used when the server
+// isn't providing a static thumbnail.
+const hasVideoThumb = computed(
+  () => isVideoItem.value && !enableVideoThumbs
 );
 
 const hasPdfThumb = computed(

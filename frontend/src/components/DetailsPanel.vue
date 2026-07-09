@@ -32,14 +32,15 @@
     <div v-else-if="selectedItem" class="fb-details-body">
       <!-- Thumbnail area -->
       <div class="fb-details-thumb" :style="{ background: thumbBg }">
-        <!-- Image thumbnail -->
+        <!-- Image thumbnail, also used for server-generated video thumbnails -->
         <img
-          v-if="isImage && enableThumbs"
+          v-if="(isImage || (isVideo && enableVideoThumbs)) && enableThumbs"
           :src="thumbUrl"
           :alt="selectedItem.name"
         />
 
-        <!-- Video thumbnail (first frame captured to a canvas) -->
+        <!-- Video thumbnail fallback: client-side capture when the server
+             didn't generate a static thumbnail (flag off or ffmpeg unavailable) -->
         <template v-else-if="isVideo && enableThumbs">
           <canvas ref="videoCanvas" class="fb-details-thumb-media"></canvas>
           <video
@@ -186,7 +187,7 @@ import { useAuthStore } from "@/stores/auth";
 import { files as api } from "@/api";
 import { fileKind, fileTypeLabel } from "@/utils/fileKind";
 import { filesize } from "@/utils";
-import { enableThumbs } from "@/utils/constants";
+import { enableThumbs, enableVideoThumbs } from "@/utils/constants";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import FbIcon from "@/components/FbIcon.vue";

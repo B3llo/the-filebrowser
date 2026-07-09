@@ -15,9 +15,9 @@ import (
 	"strings"
 	"time"
 
-	fberrors "github.com/filebrowser/filebrowser/v2/errors"
-	"github.com/filebrowser/filebrowser/v2/files"
-	"github.com/filebrowser/filebrowser/v2/fileutils"
+	fberrors "github.com/B3llo/the-filebrowser/errors"
+	"github.com/B3llo/the-filebrowser/files"
+	"github.com/B3llo/the-filebrowser/fileutils"
 	"github.com/mholt/archives"
 	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/spf13/afero"

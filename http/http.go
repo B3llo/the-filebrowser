@@ -6,8 +6,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/filebrowser/filebrowser/v2/settings"
-	"github.com/filebrowser/filebrowser/v2/storage"
+	"github.com/B3llo/the-filebrowser/settings"
+	"github.com/B3llo/the-filebrowser/storage"
 )
 
 type modifyRequest struct {
@@ -21,6 +21,7 @@ func NewHandler(
 	fileCache FileCache,
 	avatarStore FileCache,
 	uploadCache UploadCache,
+	videoSvc VideoService,
 	store *storage.Storage,
 	server *settings.Server,
 	assetsFs fs.FS,
@@ -96,7 +97,8 @@ func NewHandler(
 
 	api.PathPrefix("/raw").Handler(monkey(rawHandler, "/api/raw")).Methods("GET")
 	api.PathPrefix("/preview/{size}/{path:.*}").
-		Handler(monkey(previewHandler(imgSvc, fileCache, server.EnableThumbnails, server.ResizePreview), "/api/preview")).Methods("GET")
+		Handler(monkey(previewHandler(imgSvc, fileCache, videoSvc,
+			server.EnableThumbnails, server.ResizePreview, server.EnableVideoThumbnails), "/api/preview")).Methods("GET")
 	api.PathPrefix("/command").Handler(monkey(commandsHandler, "/api/command")).Methods("GET")
 	api.PathPrefix("/search").Handler(monkey(searchHandler, "/api/search")).Methods("GET")
 	api.PathPrefix("/subtitle").Handler(monkey(subtitleHandler, "/api/subtitle")).Methods("GET")

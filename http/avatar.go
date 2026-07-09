@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/filebrowser/filebrowser/v2/img"
+	"github.com/B3llo/the-filebrowser/img"
 )
 
 // maxAvatarUploadSize caps the raw image body accepted for an avatar upload,

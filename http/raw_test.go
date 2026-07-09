@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/filebrowser/filebrowser/v2/files"
+	"github.com/B3llo/the-filebrowser/files"
 )
 
 func TestSetContentDisposition(t *testing.T) {

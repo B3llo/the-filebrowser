@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	libErrors "github.com/filebrowser/filebrowser/v2/errors"
-	imgErrors "github.com/filebrowser/filebrowser/v2/img"
+	libErrors "github.com/B3llo/the-filebrowser/errors"
+	imgErrors "github.com/B3llo/the-filebrowser/img"
 )
 
 func renderJSON(w http.ResponseWriter, _ *http.Request, data interface{}) (int, error) {

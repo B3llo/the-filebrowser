@@ -5,7 +5,7 @@ import (
 
 	"github.com/asdine/storm/v3"
 
-	fberrors "github.com/filebrowser/filebrowser/v2/errors"
+	fberrors "github.com/B3llo/the-filebrowser/errors"
 )
 
 func get(db *storm.DB, name string, to interface{}) error {

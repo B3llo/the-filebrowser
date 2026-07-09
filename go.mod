@@ -1,4 +1,4 @@
-module github.com/filebrowser/filebrowser/v2
+module github.com/B3llo/the-filebrowser
 
 go 1.25.0
 

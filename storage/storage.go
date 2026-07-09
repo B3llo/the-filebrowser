@@ -1,11 +1,11 @@
 package storage
 
 import (
-	"github.com/filebrowser/filebrowser/v2/auth"
-	"github.com/filebrowser/filebrowser/v2/settings"
-	"github.com/filebrowser/filebrowser/v2/share"
-	"github.com/filebrowser/filebrowser/v2/sources"
-	"github.com/filebrowser/filebrowser/v2/users"
+	"github.com/B3llo/the-filebrowser/auth"
+	"github.com/B3llo/the-filebrowser/settings"
+	"github.com/B3llo/the-filebrowser/share"
+	"github.com/B3llo/the-filebrowser/sources"
+	"github.com/B3llo/the-filebrowser/users"
 )
 
 // Storage is a storage powered by a Backend which makes the necessary

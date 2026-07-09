@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/filebrowser/filebrowser/v2/auth"
-	"github.com/filebrowser/filebrowser/v2/settings"
+	"github.com/B3llo/the-filebrowser/auth"
+	"github.com/B3llo/the-filebrowser/settings"
 )
 
 func init() {
