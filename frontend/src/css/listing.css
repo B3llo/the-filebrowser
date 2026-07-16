@@ -179,7 +179,7 @@ html[dir="rtl"] #listing {
   font-weight: 500;
   color: var(--text);
   overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 #listing.mosaic .item[data-dir="true"] .size,
 #listing.mosaic .item[data-dir="true"] .modified {
@@ -632,7 +632,6 @@ html[dir="rtl"] #listing {
   font-weight: 500;
   color: var(--text);
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 #listing.mosaic .item:not([data-dir="true"]) .size {
@@ -830,7 +829,6 @@ html[dir="rtl"] #listing {
   font-weight: 450;
   color: var(--text);
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 #listing.list .item .size {
@@ -946,4 +944,23 @@ html[dir="rtl"] #listing {
   top: 50%;
   transform: translateY(-50%);
   right: 14px;
+}
+
+/* ============================================================
+   Name tooltip (macOS-style hover)
+   ============================================================ */
+.fb-tooltip {
+  position: fixed;
+  padding: 5px 9px;
+  background: rgba(50, 50, 50, 0.96);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 450;
+  line-height: 1.4;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 100000;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+  max-width: min(640px, 90vw);
 }

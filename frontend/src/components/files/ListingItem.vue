@@ -134,7 +134,13 @@
     </div>
 
     <div>
-      <p class="name">{{ name }}</p>
+      <p
+        class="name"
+        @mouseenter="onNameEnter"
+        @mouseleave="onNameLeave"
+      >
+        {{ displayName }}
+      </p>
 
       <p v-if="!hideSize && isDir" class="size" data-order="-1">&mdash;</p>
       <p v-else-if="!hideSize" class="size" :data-order="humanSize()">
@@ -164,6 +170,12 @@
       </svg>
     </span>
   </div>
+
+  <Teleport to="body">
+    <div v-if="tooltipVisible" class="fb-tooltip" :style="tooltipPos">
+      {{ name }}
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -179,7 +191,7 @@ import dayjs from "dayjs";
 import { files as api } from "@/api";
 import { createURL } from "@/api/utils";
 import * as upload from "@/utils/upload";
-import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { loadThumbnail } from "@/utils/thumbnailCache";
 import {
   officeThumbKind,
@@ -203,6 +215,39 @@ const longPressTriggered = ref<boolean>(false);
 const longPressDelay = ref<number>(500);
 const startPosition = ref<{ x: number; y: number } | null>(null);
 const moveThreshold = ref<number>(10);
+
+const tooltipVisible = ref(false);
+const tooltipTimer = ref<number | null>(null);
+const tooltipPos = ref<{ left: string; top: string }>({ left: "0px", top: "0px" });
+
+function middleTruncate(name: string, maxLen: number): string {
+  if (name.length <= maxLen || maxLen < 8) return name;
+
+  const dot = name.lastIndexOf('.');
+
+  if (dot <= 0) {
+    const avail = maxLen - 1;
+    if (avail < 3) return name.slice(0, Math.max(1, avail)) + '…';
+    const sc = Math.ceil(avail * 0.6);
+    const ec = avail - sc;
+    return name.slice(0, sc) + '…' + name.slice(name.length - ec);
+  }
+
+  const ext = name.slice(dot);
+  const stem = name.slice(0, dot);
+  const avail = maxLen - ext.length - 1;
+
+  if (avail < 3) {
+    const s = Math.max(1, maxLen - ext.length - 1);
+    return stem.slice(0, s) + '…' + ext;
+  }
+
+  const sc = Math.ceil(avail * 0.6);
+  const ec = avail - sc;
+  return stem.slice(0, sc) + '…' + stem.slice(stem.length - ec) + ext;
+}
+
+const displayName = computed(() => middleTruncate(props.name, 28));
 
 const $showError = inject<IToastError>("$showError")!;
 const router = useRouter();
@@ -706,6 +751,53 @@ const getExtension = (fileName: string): string => {
     return fileName;
   }
   return fileName.substring(lastDotIndex);
+};
+
+// Tooltip helpers
+const onNameEnter = (e: MouseEvent) => {
+  clearTooltipTimer();
+  if (displayName.value === props.name) return;
+
+  const x = e.clientX;
+  const y = e.clientY;
+
+  tooltipTimer.value = window.setTimeout(() => {
+    tooltipVisible.value = true;
+    tooltipPos.value = { left: "0px", top: "0px" };
+
+    nextTick(() => {
+      const el = document.querySelector(".fb-tooltip") as HTMLElement | null;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      let left = x + 10;
+      let top = y - rect.height - 4;
+
+      if (left + rect.width > vw - 4) {
+        left = x - rect.width - 10;
+      }
+      if (top < 4) {
+        top = y + 14;
+      }
+      if (left < 4) left = 4;
+
+      tooltipPos.value = { left: left + "px", top: top + "px" };
+    });
+  }, 1250);
+};
+
+const onNameLeave = () => {
+  clearTooltipTimer();
+  tooltipVisible.value = false;
+};
+
+const clearTooltipTimer = () => {
+  if (tooltipTimer.value !== null) {
+    window.clearTimeout(tooltipTimer.value);
+    tooltipTimer.value = null;
+  }
 };
 
 // Long-press helper functions
