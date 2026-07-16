@@ -33,6 +33,13 @@
   min-height: 0;
 }
 
+/* Scroll container for previews that use the fb-scroll convention */
+.fb-scroll {
+  height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Smooth transitions for preview content */
 .preview-content {
   animation: fadeIn 0.2s ease-in-out;

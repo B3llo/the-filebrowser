@@ -503,7 +503,14 @@ const isInScrollable = (e: WheelEvent | TouchEvent): boolean => {
       style.overflow === "auto" ||
       style.overflow === "scroll"
     ) {
-      if (el.scrollHeight > el.clientHeight) return true;
+      if (el.scrollHeight > el.clientHeight) {
+        const atTop = el.scrollTop <= 0;
+        const atBottom = el.scrollTop >= el.scrollHeight - el.clientHeight - 1;
+        const deltaY = "deltaY" in e ? e.deltaY : 0;
+        if ((deltaY > 0 && !atBottom) || (deltaY < 0 && !atTop)) {
+          return true;
+        }
+      }
     }
     el = el.parentElement;
   }
