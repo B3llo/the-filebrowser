@@ -65,6 +65,37 @@
           class="fb-details-thumb-media"
         ></canvas>
 
+        <!-- Office document thumbnail (lazy fetched) -->
+        <div
+          v-else-if="isDocx && !officeError"
+          class="fb-details-office fb-details-office--docx"
+        >
+          <div v-if="officeLoading" class="fb-details-office-loading">
+            <div class="fb-details-office-spinner"></div>
+          </div>
+          <pre
+            v-else-if="officeContent?.kind === 'docx'"
+            class="fb-details-office-text"
+            >{{ officeContent.text }}</pre
+          >
+        </div>
+        <div
+          v-else-if="isSheet && !officeError"
+          class="fb-details-office fb-details-office--sheet"
+        >
+          <div v-if="officeLoading" class="fb-details-office-loading">
+            <div class="fb-details-office-spinner"></div>
+          </div>
+          <table
+            v-else-if="officeContent?.kind === 'sheet'"
+            class="fb-details-office-table"
+          >
+            <tr v-for="(row, ri) in officeContent.grid || []" :key="ri">
+              <td v-for="(cell, ci) in row" :key="ci">{{ cell }}</td>
+            </tr>
+          </table>
+        </div>
+
         <!-- Folder icon -->
         <svg
           v-else-if="selectedItem.isDir"
@@ -194,6 +225,8 @@ import FbIcon from "@/components/FbIcon.vue";
 import AvatarBadge from "@/components/AvatarBadge.vue";
 import * as pdfjsLib from "pdfjs-dist";
 import dayjs from "dayjs";
+import { fetchDocxText, fetchSheetGrid } from "@/utils/officeThumb";
+import { createURL } from "@/api/utils";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -233,6 +266,62 @@ const kind = computed(() => {
 const isImage = computed(() => selectedItem.value?.type === "image");
 const isVideo = computed(() => selectedItem.value?.type === "video");
 const isPdf = computed(() => selectedItem.value?.type === "pdf");
+
+// Office thumbnails: client-side rendered preview
+const isDocx = computed(() => {
+  if (!selectedItem.value || !enableThumbs) return false;
+  return (
+    selectedItem.value.type === "blob" &&
+    /\.docx$/i.test(selectedItem.value.name)
+  );
+});
+
+const isSheet = computed(() => {
+  if (!selectedItem.value || !enableThumbs) return false;
+  return (
+    selectedItem.value.type === "blob" &&
+    /\.(xlsx|ods)$/i.test(selectedItem.value.name)
+  );
+});
+
+const isOffice = computed(() => isDocx.value || isSheet.value);
+
+const officeUrl = computed(() => {
+  if (!selectedItem.value || !isOffice.value) return "";
+  return createURL("api/raw" + selectedItem.value.path, { inline: "true" });
+});
+
+const officeContent = ref<
+  { kind: "docx"; text: string } | { kind: "sheet"; grid: string[][] } | null
+>(null);
+const officeLoading = ref(false);
+const officeError = ref(false);
+
+watch(
+  officeUrl,
+  async (url) => {
+    officeContent.value = null;
+    officeLoading.value = false;
+    officeError.value = false;
+    if (!url) return;
+    officeLoading.value = true;
+    try {
+      if (isDocx.value) {
+        const text = await fetchDocxText(url, 25);
+        if (text) officeContent.value = { kind: "docx", text };
+      } else if (isSheet.value) {
+        const grid = await fetchSheetGrid(url, 12, 8);
+        if (grid) officeContent.value = { kind: "sheet", grid };
+      }
+      if (!officeContent.value) officeError.value = true;
+    } catch {
+      officeError.value = true;
+    } finally {
+      officeLoading.value = false;
+    }
+  },
+  { immediate: true }
+);
 
 const thumbUrl = computed(() => {
   if (!selectedItem.value) return "";
@@ -319,7 +408,10 @@ const tint = computed(() => {
 });
 
 const thumbBg = computed(() => {
-  if ((isImage.value || isVideo.value || isPdf.value) && enableThumbs)
+  if (
+    (isImage.value || isVideo.value || isPdf.value || isOffice.value) &&
+    enableThumbs
+  )
     return "var(--hover)";
   const k = kind.value;
   const softs: Record<string, string> = {
@@ -393,7 +485,8 @@ const subLine = computed(() => {
   const type = kindLabel.value;
   if (selectedItem.value.isDir) {
     if (loadingFolderSize.value) return `${type}  ·  …`;
-    if (folderSize.value !== null) return `${type}  ·  ${filesize(folderSize.value)}`;
+    if (folderSize.value !== null)
+      return `${type}  ·  ${filesize(folderSize.value)}`;
     return type;
   }
   return `${type}  ·  ${formattedSize.value}`;

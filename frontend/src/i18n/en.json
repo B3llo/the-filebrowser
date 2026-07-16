@@ -143,6 +143,7 @@
     "sortByName": "Sort by name",
     "sortBySize": "Sort by size",
     "noPreview": "Preview is not available for this file.",
+    "officeLoadFailed": "Unable to load document preview. Please download to view.",
     "csvTooLarge": "CSV file is too large for preview (>5MB). Please download to view.",
     "csvLoadFailed": "Failed to load CSV file.",
     "showingRows": "Showing {count} row(s)",

@@ -182,6 +182,79 @@
   letter-spacing: 0.05em;
 }
 
+/* --- Office document thumbnail (DOCX / XLSX / ODS) --- */
+.fb-details-office {
+  min-width: 0;
+  min-height: 0;
+  max-height: 200px;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.fb-details-office--docx {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  max-height: 200px;
+  overflow: hidden;
+}
+
+.fb-details-office-text {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: #1a1a1a;
+  white-space: pre;
+  overflow: hidden;
+  max-height: 200px;
+}
+
+.fb-details-office--sheet {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+  max-height: 200px;
+  overflow: auto;
+  padding: 6px;
+}
+
+.fb-details-office-table {
+  border-collapse: collapse;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.fb-details-office-table td {
+  border: 1px solid #d8d8d8;
+  padding: 2px 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+  color: #1a1a1a;
+}
+
+.fb-details-office-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  height: 84px;
+}
+
+.fb-details-office-spinner {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  animation: fbspin 0.8s linear infinite;
+}
+
 /* --- File name --- */
 .fb-details-name {
   font-size: 16px;

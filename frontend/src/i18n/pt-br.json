@@ -135,6 +135,7 @@
     "sortByName": "Ordenar pelo nome",
     "sortBySize": "Ordenar pelo tamanho",
     "noPreview": "Pré-visualização não disponível para este arquivo.",
+    "officeLoadFailed": "Não foi possível carregar a pré-visualização do documento. Faça o download para visualizar.",
     "csvTooLarge": "CSV file is too large for preview (>5MB). Please download to view.",
     "csvLoadFailed": "Failed to load CSV file.",
     "showingRows": "Showing {count} row(s)",

@@ -8,7 +8,14 @@
   >
     <header-bar
       v-if="
-        isPdf || isEpub || isCsv || isMarkdown || isCode || isText || showNav
+        isPdf ||
+        isEpub ||
+        isCsv ||
+        isMarkdown ||
+        isCode ||
+        isText ||
+        isOffice ||
+        showNav
       "
     >
       <span class="fb-preview-type">{{ typeLabel }}</span>
@@ -151,6 +158,18 @@
           :content="textContent"
           :filename="name"
         />
+        <DocxPreview
+          v-else-if="isDoc"
+          :src="previewUrl"
+          :filename="name"
+          :download-url="downloadUrl"
+        />
+        <SheetPreview
+          v-else-if="isSheet"
+          :src="previewUrl"
+          :filename="name"
+          :download-url="downloadUrl"
+        />
         <div v-else-if="fileStore.req?.type == 'blob'" class="info">
           <div class="title">
             <i class="material-icons">feedback</i>
@@ -223,6 +242,8 @@ import CsvViewer from "@/components/files/CsvViewer.vue";
 import CodePreview from "@/components/files/CodePreview.vue";
 import TextPreview from "@/components/files/TextPreview.vue";
 import PdfPreview from "@/components/files/PdfPreview.vue";
+import DocxPreview from "@/components/files/DocxPreview.vue";
+import SheetPreview from "@/components/files/SheetPreview.vue";
 import { VueReader } from "vue-reader";
 import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -236,6 +257,17 @@ import { addRecent } from "@/utils/recents";
 // CSV file size limit for preview (5MB)
 // Prevents browser memory issues with large files
 const CSV_MAX_SIZE = 5 * 1024 * 1024;
+
+// Office preview size guard. Office documents are parsed in memory and turned
+// into HTML, so very large files could freeze the tab. Beyond this cap the file
+// falls through to the standard "preview not available" + download fallback.
+const OFFICE_MAX_SIZE = 50 * 1024 * 1024;
+
+// Modern Office Open XML / OpenDocument formats supported client-side.
+// Legacy binary formats (.doc/.xls/.ppt) and .odt/.pptx/.odp have no mature
+// pure-frontend renderer and fall back to download (#51).
+const DOCX_EXTS = new Set([".docx"]);
+const SHEET_EXTS = new Set([".xlsx", ".ods"]);
 
 const location = useStorage("book-progress", 0, undefined, {
   serializer: {
@@ -430,6 +462,19 @@ const isTextType = computed(
   () => isMarkdown.value || isCode.value || isText.value
 );
 
+// Office document previews (DOCX via mammoth, XLSX/ODS via SheetJS).
+const isDoc = computed(() => {
+  const ext = fileStore.req?.extension.toLowerCase() || "";
+  return DOCX_EXTS.has(ext) && (fileStore.req?.size ?? 0) <= OFFICE_MAX_SIZE;
+});
+
+const isSheet = computed(() => {
+  const ext = fileStore.req?.extension.toLowerCase() || "";
+  return SHEET_EXTS.has(ext) && (fileStore.req?.size ?? 0) <= OFFICE_MAX_SIZE;
+});
+
+const isOffice = computed(() => isDoc.value || isSheet.value);
+
 // Short type label shown as a chip in the unified preview toolbar (#13).
 const typeLabel = computed(() => {
   const ext = fileStore.req?.extension.toLowerCase() || "";
@@ -438,6 +483,8 @@ const typeLabel = computed(() => {
   if (ext === ".csv") return "CSV";
   if (isMarkdown.value) return "Markdown";
   if (isCode.value) return codeLanguage.value.toUpperCase();
+  if (isDoc.value) return ext === ".docx" ? "Word" : "Doc";
+  if (isSheet.value) return ext === ".ods" ? "ODS" : "Excel";
   const type = fileStore.req?.type;
   if (type === "image") return "Image";
   if (type === "video") return "Video";
@@ -446,15 +493,32 @@ const typeLabel = computed(() => {
   return "File";
 });
 
+const isInScrollable = (e: WheelEvent | TouchEvent): boolean => {
+  let el = e.target as HTMLElement | null;
+  while (el && el.id !== "previewer") {
+    const style = window.getComputedStyle(el);
+    if (
+      style.overflowY === "auto" ||
+      style.overflowY === "scroll" ||
+      style.overflow === "auto" ||
+      style.overflow === "scroll"
+    ) {
+      if (el.scrollHeight > el.clientHeight) return true;
+    }
+    el = el.parentElement;
+  }
+  return false;
+};
+
 const onWheel = (e: WheelEvent) => {
-  if (!isTextType.value) {
+  if (!isTextType.value && !isInScrollable(e)) {
     e.preventDefault();
     e.stopPropagation();
   }
 };
 
 const onTouchMove = (e: TouchEvent) => {
-  if (!isTextType.value) {
+  if (!isTextType.value && !isInScrollable(e)) {
     e.preventDefault();
     e.stopPropagation();
   }

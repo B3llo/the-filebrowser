@@ -102,6 +102,256 @@
   border: none;
 }
 
+/* Office document preview (DOCX via mammoth) */
+.doc-preview {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--pdf-bg, #525659);
+  overflow: auto;
+}
+
+.doc-content {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 0;
+  padding: 16px;
+}
+
+.doc-page {
+  width: 100%;
+  max-width: 850px;
+  background: #fff;
+  color: #1a1a1a;
+  border-radius: 2px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  padding: 48px 56px;
+  font-family: var(--font-sans, -apple-system, system-ui, sans-serif);
+  font-size: 15px;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.doc-page h1,
+.doc-page h2,
+.doc-page h3,
+.doc-page h4,
+.doc-page h5,
+.doc-page h6 {
+  margin: 1.4em 0 0.6em;
+  line-height: 1.3;
+}
+
+.doc-page h1 {
+  font-size: 1.8em;
+}
+
+.doc-page h2 {
+  font-size: 1.5em;
+}
+
+.doc-page p {
+  margin: 0 0 1em;
+}
+
+.doc-page ul,
+.doc-page ol {
+  margin: 0 0 1em;
+  padding-left: 1.6em;
+}
+
+.doc-page table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1em;
+}
+
+.doc-page th,
+.doc-page td {
+  border: 1px solid #d0d0d0;
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.doc-page img {
+  max-width: 100%;
+  height: auto;
+}
+
+.doc-page a {
+  color: var(--accent);
+}
+
+.doc-loading,
+.doc-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 32px;
+  text-align: center;
+}
+
+.doc-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  animation: fbspin 0.9s linear infinite;
+}
+
+.doc-placeholder-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.doc-download-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+  text-decoration: none;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.doc-download-btn:hover {
+  filter: brightness(1.05);
+}
+
+/* Office spreadsheet preview (XLSX/ODS via SheetJS) */
+.sheet-preview {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--pdf-bg, #525659);
+  overflow: hidden;
+}
+
+.sheet-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px 0;
+  overflow-x: auto;
+  background: var(--pdf-bg, #525659);
+  flex-shrink: 0;
+}
+
+.sheet-tab {
+  appearance: none;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 6px 14px;
+  border-radius: 8px 8px 0 0;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sheet-tab:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sheet-tab.active {
+  background: #fff;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.sheet-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #fff;
+}
+
+.sheet-table {
+  flex: 1;
+  overflow: auto;
+  color: #1a1a1a;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.sheet-table table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.sheet-table td,
+.sheet-table th {
+  border: 1px solid #d8d8d8;
+  padding: 4px 8px;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.sheet-table tr:nth-child(even) td {
+  background: #f7f7f7;
+}
+
+.sheet-loading,
+.sheet-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 32px;
+  text-align: center;
+  background: var(--pdf-bg, #525659);
+}
+
+.sheet-loading-spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  animation: fbspin 0.9s linear infinite;
+}
+
+.sheet-placeholder-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.sheet-download-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background: var(--accent);
+  color: var(--on-accent, #fff);
+  text-decoration: none;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sheet-download-btn:hover {
+  filter: brightness(1.05);
+}
+
+@keyframes fbspin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 736px) {
   .code-preview .code-content,

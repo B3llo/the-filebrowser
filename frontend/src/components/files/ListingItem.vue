@@ -69,11 +69,7 @@
       ></video>
 
       <!-- Play icon overlay for video thumbnails -->
-      <div
-        v-if="isVideoItem"
-        class="fb-video-play-overlay"
-        aria-hidden="true"
-      >
+      <div v-if="isVideoItem" class="fb-video-play-overlay" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="rgba(255,255,255,0.9)">
           <path d="M8 5v14l11-7z" />
         </svg>
@@ -113,6 +109,26 @@
         <span class="fb-card-doc-ext">{{ extLabelText }}</span>
       </div>
 
+      <!-- Mosaic card: Office document thumbnail (lazy fetched) -->
+      <template v-if="officeContent">
+        <div
+          class="fb-card-office"
+          :class="`fb-card-office--${officeContent.kind}`"
+          aria-hidden="true"
+        >
+          <pre
+            v-if="officeContent.kind === 'docx'"
+            class="fb-card-office-text"
+            >{{ officeContent.text }}</pre
+          >
+          <table v-else class="fb-card-office-table">
+            <tr v-for="(row, ri) in officeContent.grid" :key="ri">
+              <td v-for="(cell, ci) in row" :key="ci">{{ cell }}</td>
+            </tr>
+          </table>
+        </div>
+      </template>
+
       <!-- List view: extension pill badge (colored by kind) -->
       <span class="fb-list-pill" aria-hidden="true">{{ extLabelText }}</span>
     </div>
@@ -121,7 +137,9 @@
       <p class="name">{{ name }}</p>
 
       <p v-if="!hideSize && isDir" class="size" data-order="-1">&mdash;</p>
-      <p v-else-if="!hideSize" class="size" :data-order="humanSize()">{{ humanSize() }}</p>
+      <p v-else-if="!hideSize" class="size" :data-order="humanSize()">
+        {{ humanSize() }}
+      </p>
 
       <p class="modified">
         <time :datetime="modified">{{ humanTime() }}</time>
@@ -159,9 +177,15 @@ import { filesize } from "@/utils";
 import { fileKind, extLabel } from "@/utils/fileKind";
 import dayjs from "dayjs";
 import { files as api } from "@/api";
+import { createURL } from "@/api/utils";
 import * as upload from "@/utils/upload";
 import { computed, inject, onMounted, onUnmounted, ref, watch } from "vue";
 import { loadThumbnail } from "@/utils/thumbnailCache";
+import {
+  officeThumbKind,
+  fetchDocxText,
+  fetchSheetGrid,
+} from "@/utils/officeThumb";
 import { useRouter } from "vue-router";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
@@ -272,6 +296,20 @@ onMounted(() => {
   thumbObserver.observe(thumbImgRef.value);
 });
 
+// Office thumbnail lazy load. Fetches in the background for every visible
+// item (same pattern as PDF page thumbnails) with a size cap to keep it light.
+onMounted(async () => {
+  const kind = hasOfficeThumb.value;
+  if (!kind || !officeUrl.value) return;
+  if (kind === "docx") {
+    const text = await fetchDocxText(officeUrl.value);
+    if (text) officeContent.value = { kind: "docx", text };
+  } else if (kind === "sheet") {
+    const grid = await fetchSheetGrid(officeUrl.value);
+    if (grid) officeContent.value = { kind: "sheet", grid };
+  }
+});
+
 onUnmounted(() => {
   thumbObserver?.disconnect();
   thumbObserver = null;
@@ -314,13 +352,33 @@ const isVideoItem = computed(
 
 // Client-side <video>+canvas capture fallback, only used when the server
 // isn't providing a static thumbnail.
-const hasVideoThumb = computed(
-  () => isVideoItem.value && !enableVideoThumbs
-);
+const hasVideoThumb = computed(() => isVideoItem.value && !enableVideoThumbs);
 
 const hasPdfThumb = computed(
   () => !props.readOnly && props.type === "pdf" && isThumbsEnabled.value
 );
+
+// Client-side Office thumbnail for the grid card.
+const officeContent = ref<
+  { kind: "docx"; text: string } | { kind: "sheet"; grid: string[][] } | null
+>(null);
+
+const hasOfficeThumb = computed(() => {
+  if (
+    props.readOnly ||
+    !isThumbsEnabled.value ||
+    hasImageThumb.value ||
+    hasVideoThumb.value ||
+    hasPdfThumb.value
+  )
+    return false;
+  return officeThumbKind(props.name, props.size);
+});
+
+const officeUrl = computed(() => {
+  if (!props.path) return "";
+  return createURL("api/raw" + props.path, { inline: "true" });
+});
 
 const isDotfile = computed(() => {
   const n = props.name;
