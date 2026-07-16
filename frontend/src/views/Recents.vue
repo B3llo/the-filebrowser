@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="fb-files-root">
     <header-bar>
       <span class="fb-toolbar-title">{{ $t("sidebar.recent") }}</span>
       <template #actions>
@@ -106,7 +106,9 @@
       :download="downloadSelected"
     />
 
-    <div v-if="allItems.length === 0" class="fb-empty">
+    <div class="fb-content-row">
+      <div class="fb-content-main">
+        <div v-if="allItems.length === 0" class="fb-empty">
       <div class="fb-empty-icon">
         <fb-icon name="clock" size="40px" />
       </div>
@@ -173,7 +175,9 @@
       </div>
     </div>
 
-    <DetailsPanel v-if="layoutStore.showDetails" />
+      </div>
+      <DetailsPanel v-if="layoutStore.showDetails" />
+    </div>
   </div>
 </template>
 

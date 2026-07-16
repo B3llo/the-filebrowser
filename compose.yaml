@@ -8,8 +8,10 @@ services:
       - 8000:80
     volumes:
       - filebrowser:/flux/vault
+      - filebrowser_cache:/config/cache
     environment:
       - FB_REDIS_CACHE_URL=redis://default:filebrowser@redis:6379 # Use rediss:// for ssl
+      - FB_CACHE_DIR=/config/cache # without this, thumbnail caching is a no-op and regenerates on every request
 
   redis:
     container_name: redis
@@ -30,3 +32,4 @@ networks:
 
 volumes:
   filebrowser:
+  filebrowser_cache:
