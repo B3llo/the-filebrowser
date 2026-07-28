@@ -177,6 +177,40 @@
             <span class="fb-settings-toggle-knob"></span>
           </button>
         </div>
+
+        <!-- Prefer high quality previews -->
+        <div class="fb-settings-row">
+          <div>
+            <div class="fb-settings-row-label">
+              {{
+                t(
+                  "settings.preferHighQualityPreview",
+                  "Full quality image previews"
+                )
+              }}
+            </div>
+            <div class="fb-settings-row-desc">
+              {{
+                t(
+                  "settings.preferHighQualityPreviewDesc",
+                  "Open images at full resolution instead of a lower-quality thumbnail"
+                )
+              }}
+            </div>
+          </div>
+          <button
+            class="fb-settings-toggle"
+            :class="
+              preferHighQualityPreview
+                ? 'fb-settings-toggle--on'
+                : 'fb-settings-toggle--off'
+            "
+            @click="toggleHighQualityPreview"
+            :aria-label="t('settings.preferHighQualityPreview')"
+          >
+            <span class="fb-settings-toggle-knob"></span>
+          </button>
+        </div>
       </div>
 
       <div class="fb-settings-footer">
@@ -241,6 +275,10 @@ const currentView = computed(() => {
 
 const hideDotfiles = computed(() => authStore.user?.hideDotfiles ?? false);
 
+const preferHighQualityPreview = computed(
+  () => authStore.user?.preferHighQualityPreview ?? false
+);
+
 onMounted(() => {
   const density = localStorage.getItem("fb-density");
   if (density === "compact" || density === "comfortable") {
@@ -301,6 +339,14 @@ async function toggleHidden() {
   const newVal = !authStore.user.hideDotfiles;
   const data = { id: authStore.user.id, hideDotfiles: newVal };
   await api.update(data, ["hideDotfiles"]).catch($showError);
+  authStore.updateUser(data);
+}
+
+async function toggleHighQualityPreview() {
+  if (authStore.user === null) return;
+  const newVal = !authStore.user.preferHighQualityPreview;
+  const data = { id: authStore.user.id, preferHighQualityPreview: newVal };
+  await api.update(data, ["preferHighQualityPreview"]).catch($showError);
   authStore.updateUser(data);
 }
 </script>

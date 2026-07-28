@@ -25,6 +25,7 @@ interface IUser {
   rules: IRule[];
   lockPassword: boolean;
   hideDotfiles: boolean;
+  preferHighQualityPreview: boolean;
   singleClick: boolean;
   redirectAfterCopyMove: boolean;
   dateFormat: boolean;
@@ -58,6 +59,7 @@ interface IUserForm {
   rules?: IRule[];
   lockPassword?: boolean;
   hideDotfiles?: boolean;
+  preferHighQualityPreview?: boolean;
   singleClick?: boolean;
   redirectAfterCopyMove?: boolean;
   dateFormat?: boolean;

@@ -43,30 +43,31 @@ type RecentFile struct {
 
 // User describes a user.
 type User struct {
-	ID                    uint              `storm:"id,increment" json:"id"`
-	Username              string            `storm:"unique" json:"username"`
-	DisplayName           string            `json:"displayName"`
-	Password              string            `json:"password"`
-	Scope                 string            `json:"scope"`
-	Sources               []SourceRef       `json:"sources"`
-	Locale                string            `json:"locale"`
-	LockPassword          bool              `json:"lockPassword"`
-	ViewMode              ViewMode          `json:"viewMode"`
-	SingleClick           bool              `json:"singleClick"`
-	RedirectAfterCopyMove bool              `json:"redirectAfterCopyMove"`
-	Perm                  Permissions       `json:"perm"`
-	Commands              []string          `json:"commands"`
-	Sorting               files.Sorting     `json:"sorting"`
-	Fs                    afero.Fs          `json:"-" yaml:"-"`
-	Rules                 []rules.Rule      `json:"rules"`
-	HideDotfiles          bool              `json:"hideDotfiles"`
-	DateFormat            bool              `json:"dateFormat"`
-	AceEditorTheme        string            `json:"aceEditorTheme"`
-	FolderColors          map[string]string `json:"folderColors"`
-	Theme                 string            `json:"theme"`
-	Starred               []StarredFile     `json:"starred"`
-	Recents               []RecentFile      `json:"recents"`
-	Avatar                string            `json:"avatar"`
+	ID                       uint              `storm:"id,increment" json:"id"`
+	Username                 string            `storm:"unique" json:"username"`
+	DisplayName              string            `json:"displayName"`
+	Password                 string            `json:"password"`
+	Scope                    string            `json:"scope"`
+	Sources                  []SourceRef       `json:"sources"`
+	Locale                   string            `json:"locale"`
+	LockPassword             bool              `json:"lockPassword"`
+	ViewMode                 ViewMode          `json:"viewMode"`
+	SingleClick              bool              `json:"singleClick"`
+	RedirectAfterCopyMove    bool              `json:"redirectAfterCopyMove"`
+	Perm                     Permissions       `json:"perm"`
+	Commands                 []string          `json:"commands"`
+	Sorting                  files.Sorting     `json:"sorting"`
+	Fs                       afero.Fs          `json:"-" yaml:"-"`
+	Rules                    []rules.Rule      `json:"rules"`
+	HideDotfiles             bool              `json:"hideDotfiles"`
+	PreferHighQualityPreview bool              `json:"preferHighQualityPreview"`
+	DateFormat               bool              `json:"dateFormat"`
+	AceEditorTheme           string            `json:"aceEditorTheme"`
+	FolderColors             map[string]string `json:"folderColors"`
+	Theme                    string            `json:"theme"`
+	Starred                  []StarredFile     `json:"starred"`
+	Recents                  []RecentFile      `json:"recents"`
+	Avatar                   string            `json:"avatar"`
 }
 
 // GetRules implements rules.Provider.

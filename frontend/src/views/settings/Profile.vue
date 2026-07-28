@@ -90,6 +90,17 @@
               <div class="fb-settings-checkbox-item">
                 <input
                   type="checkbox"
+                  name="preferHighQualityPreview"
+                  v-model="preferHighQualityPreview"
+                  id="preferHighQualityPreview"
+                />
+                <label for="preferHighQualityPreview">{{
+                  t("settings.preferHighQualityPreview")
+                }}</label>
+              </div>
+              <div class="fb-settings-checkbox-item">
+                <input
+                  type="checkbox"
                   name="dateFormat"
                   v-model="dateFormat"
                   id="dateFormat"
@@ -218,6 +229,7 @@ const displayName = ref<string>("");
 const hideDotfiles = ref<boolean>(false);
 const singleClick = ref<boolean>(false);
 const redirectAfterCopyMove = ref<boolean>(false);
+const preferHighQualityPreview = ref<boolean>(false);
 const dateFormat = ref<boolean>(false);
 const locale = ref<string>("");
 const aceEditorTheme = ref<string>("");
@@ -246,6 +258,7 @@ onMounted(async () => {
   hideDotfiles.value = authStore.user.hideDotfiles;
   singleClick.value = authStore.user.singleClick;
   redirectAfterCopyMove.value = authStore.user.redirectAfterCopyMove;
+  preferHighQualityPreview.value = authStore.user.preferHighQualityPreview;
   dateFormat.value = authStore.user.dateFormat;
   aceEditorTheme.value = authStore.user.aceEditorTheme;
   layoutStore.loading = false;
@@ -308,7 +321,10 @@ const saveAvatar = async () => {
       const data = { id: authStore.user.id, avatar: pendingAvatar.value };
       await api.update(data, ["avatar"]);
     }
-    authStore.updateUser({ id: authStore.user.id, avatar: pendingAvatar.value });
+    authStore.updateUser({
+      id: authStore.user.id,
+      avatar: pendingAvatar.value,
+    });
     $showSuccess(t("settings.settingsUpdated"));
     pendingAvatar.value = null;
     pendingAvatarFile.value = null;
@@ -336,6 +352,7 @@ const updateSettings = async (event: Event) => {
       hideDotfiles: hideDotfiles.value,
       singleClick: singleClick.value,
       redirectAfterCopyMove: redirectAfterCopyMove.value,
+      preferHighQualityPreview: preferHighQualityPreview.value,
       dateFormat: dateFormat.value,
       aceEditorTheme: aceEditorTheme.value,
     };
@@ -346,6 +363,7 @@ const updateSettings = async (event: Event) => {
       "hideDotfiles",
       "singleClick",
       "redirectAfterCopyMove",
+      "preferHighQualityPreview",
       "dateFormat",
       "aceEditorTheme",
     ]);

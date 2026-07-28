@@ -1,23 +1,13 @@
 <template>
   <div
     id="previewer"
+    ref="previewerEl"
     @touchmove="onTouchMove"
     @wheel="onWheel"
     @mousemove="toggleNavigation"
     @touchstart="toggleNavigation"
   >
-    <header-bar
-      v-if="
-        isPdf ||
-        isEpub ||
-        isCsv ||
-        isMarkdown ||
-        isCode ||
-        isText ||
-        isOffice ||
-        showNav
-      "
-    >
+    <header-bar>
       <span class="fb-preview-type">{{ typeLabel }}</span>
       <title class="fb-preview-name">{{ name }}</title>
 
@@ -27,6 +17,13 @@
           v-if="isResizeEnabled && fileStore.req?.type === 'image'"
           :icon="fullSize ? 'photo_size_select_large' : 'hd'"
           @action="toggleSize"
+        />
+        <action
+          :disabled="layoutStore.loading"
+          v-if="fileStore.req?.type === 'image'"
+          :icon="isFullscreen ? 'fullscreen_exit' : 'fullscreen'"
+          :label="t('buttons.fullScreen')"
+          @action="toggleFullscreen"
         />
         <action
           :disabled="layoutStore.loading"
@@ -326,7 +323,8 @@ const previousLink = ref<string>("");
 const nextLink = ref<string>("");
 const listing = ref<ResourceItem[] | null>(null);
 const name = ref<string>("");
-const fullSize = ref<boolean>(false);
+const isFullscreen = ref<boolean>(false);
+const previewerEl = ref<HTMLElement | null>(null);
 const showNav = ref<boolean>(true);
 const navTimeout = ref<null | number>(null);
 const hoverNav = ref<boolean>(false);
@@ -344,6 +342,10 @@ const $showError = inject<IToastError>("$showError")!;
 const authStore = useAuthStore();
 const fileStore = useFileStore();
 const layoutStore = useLayoutStore();
+
+const fullSize = ref<boolean>(
+  authStore.user?.preferHighQualityPreview ?? false
+);
 
 const { t } = useI18n();
 
@@ -472,8 +474,6 @@ const isSheet = computed(() => {
   const ext = fileStore.req?.extension.toLowerCase() || "";
   return SHEET_EXTS.has(ext) && (fileStore.req?.size ?? 0) <= OFFICE_MAX_SIZE;
 });
-
-const isOffice = computed(() => isDoc.value || isSheet.value);
 
 // Short type label shown as a chip in the unified preview toolbar (#13).
 const typeLabel = computed(() => {
@@ -606,11 +606,15 @@ watch(route, () => {
 // Specify hooks
 onMounted(async () => {
   window.addEventListener("keydown", key);
+  document.addEventListener("fullscreenchange", onFullscreenChange);
   listing.value = fileStore.oldReq?.items ?? null;
   updatePreview();
 });
 
-onBeforeUnmount(() => window.removeEventListener("keydown", key));
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", key);
+  document.removeEventListener("fullscreenchange", onFullscreenChange);
+});
 
 // Specify methods
 const deleteFile = () => {
@@ -659,6 +663,7 @@ const key = (event: KeyboardEvent) => {
     if (hasPrevious.value) prev();
   } else if (event.which === 27) {
     // esc
+    if (document.fullscreenElement) return; // let the browser exit fullscreen only
     close();
   }
 };
@@ -786,6 +791,22 @@ const prefetchUrl = (item: ResourceItem) => {
 };
 
 const toggleSize = () => (fullSize.value = !fullSize.value);
+
+const toggleFullscreen = () => {
+  if (!document.fullscreenElement) {
+    previewerEl.value?.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+};
+
+const onFullscreenChange = () => {
+  isFullscreen.value = document.fullscreenElement !== null;
+  // ExtendedImage's setCenter() only recomputes on image `load` and
+  // `window resize` — force a resize tick so it re-centers when entering/
+  // exiting fullscreen changes the container's size.
+  window.dispatchEvent(new Event("resize"));
+};
 
 const toggleNavigation = throttle(function () {
   showNav.value = true;

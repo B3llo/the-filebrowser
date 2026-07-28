@@ -25,22 +25,23 @@ const (
 )
 
 type userInfo struct {
-	ID                    uint              `json:"id"`
-	Locale                string            `json:"locale"`
-	ViewMode              users.ViewMode    `json:"viewMode"`
-	SingleClick           bool              `json:"singleClick"`
-	RedirectAfterCopyMove bool              `json:"redirectAfterCopyMove"`
-	Perm                  users.Permissions `json:"perm"`
-	Commands              []string          `json:"commands"`
-	LockPassword          bool              `json:"lockPassword"`
-	HideDotfiles          bool              `json:"hideDotfiles"`
-	DateFormat            bool              `json:"dateFormat"`
-	Username              string            `json:"username"`
-	DisplayName           string            `json:"displayName"`
-	AceEditorTheme        string            `json:"aceEditorTheme"`
-	FolderColors          map[string]string `json:"folderColors"`
-	Theme                 string            `json:"theme"`
-	Avatar                string            `json:"avatar"`
+	ID                       uint              `json:"id"`
+	Locale                   string            `json:"locale"`
+	ViewMode                 users.ViewMode    `json:"viewMode"`
+	SingleClick              bool              `json:"singleClick"`
+	RedirectAfterCopyMove    bool              `json:"redirectAfterCopyMove"`
+	Perm                     users.Permissions `json:"perm"`
+	Commands                 []string          `json:"commands"`
+	LockPassword             bool              `json:"lockPassword"`
+	HideDotfiles             bool              `json:"hideDotfiles"`
+	PreferHighQualityPreview bool              `json:"preferHighQualityPreview"`
+	DateFormat               bool              `json:"dateFormat"`
+	Username                 string            `json:"username"`
+	DisplayName              string            `json:"displayName"`
+	AceEditorTheme           string            `json:"aceEditorTheme"`
+	FolderColors             map[string]string `json:"folderColors"`
+	Theme                    string            `json:"theme"`
+	Avatar                   string            `json:"avatar"`
 }
 
 type authToken struct {
@@ -228,22 +229,23 @@ func renewHandler(tokenExpireTime time.Duration) handleFunc {
 func printToken(w http.ResponseWriter, _ *http.Request, d *data, user *users.User, tokenExpirationTime time.Duration) (int, error) {
 	claims := &authToken{
 		User: userInfo{
-			ID:                    user.ID,
-			Locale:                user.Locale,
-			ViewMode:              user.ViewMode,
-			SingleClick:           user.SingleClick,
-			RedirectAfterCopyMove: user.RedirectAfterCopyMove,
-			Perm:                  user.Perm,
-			LockPassword:          user.LockPassword,
-			Commands:              user.Commands,
-			HideDotfiles:          user.HideDotfiles,
-			DateFormat:            user.DateFormat,
-			Username:              user.Username,
-			DisplayName:           user.DisplayName,
-			AceEditorTheme:        user.AceEditorTheme,
-			FolderColors:          user.FolderColors,
-			Theme:                 user.Theme,
-			Avatar:                user.Avatar,
+			ID:                       user.ID,
+			Locale:                   user.Locale,
+			ViewMode:                 user.ViewMode,
+			SingleClick:              user.SingleClick,
+			RedirectAfterCopyMove:    user.RedirectAfterCopyMove,
+			Perm:                     user.Perm,
+			LockPassword:             user.LockPassword,
+			Commands:                 user.Commands,
+			HideDotfiles:             user.HideDotfiles,
+			PreferHighQualityPreview: user.PreferHighQualityPreview,
+			DateFormat:               user.DateFormat,
+			Username:                 user.Username,
+			DisplayName:              user.DisplayName,
+			AceEditorTheme:           user.AceEditorTheme,
+			FolderColors:             user.FolderColors,
+			Theme:                    user.Theme,
+			Avatar:                   user.Avatar,
 		},
 		RegisteredClaims: jwt.RegisteredClaims{
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
