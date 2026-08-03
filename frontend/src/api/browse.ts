@@ -38,7 +38,8 @@ export async function listDirs(
   return data.items
     .filter((item: any) => item.isDir === true)
     .map((item: any) => {
-      const childPath = apiPath === "/" ? `/${item.name}/` : `${apiPath}${item.name}/`;
+      const childPath =
+        apiPath === "/" ? `/${item.name}/` : `${apiPath}${item.name}/`;
       return {
         name: item.name,
         path: childPath,

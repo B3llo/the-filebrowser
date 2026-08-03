@@ -8,4 +8,14 @@ import * as browse from "./browse";
 import search from "./search";
 import commands from "./commands";
 
-export { files, share, users, settings, pub, commands, search, sources, browse };
+export {
+  files,
+  share,
+  users,
+  settings,
+  pub,
+  commands,
+  search,
+  sources,
+  browse,
+};

@@ -39,12 +39,13 @@
         <FbIcon name="share" size="16px" />
         <span>{{ t("buttons.share") }}</span>
       </button>
-      <button
-        class="fb-sel-action-item"
-        @click="handleStar"
-      >
+      <button class="fb-sel-action-item" @click="handleStar">
         <FbIcon name="star" size="16px" />
-        <span>{{ allSelectedStarred ? t("files.unstar", "Unstar") : t("buttons.star", "Star") }}</span>
+        <span>{{
+          allSelectedStarred
+            ? t("files.unstar", "Unstar")
+            : t("buttons.star", "Star")
+        }}</span>
       </button>
       <div class="fb-menu-divider"></div>
       <button

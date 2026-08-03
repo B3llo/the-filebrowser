@@ -34,7 +34,9 @@
 
     <ConfirmDialog
       v-if="showDeleteDialog"
-      :message="t('prompts.deleteMessageMultiple', { count: pendingDeleteItems.length })"
+      :message="
+        t('prompts.deleteMessageMultiple', { count: pendingDeleteItems.length })
+      "
       :confirm-text="t('buttons.delete')"
       :cancel-text="t('buttons.cancel')"
       :danger="true"
@@ -102,7 +104,9 @@ const breadcrumbSegments = computed(() => {
 });
 
 onMounted(() => loadTrash());
-onUnmounted(() => { fileStore.updateRequest(null); });
+onUnmounted(() => {
+  fileStore.updateRequest(null);
+});
 watch(activeSourceId, () => {
   trashSubPath.value = "";
   loadTrash();

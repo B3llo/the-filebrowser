@@ -38,6 +38,14 @@
         />
         <action
           :disabled="layoutStore.loading"
+          v-if="isPdf"
+          fb-icon="print"
+          size="18px"
+          :label="$t('buttons.print')"
+          @action="printPdf"
+        />
+        <action
+          :disabled="layoutStore.loading"
           v-if="authStore.user?.perm.download"
           fb-icon="download"
           size="18px"
@@ -140,6 +148,7 @@
         </VideoPlayer>
         <PdfPreview
           v-else-if="isPdf"
+          ref="pdfPreviewRef"
           :src="previewUrl"
           :filename="name"
           :download-url="downloadUrl"
@@ -325,6 +334,7 @@ const listing = ref<ResourceItem[] | null>(null);
 const name = ref<string>("");
 const isFullscreen = ref<boolean>(false);
 const previewerEl = ref<HTMLElement | null>(null);
+const pdfPreviewRef = ref<InstanceType<typeof PdfPreview> | null>(null);
 const showNav = ref<boolean>(true);
 const navTimeout = ref<null | number>(null);
 const hoverNav = ref<boolean>(false);
@@ -647,6 +657,17 @@ const key = (event: KeyboardEvent) => {
   if (layoutStore.currentPrompt !== null) {
     return;
   }
+  // When previewing a PDF, Ctrl/Cmd+P must print the document itself, not the
+  // preview UI around it.
+  if (
+    isPdf.value &&
+    (event.ctrlKey || event.metaKey) &&
+    (event.key === "p" || event.key === "P")
+  ) {
+    event.preventDefault();
+    printPdf();
+    return;
+  }
   // When previewing a video, let arrow keys fall through to video.js for
   // seeking instead of switching to the prev/next file. Enter still advances.
   const isVideo = fileStore.req?.type === "video";
@@ -661,7 +682,7 @@ const key = (event: KeyboardEvent) => {
     // left arrow
     if (isVideo) return;
     if (hasPrevious.value) prev();
-  } else if (event.which === 27) {
+  } else if (event.key === "Escape") {
     // esc
     if (document.fullscreenElement) return; // let the browser exit fullscreen only
     close();
@@ -828,6 +849,10 @@ const close = () => {
 
 const download = () => window.open(downloadUrl.value);
 const openDirect = () => window.open(directUrl.value);
+
+const printPdf = () => {
+  pdfPreviewRef.value?.print();
+};
 
 const editAsText = () => {
   router.push({ path: route.path, query: { edit: "true" } });

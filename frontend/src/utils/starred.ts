@@ -9,6 +9,26 @@ export interface StarredFile {
   starredAt: number;
 }
 
+export interface StarredSortable {
+  url: string;
+  name: string;
+}
+
+/**
+ * Partitions a list so starred (favorited) items come first, sorted
+ * alphabetically by name, followed by the remaining items in their original
+ * order. Used by the file listing to pin favorites at the top of each section
+ * (folders and files are partitioned separately).
+ */
+export function sortStarredFirst<T extends StarredSortable>(items: T[]): T[] {
+  const starred = items.filter((item) => isStarred(item.url));
+  const rest = items.filter((item) => !isStarred(item.url));
+
+  starred.sort((a, b) => a.name.localeCompare(b.name));
+
+  return [...starred, ...rest];
+}
+
 // Global reactive counter — bump it inside toggleStarred so any computed
 // that reads starVersion.value automatically re-evaluates.
 export const starVersion = ref(0);
@@ -60,7 +80,9 @@ export function toggleStarred(file: Omit<StarredFile, "starredAt">): boolean {
       authStore.updateUser({ starred: updated });
       users
         .update({ id: authStore.user.id, starred: updated }, ["starred"])
-        .catch(() => {/* ignore sync errors */});
+        .catch(() => {
+          /* ignore sync errors */
+        });
     }
 
     return nowStarred;

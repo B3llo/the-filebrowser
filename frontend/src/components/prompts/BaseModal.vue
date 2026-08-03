@@ -7,11 +7,18 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 
 const emit = defineEmits(["closed"]);
 
 const modalContainer = ref(null);
+
+const onKeydown = (event: KeyboardEvent) => {
+  if (event.key === "Escape") {
+    event.stopImmediatePropagation();
+    emit("closed");
+  }
+};
 
 onMounted(() => {
   const element = document.querySelector("#focus-prompt") as HTMLElement | null;
@@ -20,6 +27,12 @@ onMounted(() => {
   } else if (modalContainer.value) {
     (modalContainer.value as HTMLElement).focus();
   }
+
+  window.addEventListener("keydown", onKeydown);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("keydown", onKeydown);
 });
 
 const backgroundClick = (event: Event) => {
@@ -28,13 +41,6 @@ const backgroundClick = (event: Event) => {
     emit("closed");
   }
 };
-
-window.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
-    event.stopImmediatePropagation();
-    emit("closed");
-  }
-});
 </script>
 
 <style scoped>

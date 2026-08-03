@@ -1,3 +1,13 @@
+## Static ffmpeg binaries, pulled straight from mwader/static-ffmpeg (an
+## actively maintained multi-arch image of hardened static PIE builds) via
+## plain COPY --from below. This replaces wget-ing a tarball from
+## johnvansickle.com's personal, non-CDN server, which is a known single
+## point of build failure (intermittent errors, no SLA). Only amd64/arm64
+## are published upstream; other targets keep the previous graceful
+## fallback (an empty placeholder binary).
+FROM mwader/static-ffmpeg:8.1.2-amd64 AS ffmpeg-amd64
+FROM mwader/static-ffmpeg:8.1.2-arm64 AS ffmpeg-arm64
+
 ## Multistage build: First stage fetches dependencies
 FROM alpine:3.23 AS fetcher
 
@@ -9,30 +19,19 @@ RUN apk update && \
     apk --no-cache add ca-certificates mailcap tini-static && \
     wget -O /JSON.sh https://raw.githubusercontent.com/dominictarr/JSON.sh/0d5e5c77365f63809bf6e77ef44a1f34b0e05840/JSON.sh
 
-# download a static ffmpeg build (musl/busybox has no package manager to install it from)
-# and verify it against the upstream-published checksum before extracting.
+COPY --from=ffmpeg-amd64 /ffmpeg /ffmpeg-amd64
+COPY --from=ffmpeg-arm64 /ffmpeg /ffmpeg-arm64
+
+# select the static ffmpeg binary matching the target architecture
 RUN set -eu; \
-    case "$TARGETARCH-$TARGETVARIANT" in \
-        "amd64-") FFMPEG_ARCH="amd64" ;; \
-        "arm64-") FFMPEG_ARCH="arm64" ;; \
-        "arm-v7") FFMPEG_ARCH="armhf" ;; \
-        "arm-v6") FFMPEG_ARCH="armel" ;; \
-        *) echo "no static ffmpeg build for $TARGETARCH-$TARGETVARIANT, skipping" && FFMPEG_ARCH="" ;; \
-    esac; \
     mkdir -p /usr/local/bin; \
-    if [ -n "$FFMPEG_ARCH" ]; then \
-        BASE_URL="https://johnvansickle.com/ffmpeg/releases"; \
-        ARCHIVE="ffmpeg-release-$FFMPEG_ARCH-static.tar.xz"; \
-        mkdir -p /ffmpeg-dl && cd /ffmpeg-dl; \
-        wget -O "$ARCHIVE" "$BASE_URL/$ARCHIVE"; \
-        wget -O "$ARCHIVE.md5" "$BASE_URL/$ARCHIVE.md5"; \
-        md5sum -c "$ARCHIVE.md5"; \
-        mkdir -p /ffmpeg-extract && tar -xJf "$ARCHIVE" -C /ffmpeg-extract; \
-        find /ffmpeg-extract -type f -name ffmpeg -exec cp {} /usr/local/bin/ffmpeg \; ; \
-        chmod +x /usr/local/bin/ffmpeg; \
-    else \
-        touch /usr/local/bin/ffmpeg; \
-    fi
+    case "$TARGETARCH-$TARGETVARIANT" in \
+        "amd64-") cp /ffmpeg-amd64 /usr/local/bin/ffmpeg ;; \
+        "arm64-") cp /ffmpeg-arm64 /usr/local/bin/ffmpeg ;; \
+        *) echo "no static ffmpeg build for $TARGETARCH-$TARGETVARIANT, skipping" && touch /usr/local/bin/ffmpeg ;; \
+    esac; \
+    rm -f /ffmpeg-amd64 /ffmpeg-arm64; \
+    chmod +x /usr/local/bin/ffmpeg
 
 ## Second stage: Use lightweight BusyBox image for final runtime environment
 FROM busybox:1.37.0-musl

@@ -34,8 +34,13 @@
     <!-- Navigation destinations -->
     <ul class="fb-sidebar-nav" v-if="isLoggedIn" role="list">
       <!-- Sources section: label + "+" for admins (only when expanded) -->
-      <li v-if="!sidebarCollapsed && (sourceList.length > 1 || isAdmin)" class="fb-nav-section-header">
-        <span class="fb-nav-section-label">{{ $t("sidebar.sources", "Sources") }}</span>
+      <li
+        v-if="!sidebarCollapsed && (sourceList.length > 1 || isAdmin)"
+        class="fb-nav-section-header"
+      >
+        <span class="fb-nav-section-label">{{
+          $t("sidebar.sources", "Sources")
+        }}</span>
         <button
           v-if="isAdmin"
           class="fb-nav-section-add"
@@ -266,7 +271,7 @@ function writeCachedSourceSize(id, size) {
   try {
     localStorage.setItem(
       `fb:sourceSize:${id}`,
-      JSON.stringify({ size, ts: Date.now() }),
+      JSON.stringify({ size, ts: Date.now() })
     );
   } catch {
     // Ignore quota / private-mode failures — caching is best-effort.
@@ -296,7 +301,12 @@ export default {
     ...mapState(useAuthStore, ["user", "isLoggedIn"]),
     ...mapState(useFileStore, ["isFiles", "reload"]),
     ...mapState(useLayoutStore, ["currentPromptName", "sidebarCollapsed"]),
-    ...mapState(useSourceStore, ["sources", "hasMultiple", "activeId", "active"]),
+    ...mapState(useSourceStore, [
+      "sources",
+      "hasMultiple",
+      "activeId",
+      "active",
+    ]),
     sourceList() {
       // Once sources are loaded they replace the navigation; while loading on
       // first paint, show the implicit "My Files" so the sidebar is never empty.

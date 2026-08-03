@@ -40,14 +40,23 @@
       >
         <fb-icon name="folder" size="16px" />
         <span>{{ dir.name }}</span>
-        <fb-icon v-if="dir.hasChildren" name="chevron-right" size="14px" class="fb-dir-picker-chevron" />
+        <fb-icon
+          v-if="dir.hasChildren"
+          name="chevron-right"
+          size="14px"
+          class="fb-dir-picker-chevron"
+        />
       </button>
     </div>
 
     <!-- Selected path display + confirm -->
     <div class="fb-dir-picker-footer">
       <span class="fb-dir-picker-selected">{{ currentPath }}</span>
-      <button type="button" class="fb-btn fb-btn--sm fb-btn--primary" @click="select">
+      <button
+        type="button"
+        class="fb-btn fb-btn--sm fb-btn--primary"
+        @click="select"
+      >
         {{ $t("browse.selectFolder", "Select") }}
       </button>
     </div>

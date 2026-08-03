@@ -45,7 +45,9 @@ export function addRecent(file: Omit<RecentFile, "at">): void {
         authStore.updateUser({ recents: updated });
         users
           .update({ id: authStore.user.id, recents: updated }, ["recents"])
-          .catch(() => {/* ignore sync errors */});
+          .catch(() => {
+            /* ignore sync errors */
+          });
       }
     }, 500);
   } catch {

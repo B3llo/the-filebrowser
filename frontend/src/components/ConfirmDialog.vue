@@ -83,7 +83,9 @@ defineEmits<{
   font-size: 13.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.08s, color 0.08s;
+  transition:
+    background 0.08s,
+    color 0.08s;
   font-family: inherit;
 }
 

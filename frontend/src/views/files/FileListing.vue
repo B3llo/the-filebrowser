@@ -2,12 +2,17 @@
   <div>
     <header-bar :showBreadcrumb="!isTrash" :base="filesBase">
       <template v-if="isTrash" #default>
-        <div class="fb-toolbar-title fb-trash-breadcrumb" v-if="breadcrumb && breadcrumb.length > 0">
+        <div
+          class="fb-toolbar-title fb-trash-breadcrumb"
+          v-if="breadcrumb && breadcrumb.length > 0"
+        >
           <button
             v-for="(seg, i) in breadcrumb"
             :key="i"
             class="fb-trash-breadcrumb-item"
-            :class="{ 'fb-trash-breadcrumb-item--last': i === breadcrumb.length - 1 }"
+            :class="{
+              'fb-trash-breadcrumb-item--last': i === breadcrumb.length - 1,
+            }"
             @click="emit('navigate-to', seg.url)"
           >
             <span v-if="i > 0" class="fb-trash-breadcrumb-sep">/</span>
@@ -15,12 +20,20 @@
           </button>
         </div>
         <span class="fb-toolbar-title" v-else>{{ $t("sidebar.trash") }}</span>
-        <div v-if="sourceStore.sources.length > 1" class="fb-source-tabs" style="flex: 0 0 auto;">
+        <div
+          v-if="sourceStore.sources.length > 1"
+          class="fb-source-tabs"
+          style="flex: 0 0 auto"
+        >
           <button
             v-for="src in sourceStore.sources"
             :key="src.id"
             class="fb-tbtn"
-            :class="{ 'fb-tbtn--active': String(src.id) === (props.sourceId ?? String(sourceStore.activeId)) }"
+            :class="{
+              'fb-tbtn--active':
+                String(src.id) ===
+                (props.sourceId ?? String(sourceStore.activeId)),
+            }"
             @click="emit('switch-source', String(src.id))"
           >
             {{ src.name }}
@@ -320,7 +333,6 @@
           </div>
         </div>
       </template>
-
     </header-bar>
 
     <template v-if="!isTrash">
@@ -501,10 +513,16 @@
                 role="button"
                 tabindex="0"
                 @click="sort('modified')"
-                :title="isTrash ? t('trash.deletedAt') : t('files.sortByLastModified')"
-                :aria-label="isTrash ? t('trash.deletedAt') : t('files.sortByLastModified')"
+                :title="
+                  isTrash ? t('trash.deletedAt') : t('files.sortByLastModified')
+                "
+                :aria-label="
+                  isTrash ? t('trash.deletedAt') : t('files.sortByLastModified')
+                "
               >
-                <span>{{ isTrash ? t("trash.deletedAt") : t("files.lastModified") }}</span>
+                <span>{{
+                  isTrash ? t("trash.deletedAt") : t("files.lastModified")
+                }}</span>
                 <FbIcon :name="modifiedIcon" size="14px" />
               </p>
             </div>
@@ -557,7 +575,9 @@
             v-bind:size="item.size"
             v-bind:path="item.path"
             v-bind:preview="item.preview"
-            v-bind:noOpen="(isTrash && !item.isDir && !trashSubPath) || undefined"
+            v-bind:noOpen="
+              (isTrash && !item.isDir && !trashSubPath) || undefined
+            "
             v-bind:onOpen="isTrash ? handleTrashOpen : undefined"
           >
           </item>
@@ -712,7 +732,6 @@
           webkitdirectory
           multiple
         />
-
       </div>
     </template>
   </div>
@@ -731,7 +750,12 @@ import { enableExec } from "@/utils/constants";
 import * as upload from "@/utils/upload";
 import { throttle } from "lodash-es";
 import { Base64 } from "js-base64";
-import { isStarred, toggleStarred, starVersion } from "@/utils/starred";
+import {
+  isStarred,
+  toggleStarred,
+  starVersion,
+  sortStarredFirst,
+} from "@/utils/starred";
 import { fileKind } from "@/utils/fileKind";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
@@ -780,7 +804,7 @@ const emit = defineEmits<{
 }>();
 
 const showLimit = ref<number>(50);
-const dragCounter = ref<number>(0);
+let fadeResetTimer: number | null = null;
 const width = ref<number>(window.innerWidth);
 const itemWeight = ref<number>(0);
 const isContextMenuVisible = ref<boolean>(false);
@@ -814,7 +838,9 @@ const route = useRoute();
 const router = useRouter();
 
 const filesBase = computed(() =>
-  props.isTrash ? `/files/${props.sourceId ?? sourceStore.activeId}` : `/files/${route.params.sourceId ?? 0}`
+  props.isTrash
+    ? `/files/${props.sourceId ?? sourceStore.activeId}`
+    : `/files/${route.params.sourceId ?? 0}`
 );
 
 onBeforeRouteUpdate(() => {
@@ -827,23 +853,41 @@ const listing = ref<HTMLElement | null>(null);
 const searchRef = ref<InstanceType<typeof Search> | null>(null);
 
 const nameSorted = computed(() =>
-  props.isTrash ? props.sortBy === "name" : fileStore.req ? fileStore.req.sorting.by === "name" : false
+  props.isTrash
+    ? props.sortBy === "name"
+    : fileStore.req
+      ? fileStore.req.sorting.by === "name"
+      : false
 );
 
 const sizeSorted = computed(() =>
-  props.isTrash ? props.sortBy === "size" : fileStore.req ? fileStore.req.sorting.by === "size" : false
+  props.isTrash
+    ? props.sortBy === "size"
+    : fileStore.req
+      ? fileStore.req.sorting.by === "size"
+      : false
 );
 
 const modifiedSorted = computed(() =>
-  props.isTrash ? props.sortBy === "modified" : fileStore.req ? fileStore.req.sorting.by === "modified" : false
+  props.isTrash
+    ? props.sortBy === "modified"
+    : fileStore.req
+      ? fileStore.req.sorting.by === "modified"
+      : false
 );
 
 const ascOrdered = computed(() =>
-  props.isTrash ? !!props.sortAsc : fileStore.req ? fileStore.req.sorting.asc : false
+  props.isTrash
+    ? !!props.sortAsc
+    : fileStore.req
+      ? fileStore.req.sorting.asc
+      : false
 );
 
 const currentSortBy = computed(() =>
-  props.isTrash ? (props.sortBy ?? "name") : (fileStore.req?.sorting.by ?? "name")
+  props.isTrash
+    ? (props.sortBy ?? "name")
+    : (fileStore.req?.sorting.by ?? "name")
 );
 const currentSortAsc = computed(() =>
   props.isTrash ? (props.sortAsc ?? true) : (fileStore.req?.sorting.asc ?? true)
@@ -855,7 +899,10 @@ const items = computed(() => {
   const dirs: ResourceItem[] = [];
   const files: ResourceItem[] = [];
 
-  const q = props.isTrash && props.searchQuery ? props.searchQuery.toLowerCase().trim() : "";
+  const q =
+    props.isTrash && props.searchQuery
+      ? props.searchQuery.toLowerCase().trim()
+      : "";
   let source = fileStore.req?.items ?? [];
 
   if (q) {
@@ -889,6 +936,13 @@ const items = computed(() => {
         files.push(item);
       }
     });
+
+  // Starred items are pinned to the top of their section, sorted by name.
+  // Starring/unstarring re-evaluates this computed via starVersion.
+  if (!props.isTrash) {
+    starVersion.value;
+    return { dirs: sortStarredFirst(dirs), files: sortStarredFirst(files) };
+  }
 
   return { dirs, files };
 });
@@ -999,9 +1053,10 @@ onMounted(() => {
   }
 
   if (props.isTrash || !authStore.user?.perm.create) return;
-  document.addEventListener("dragover", preventDefault);
+  document.addEventListener("dragover", onDragOverGlobal);
   document.addEventListener("dragenter", dragEnter);
   document.addEventListener("dragleave", dragLeave);
+  document.addEventListener("dragend", dragEnd);
   document.addEventListener("drop", drop);
 });
 
@@ -1010,14 +1065,20 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", keyEvent);
   window.removeEventListener("scroll", scrollEvent, true);
   window.removeEventListener("resize", windowsResize);
+  stopDragScroll();
+  if (fadeResetTimer) {
+    window.clearTimeout(fadeResetTimer);
+    fadeResetTimer = null;
+  }
   if (!props.isTrash) {
     document.removeEventListener("click", closeNewMenu);
   }
 
   if (props.isTrash || !authStore.user?.perm.create) return;
-  document.removeEventListener("dragover", preventDefault);
+  document.removeEventListener("dragover", onDragOverGlobal);
   document.removeEventListener("dragenter", dragEnter);
   document.removeEventListener("dragleave", dragLeave);
+  document.removeEventListener("dragend", dragEnd);
   document.removeEventListener("drop", drop);
 });
 
@@ -1099,9 +1160,95 @@ const keyEvent = (event: KeyboardEvent) => {
   }
 };
 
-const preventDefault = (event: Event) => {
-  // Wrapper around prevent default.
+// --- Drag auto-scroll -----------------------------------------------------
+// While dragging, moving the pointer near the top or bottom edge of the
+// scrollable area scrolls it, so items can be dropped on folders far off
+// screen without dropping first. Follows the conventions of
+// react-beautiful-dnd / dnd-kit auto-scrollers: an edge zone sized as a
+// percentage of the container height (clamped to absolute pixels), and a
+// scroll speed that accelerates as the pointer approaches the true edge.
+
+let dragScrollRaf: number | null = null;
+let dragClientY = -1;
+let dragLastMove = 0;
+
+const SCROLL_ZONE_FRACTION = 0.18;
+const SCROLL_ZONE_MIN = 48;
+const SCROLL_ZONE_MAX = 180;
+const SCROLL_MAX_SPEED_FRACTION = 0.05;
+const SCROLL_MAX_SPEED_MIN = 12;
+const SCROLL_MAX_SPEED_MAX = 40;
+const SCROLL_STALE_MS = 300;
+
+const getDragScroller = (): HTMLElement => {
+  // The listing scrolls inside `main`; when the view is short the window
+  // itself scrolls instead.
+  const main = document.querySelector("main");
+  if (main && main.scrollHeight > main.clientHeight + 4) {
+    return main as HTMLElement;
+  }
+  return document.documentElement;
+};
+
+const stopDragScroll = () => {
+  dragClientY = -1;
+  if (dragScrollRaf !== null) {
+    cancelAnimationFrame(dragScrollRaf);
+    dragScrollRaf = null;
+  }
+};
+
+const onDragOverGlobal = (event: DragEvent) => {
   event.preventDefault();
+  dragClientY = event.clientY;
+  dragLastMove = Date.now();
+  if (dragScrollRaf === null) {
+    dragScrollRaf = requestAnimationFrame(dragScrollTick);
+  }
+};
+
+const dragScrollTick = () => {
+  dragScrollRaf = null;
+
+  // Safety net: if no dragover arrives for a while the drag ended without a
+  // proper dragend/drop (e.g. Esc-cancel quirks) — stop scrolling.
+  if (Date.now() - dragLastMove > SCROLL_STALE_MS) {
+    stopDragScroll();
+    return;
+  }
+
+  const y = dragClientY;
+  if (y < 0) return;
+
+  const scroller = getDragScroller();
+  const rect = scroller.getBoundingClientRect();
+  const viewH = scroller.clientHeight || window.innerHeight;
+  if (viewH <= 0) return;
+
+  const zone = Math.min(
+    Math.max(viewH * SCROLL_ZONE_FRACTION, SCROLL_ZONE_MIN),
+    SCROLL_ZONE_MAX
+  );
+  const maxSpeed = Math.min(
+    Math.max(viewH * SCROLL_MAX_SPEED_FRACTION, SCROLL_MAX_SPEED_MIN),
+    SCROLL_MAX_SPEED_MAX
+  );
+
+  const fromTop = y - rect.top;
+  const fromBottom = rect.bottom - y;
+  let speed = 0;
+  if (fromTop >= 0 && fromTop < zone) {
+    const t = 1 - fromTop / zone;
+    speed = -Math.max(1, Math.round(maxSpeed * t * t));
+  } else if (fromBottom >= 0 && fromBottom < zone) {
+    const t = 1 - fromBottom / zone;
+    speed = Math.max(1, Math.round(maxSpeed * t * t));
+  }
+
+  if (speed !== 0) {
+    scroller.scrollTop += speed;
+    dragScrollRaf = requestAnimationFrame(dragScrollTick);
+  }
 };
 
 const copyCut = (event: Event | KeyboardEvent): void => {
@@ -1246,33 +1393,78 @@ const scrollEvent = throttle((e?: Event) => {
   }
 }, 100);
 
-const dragEnter = () => {
-  dragCounter.value++;
-
+const fadeItems = () => {
   // When the user starts dragging an item, put every
   // file on the listing with 50% opacity.
   const items = document.getElementsByClassName("item");
-
   Array.from(items).forEach((file: Element) => {
     (file as HTMLElement).style.opacity = "0.5";
   });
+
+  // Watchdog: whatever happens (Esc cancel, quirks in Chrome's drag events,
+  // drops outside the listing), the fade must never stick. Every dragenter
+  // renews the timer, so it only fires while the drag is idle or over.
+  if (fadeResetTimer) window.clearTimeout(fadeResetTimer);
+  fadeResetTimer = window.setTimeout(() => {
+    fadeResetTimer = null;
+    stopDragScroll();
+    resetOpacity();
+  }, 4000);
 };
 
-const dragLeave = () => {
-  dragCounter.value--;
+const dragEnter = (event: DragEvent) => {
+  event.preventDefault();
 
-  if (dragCounter.value == 0) {
-    resetOpacity();
+  // Only dim the listing for internal item drags (which carry text/plain).
+  // Dragging files from the OS to upload must never fade the background.
+  const types = event.dataTransfer?.types ?? [];
+  const isInternalDrag =
+    types.includes("text/plain") && !types.includes("Files");
+  if (isInternalDrag) {
+    fadeItems();
   }
+};
+
+const dragLeave = (event: DragEvent) => {
+  event.preventDefault();
+  // Only reset when the drag actually leaves the document. Moving between
+  // elements fires document-level dragleave with a relatedTarget still
+  // inside the document — resetting there would flicker the fade.
+  const related = event.relatedTarget as Node | null;
+  if (related === null || !document.contains(related)) {
+    resetDragUi();
+  }
+};
+
+const dragEnd = () => {
+  resetDragUi();
+};
+
+const clearDropTargets = () => {
+  document
+    .querySelectorAll("#listing .item.fb-drop-target")
+    .forEach((el) => el.classList.remove("fb-drop-target"));
+};
+
+const resetDragUi = () => {
+  stopDragScroll();
+  if (fadeResetTimer) {
+    window.clearTimeout(fadeResetTimer);
+    fadeResetTimer = null;
+  }
+  resetOpacity();
+  clearDropTargets();
 };
 
 const drop = async (event: DragEvent) => {
   event.preventDefault();
-  dragCounter.value = 0;
-  resetOpacity();
+  resetDragUi();
 
   const dt = event.dataTransfer;
   let el: HTMLElement | null = event.target as HTMLElement;
+
+  // The upload modal handles its own drops — don't start a second upload here.
+  if ((event.target as HTMLElement).closest?.(".upload-card")) return;
 
   if (fileStore.req === null || dt === null || dt.files.length <= 0) return;
 
@@ -1635,9 +1827,7 @@ const showContextMenu = (event: MouseEvent) => {
     const itemEl = target.closest(".item") as HTMLElement | null;
     const itemPath = itemEl?.getAttribute("data-path");
     const items = fileStore.req?.items ?? [];
-    const found = itemPath
-      ? items.find((it) => it.path === itemPath)
-      : null;
+    const found = itemPath ? items.find((it) => it.path === itemPath) : null;
     if (found && !fileStore.selected.includes(found.index)) {
       fileStore.selected = [found.index];
     }

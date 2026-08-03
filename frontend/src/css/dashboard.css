@@ -567,6 +567,36 @@ body.rtl .card .card-action {
   font-weight: 600;
 }
 
+/* Drop zone inside the upload prompt: accepts files and folders (including
+   multiple folders at once, which the native directory picker cannot do). */
+.upload-dropzone {
+  margin: 0 1.5em 1em;
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px dashed var(--border-strong, var(--divider));
+  border-radius: 8px;
+  color: var(--text-secondary, var(--textPrimary));
+  font-size: 13px;
+  text-align: center;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.upload-dropzone i {
+  font-size: 26px;
+  opacity: 0.7;
+}
+
+.upload-dropzone--over {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
 /*** RTL - Fix disk usage information (in english) ***/
 html[dir="rtl"] .credits {
   text-align: right;

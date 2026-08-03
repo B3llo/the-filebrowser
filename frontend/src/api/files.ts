@@ -210,18 +210,18 @@ export function copy(items: any[], overwrite = false, rename = false) {
 }
 
 export async function extract(url: string) {
-	return resourceAction(`${url}?action=extract`, "PATCH");
+  return resourceAction(`${url}?action=extract`, "PATCH");
 }
 
 export async function dirSize(url: string): Promise<{ size: number }> {
-	url = removePrefix(url);
-	const res = await fetchURL(`/api/resources/dirsize${url}`, {});
-	return res.json();
+  url = removePrefix(url);
+  const res = await fetchURL(`/api/resources/dirsize${url}`, {});
+  return res.json();
 }
 
 export async function checksum(url: string, algo: ChecksumAlg) {
-	const data = await resourceAction(`${url}?checksum=${algo}`, "GET");
-	return (await data.json()).checksums[algo];
+  const data = await resourceAction(`${url}?checksum=${algo}`, "GET");
+  return (await data.json()).checksums[algo];
 }
 
 export function getDownloadURL(file: ResourceItem, inline: any) {
@@ -232,7 +232,11 @@ export function getDownloadURL(file: ResourceItem, inline: any) {
   return createURL("api/raw" + file.path, params);
 }
 
-export function getPreviewURL(file: ResourceItem, size: string, sourceId?: string) {
+export function getPreviewURL(
+  file: ResourceItem,
+  size: string,
+  sourceId?: string
+) {
   const params: { inline: string; key: number; source?: string } = {
     inline: "true",
     key: Date.parse(file.modified),

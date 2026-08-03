@@ -1,11 +1,25 @@
 <template>
-  <div class="card floating">
+  <div
+    class="card floating upload-card"
+    @dragover.prevent="onDragOver"
+    @dragleave="onDragLeave"
+    @drop.prevent="onDrop"
+  >
     <div class="card-title">
       <h2>{{ t("prompts.upload") }}</h2>
     </div>
 
     <div class="card-content">
       <p>{{ t("prompts.uploadMessage") }}</p>
+    </div>
+
+    <div
+      class="upload-dropzone"
+      :class="{ 'upload-dropzone--over': dropActive }"
+      aria-hidden="true"
+    >
+      <i class="material-icons">file_upload</i>
+      <span>{{ t("prompts.uploadDropHint") }}</span>
     </div>
 
     <div class="card-action full">
@@ -33,6 +47,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import { useLayoutStore } from "@/stores/layout";
@@ -43,6 +58,61 @@ const { t } = useI18n();
 const route = useRoute();
 
 const layoutStore = useLayoutStore();
+
+const dropActive = ref<boolean>(false);
+
+const onDragOver = (event: DragEvent) => {
+  if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+  dropActive.value = true;
+};
+
+const onDragLeave = () => {
+  dropActive.value = false;
+};
+
+const onDrop = async (event: DragEvent) => {
+  dropActive.value = false;
+  const dt = event.dataTransfer;
+  if (dt === null || dt.files.length <= 0) return;
+
+  const files = (await upload.scanFiles(dt)) as UploadList;
+  if (files.length === 0) return;
+
+  const path = route.path.endsWith("/") ? route.path : route.path + "/";
+
+  const conflict = await upload.checkConflict(files, path);
+
+  if (conflict.length > 0) {
+    layoutStore.showHover({
+      prompt: "resolve-conflict",
+      props: {
+        conflict: conflict,
+        isUploadAction: true,
+      },
+      confirm: (event: Event, result: Array<ConflictingResource>) => {
+        event.preventDefault();
+        layoutStore.closeHovers();
+        for (let i = result.length - 1; i >= 0; i--) {
+          const item = result[i];
+          if (item.checked.length == 2) {
+            continue;
+          } else if (item.checked.length == 1 && item.checked[0] == "origin") {
+            files[item.index].overwrite = true;
+          } else {
+            files.splice(item.index, 1);
+          }
+        }
+        if (files.length > 0) {
+          upload.handleFiles(files, path);
+        }
+      },
+    });
+
+    return;
+  }
+
+  upload.handleFiles(files, path);
+};
 
 // TODO: this is a copy of the same function in FileListing.vue
 const uploadInput = async (event: Event) => {

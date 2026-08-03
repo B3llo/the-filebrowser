@@ -11,7 +11,11 @@
             :placeholder="$t('buttons.search')"
             type="text"
           />
-          <button v-if="searchQuery" class="fb-local-search-clear" @click="searchQuery = ''">
+          <button
+            v-if="searchQuery"
+            class="fb-local-search-clear"
+            @click="searchQuery = ''"
+          >
             <FbIcon name="x" size="14px" />
           </button>
         </div>
@@ -24,9 +28,22 @@
             :aria-label="t('buttons.listView', 'List view')"
             @click="setView('list')"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 17px; height: 17px" aria-hidden="true">
-              <path d="M8 6h13" /><path d="M8 12h13" /><path d="M8 18h13" />
-              <path d="M3 6h.01" /><path d="M3 12h.01" /><path d="M3 18h.01" />
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="width: 17px; height: 17px"
+              aria-hidden="true"
+            >
+              <path d="M8 6h13" />
+              <path d="M8 12h13" />
+              <path d="M8 18h13" />
+              <path d="M3 6h.01" />
+              <path d="M3 12h.01" />
+              <path d="M3 18h.01" />
             </svg>
           </button>
           <button
@@ -35,9 +52,20 @@
             :aria-label="t('buttons.gridView', 'Grid view')"
             @click="setView('mosaic')"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px" aria-hidden="true">
-              <path d="M3 3h7v7H3z" /><path d="M14 3h7v7h-7z" />
-              <path d="M14 14h7v7h-7z" /><path d="M3 14h7v7H3z" />
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="width: 16px; height: 16px"
+              aria-hidden="true"
+            >
+              <path d="M3 3h7v7H3z" />
+              <path d="M14 3h7v7h-7z" />
+              <path d="M14 14h7v7h-7z" />
+              <path d="M3 14h7v7H3z" />
             </svg>
           </button>
         </div>
@@ -49,19 +77,36 @@
             :title="t('files.sort', 'Sort')"
             @click="sortMenuOpen = !sortMenuOpen"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 17px; height: 17px" aria-hidden="true">
-              <path d="M7 4v16" /><path d="M3 8l4-4 4 4" />
-              <path d="M17 20V4" /><path d="M21 16l-4 4-4-4" />
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="width: 17px; height: 17px"
+              aria-hidden="true"
+            >
+              <path d="M7 4v16" />
+              <path d="M3 8l4-4 4 4" />
+              <path d="M17 20V4" />
+              <path d="M21 16l-4 4-4-4" />
             </svg>
           </button>
-          <div v-show="sortMenuOpen" class="fb-sort-menu" @click.self="sortMenuOpen = false">
+          <div
+            v-show="sortMenuOpen"
+            class="fb-sort-menu"
+            @click.self="sortMenuOpen = false"
+          >
             <button
               class="fb-sort-item"
               :class="{ 'fb-sort-item--active': sortBy === 'name' }"
               @click="handleSortMenuClick('name')"
             >
               <span>{{ t("files.name") }}</span>
-              <span v-if="sortBy === 'name'" class="fb-sort-arrow">{{ sortAsc ? "↑" : "↓" }}</span>
+              <span v-if="sortBy === 'name'" class="fb-sort-arrow">{{
+                sortAsc ? "↑" : "↓"
+              }}</span>
             </button>
             <button
               class="fb-sort-item"
@@ -69,7 +114,9 @@
               @click="handleSortMenuClick('modified')"
             >
               <span>{{ t("files.lastModified") }}</span>
-              <span v-if="sortBy === 'modified'" class="fb-sort-arrow">{{ sortAsc ? "↑" : "↓" }}</span>
+              <span v-if="sortBy === 'modified'" class="fb-sort-arrow">{{
+                sortAsc ? "↑" : "↓"
+              }}</span>
             </button>
           </div>
         </div>
@@ -92,8 +139,19 @@
           :title="t('buttons.info')"
           @click="layoutStore.toggleDetails()"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width: 17px; height: 17px" aria-hidden="true">
-            <path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.9"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            style="width: 17px; height: 17px"
+            aria-hidden="true"
+          >
+            <path
+              d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+            />
             <path d="M15 3v18" />
           </svg>
         </button>
@@ -109,72 +167,85 @@
     <div class="fb-content-row">
       <div class="fb-content-main">
         <div v-if="allItems.length === 0" class="fb-empty">
-      <div class="fb-empty-icon">
-        <fb-icon name="star" size="40px" />
-      </div>
-      <h2 class="fb-empty-title">{{ $t("files.emptyStarredTitle") }}</h2>
-      <p class="fb-empty-sub">{{ $t("files.emptyStarredSub") }}</p>
-    </div>
+          <div class="fb-empty-icon">
+            <fb-icon name="star" size="40px" />
+          </div>
+          <h2 class="fb-empty-title">{{ $t("files.emptyStarredTitle") }}</h2>
+          <p class="fb-empty-sub">{{ $t("files.emptyStarredSub") }}</p>
+        </div>
 
-    <div v-else-if="filteredItems.length === 0" class="fb-empty">
-      <div class="fb-empty-icon">
-        <fb-icon name="search" size="40px" />
-      </div>
-      <p class="fb-empty-sub">{{ $t("files.noResults", "No results found") }}</p>
-    </div>
+        <div v-else-if="filteredItems.length === 0" class="fb-empty">
+          <div class="fb-empty-icon">
+            <fb-icon name="search" size="40px" />
+          </div>
+          <p class="fb-empty-sub">
+            {{ $t("files.noResults", "No results found") }}
+          </p>
+        </div>
 
-    <div
-      v-else
-      id="listing"
-      class="file-icons no-size-col"
-      :class="currentViewMode"
-      data-clear-on-click="true"
-      @click="handleEmptyAreaClick"
-    >
-      <div>
-        <div class="fb-col-header">
+        <div
+          v-else
+          id="listing"
+          class="file-icons no-size-col"
+          :class="currentViewMode"
+          data-clear-on-click="true"
+          @click="handleEmptyAreaClick"
+        >
           <div>
-            <p class="name">{{ $t("files.name") }}</p>
-            <p class="modified">{{ $t("files.lastModified") }}</p>
+            <div class="fb-col-header">
+              <div>
+                <p class="name">{{ $t("files.name") }}</p>
+                <p class="modified">{{ $t("files.lastModified") }}</p>
+              </div>
+            </div>
+          </div>
+
+          <h2 v-if="dirs.length > 0" data-clear-on-click="true">
+            {{ $t("files.folders") }}
+          </h2>
+          <div
+            v-if="dirs.length > 0"
+            class="fb-items fb-items--folders"
+            data-clear-on-click="true"
+          >
+            <item
+              v-for="(it, i) in dirs"
+              :key="it.url"
+              :index="i"
+              :name="it.name"
+              :isDir="true"
+              :url="it.url"
+              :type="it.type"
+              :size="0"
+              :modified="toISO(it.starredAt)"
+              :path="toPath(it.url)"
+              hideSize
+            />
+          </div>
+
+          <h2 v-if="files.length > 0" data-clear-on-click="true">
+            {{ $t("files.files") }}
+          </h2>
+          <div
+            v-if="files.length > 0"
+            class="fb-items fb-items--files"
+            data-clear-on-click="true"
+          >
+            <item
+              v-for="(it, i) in files"
+              :key="it.url"
+              :index="dirs.length + i"
+              :name="it.name"
+              :isDir="false"
+              :url="it.url"
+              :type="it.type"
+              :size="0"
+              :modified="toISO(it.starredAt)"
+              :path="toPath(it.url)"
+              hideSize
+            />
           </div>
         </div>
-      </div>
-
-      <h2 v-if="dirs.length > 0" data-clear-on-click="true">{{ $t("files.folders") }}</h2>
-      <div v-if="dirs.length > 0" class="fb-items fb-items--folders" data-clear-on-click="true">
-        <item
-          v-for="(it, i) in dirs"
-          :key="it.url"
-          :index="i"
-          :name="it.name"
-          :isDir="true"
-          :url="it.url"
-          :type="it.type"
-          :size="0"
-          :modified="toISO(it.starredAt)"
-          :path="toPath(it.url)"
-          hideSize
-        />
-      </div>
-
-      <h2 v-if="files.length > 0" data-clear-on-click="true">{{ $t("files.files") }}</h2>
-      <div v-if="files.length > 0" class="fb-items fb-items--files" data-clear-on-click="true">
-        <item
-          v-for="(it, i) in files"
-          :key="it.url"
-          :index="dirs.length + i"
-          :name="it.name"
-          :isDir="false"
-          :url="it.url"
-          :type="it.type"
-          :size="0"
-          :modified="toISO(it.starredAt)"
-          :path="toPath(it.url)"
-          hideSize
-        />
-      </div>
-    </div>
-
       </div>
       <DetailsPanel v-if="layoutStore.showDetails" />
     </div>

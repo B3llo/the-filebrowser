@@ -4,8 +4,16 @@
       <!-- Error / fallback: offer a direct download -->
       <div v-if="error" class="pdf-placeholder">
         <FbIcon name="file" size="56px" />
-        <p class="pdf-placeholder-title">{{ t("files.previewUnavailable", "Unable to load PDF preview") }}</p>
-        <a v-if="downloadUrl" :href="downloadUrl" class="pdf-download-btn" target="_blank" rel="noopener">
+        <p class="pdf-placeholder-title">
+          {{ t("files.previewUnavailable", "Unable to load PDF preview") }}
+        </p>
+        <a
+          v-if="downloadUrl"
+          :href="downloadUrl"
+          class="pdf-download-btn"
+          target="_blank"
+          rel="noopener"
+        >
           {{ t("buttons.download") }}
         </a>
       </div>
@@ -32,7 +40,11 @@
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount, nextTick } from "vue";
 import * as pdfjsLib from "pdfjs-dist";
-import type { PDFDocumentProxy, PDFDocumentLoadingTask, RenderTask } from "pdfjs-dist";
+import type {
+  PDFDocumentProxy,
+  PDFDocumentLoadingTask,
+  RenderTask,
+} from "pdfjs-dist";
 import { useI18n } from "vue-i18n";
 import FbIcon from "@/components/FbIcon.vue";
 
@@ -168,9 +180,70 @@ const onResize = () => {
 };
 window.addEventListener("resize", onResize);
 
+// ---------------------------------------------------------------------------
+// Print support.
+//
+// The on-screen preview renders the PDF into canvases, so the browser's native
+// Ctrl/Cmd+P would print the UI instead of the document. Printing instead
+// loads the raw PDF into a hidden off-screen iframe and prints that frame, so
+// only the PDF pages reach the print dialog.
+// ---------------------------------------------------------------------------
+let printFrame: HTMLIFrameElement | null = null;
+
+const cleanupPrintFrame = () => {
+  if (printFrame) {
+    printFrame.remove();
+    printFrame = null;
+  }
+};
+
+const print = () => {
+  if (error.value || !props.src) return;
+
+  cleanupPrintFrame();
+
+  const frame = document.createElement("iframe");
+  frame.src = props.src;
+  frame.setAttribute("aria-hidden", "true");
+  // Must stay rendered for the browser to paint it: position it off-screen
+  // instead of using display:none/visibility:hidden.
+  frame.style.cssText =
+    "position:fixed;left:-10000px;top:0;width:1px;height:1px;border:0;";
+  document.body.appendChild(frame);
+  printFrame = frame;
+
+  const onLoad = () => {
+    try {
+      frame.contentWindow?.print();
+      // The print dialog can leave keyboard focus inside the hidden frame,
+      // which would make the parent window deaf to ESC and other shortcuts.
+      // Hand focus back to the main document right away.
+      frame.contentWindow?.blur();
+      window.focus();
+    } catch {
+      cleanupPrintFrame();
+    }
+  };
+  frame.addEventListener("load", onLoad);
+
+  // Tear the frame down once the print dialog closes (afterprint), with a
+  // safety timeout for browsers that don't fire it (e.g. Safari).
+  const win = frame.contentWindow;
+  const cleanup = () => {
+    frame.removeEventListener("load", onLoad);
+    win?.removeEventListener("afterprint", cleanup);
+    cleanupPrintFrame();
+  };
+  win?.addEventListener("afterprint", cleanup);
+  window.setTimeout(cleanup, 120_000);
+};
+
+defineExpose({ print });
+
 onBeforeUnmount(() => {
   window.removeEventListener("resize", onResize);
   cancelAnimationFrame(resizeRaf);
+  cleanupPrintFrame();
   cleanup();
 });
 </script>

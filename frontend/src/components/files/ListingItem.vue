@@ -6,6 +6,8 @@
     :draggable="isDraggable"
     @dragstart="dragStart"
     @dragover="dragOver"
+    @dragleave="dragLeave"
+    @dragend="dragEnd"
     @drop="drop"
     @click="itemClick"
     @mousedown="handleMouseDown"
@@ -134,11 +136,7 @@
     </div>
 
     <div>
-      <p
-        class="name"
-        @mouseenter="onNameEnter"
-        @mouseleave="onNameLeave"
-      >
+      <p class="name" @mouseenter="onNameEnter" @mouseleave="onNameLeave">
         {{ displayName }}
       </p>
 
@@ -191,7 +189,15 @@ import dayjs from "dayjs";
 import { files as api } from "@/api";
 import { createURL } from "@/api/utils";
 import * as upload from "@/utils/upload";
-import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import {
+  computed,
+  inject,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue";
 import { loadThumbnail } from "@/utils/thumbnailCache";
 import {
   officeThumbKind,
@@ -218,19 +224,22 @@ const moveThreshold = ref<number>(10);
 
 const tooltipVisible = ref(false);
 const tooltipTimer = ref<number | null>(null);
-const tooltipPos = ref<{ left: string; top: string }>({ left: "0px", top: "0px" });
+const tooltipPos = ref<{ left: string; top: string }>({
+  left: "0px",
+  top: "0px",
+});
 
 function middleTruncate(name: string, maxLen: number): string {
   if (name.length <= maxLen || maxLen < 8) return name;
 
-  const dot = name.lastIndexOf('.');
+  const dot = name.lastIndexOf(".");
 
   if (dot <= 0) {
     const avail = maxLen - 1;
-    if (avail < 3) return name.slice(0, Math.max(1, avail)) + '…';
+    if (avail < 3) return name.slice(0, Math.max(1, avail)) + "…";
     const sc = Math.ceil(avail * 0.6);
     const ec = avail - sc;
-    return name.slice(0, sc) + '…' + name.slice(name.length - ec);
+    return name.slice(0, sc) + "…" + name.slice(name.length - ec);
   }
 
   const ext = name.slice(dot);
@@ -239,12 +248,12 @@ function middleTruncate(name: string, maxLen: number): string {
 
   if (avail < 3) {
     const s = Math.max(1, maxLen - ext.length - 1);
-    return stem.slice(0, s) + '…' + ext;
+    return stem.slice(0, s) + "…" + ext;
   }
 
   const sc = Math.ceil(avail * 0.6);
   const ec = avail - sc;
-  return stem.slice(0, sc) + '…' + stem.slice(stem.length - ec) + ext;
+  return stem.slice(0, sc) + "…" + stem.slice(stem.length - ec) + ext;
 }
 
 const displayName = computed(() => middleTruncate(props.name, 28));
@@ -541,46 +550,96 @@ const humanTime = () => {
   return dayjs(props.modified).fromNow();
 };
 
-const dragStart = () => {
+const dragStart = (event: DragEvent) => {
   if (fileStore.selectedCount === 0) {
     fileStore.selected.push(props.index);
-    return;
-  }
-
-  if (!isSelected.value) {
+  } else if (!isSelected.value) {
     fileStore.selected = [];
     fileStore.selected.push(props.index);
   }
-};
 
-const dragOver = (event: Event) => {
-  if (!canDrop.value) return;
+  // Clear any leftover highlight from a previous drag.
+  document
+    .querySelectorAll("#listing .item.fb-drop-target")
+    .forEach((el) => el.classList.remove("fb-drop-target"));
 
-  event.preventDefault();
-  let el = event.target as HTMLElement | null;
-  if (el !== null) {
-    for (let i = 0; i < 5; i++) {
-      if (!el?.classList.contains("item")) {
-        el = el?.parentElement ?? null;
-      }
-    }
+  // Without setData the browser treats the drag as having an empty data store
+  // and never dispatches `drop` events (Chrome and Firefox both require it).
+  const dt = event.dataTransfer;
+  if (dt) {
+    dt.setData("text/plain", props.url);
+    dt.effectAllowed = "copyMove";
 
-    if (el !== null) el.style.opacity = "1";
+    // Custom drag ghost: by default Chrome uses the <img>/<canvas> thumbnail as
+    // the drag image when the drag starts on it, so dragging by the thumb only
+    // drags a small picture. Build a compact card (icon + name + selection
+    // count) so every item drags the same way regardless of grab point.
+    const ghost = buildDragGhost(event.currentTarget as HTMLElement);
+    dt.setDragImage(ghost, 14, 14);
+    requestAnimationFrame(() => ghost.remove());
   }
 };
 
-const drop = async (event: Event) => {
+const buildDragGhost = (source: HTMLElement) => {
+  const ghost = document.createElement("div");
+  ghost.className = "fb-drag-ghost";
+
+  const iconArea = source.querySelector(":scope > div:first-of-type");
+  if (iconArea) {
+    const icon = iconArea.cloneNode(true) as HTMLElement;
+    icon
+      .querySelectorAll(
+        ".fb-card-markdown, .fb-card-preview, .fb-card-office, .fb-card-doc, .fb-list-pill, .fb-video-play-overlay, video"
+      )
+      .forEach((el) => el.remove());
+    ghost.appendChild(icon);
+  }
+
+  const label = document.createElement("span");
+  label.className = "fb-drag-ghost-name";
+  label.textContent = displayName.value;
+  ghost.appendChild(label);
+
+  if (fileStore.selectedCount > 1) {
+    const count = document.createElement("span");
+    count.className = "fb-drag-ghost-count";
+    count.textContent = "+" + (fileStore.selectedCount - 1);
+    ghost.appendChild(count);
+  }
+
+  document.body.appendChild(ghost);
+  return ghost;
+};
+
+const dragOver = (event: DragEvent) => {
+  if (!canDrop.value) return;
+
+  event.preventDefault();
+  const dt = event.dataTransfer;
+  if (dt) {
+    dt.dropEffect = event.ctrlKey || event.metaKey ? "copy" : "move";
+  }
+
+  (event.currentTarget as HTMLElement).classList.add("fb-drop-target");
+};
+
+const dragLeave = (event: DragEvent) => {
+  (event.currentTarget as HTMLElement).classList.remove("fb-drop-target");
+};
+
+const dragEnd = () => {
+  document
+    .querySelectorAll("#listing .item.fb-drop-target")
+    .forEach((el) => el.classList.remove("fb-drop-target"));
+};
+
+const drop = async (event: DragEvent) => {
   if (!canDrop.value) return;
   event.preventDefault();
+
+  (event.currentTarget as HTMLElement).classList.remove("fb-drop-target");
 
   if (fileStore.selectedCount === 0) return;
-
-  let el = event.target as HTMLElement | null;
-  for (let i = 0; i < 5; i++) {
-    if (el !== null && !el.classList.contains("item")) {
-      el = el.parentElement;
-    }
-  }
 
   const items: any[] = [];
 
@@ -599,17 +658,10 @@ const drop = async (event: Event) => {
     }
   }
 
-  // Get url from ListingItem instance
-  if (el === null) {
-    return;
-  }
-  const path = el.__vue__.url;
+  const path = props.url;
 
   const action = (overwrite?: boolean, rename?: boolean) => {
-    const action =
-      (event as KeyboardEvent).ctrlKey || (event as KeyboardEvent).metaKey
-        ? api.copy
-        : api.move;
+    const action = event.ctrlKey || event.metaKey ? api.copy : api.move;
     action(items, overwrite, rename)
       .then(() => {
         fileStore.reload = true;
@@ -780,6 +832,9 @@ const onNameEnter = (e: MouseEvent) => {
       }
       if (top < 4) {
         top = y + 14;
+      }
+      if (top + rect.height > vh - 4) {
+        top = vh - rect.height - 4;
       }
       if (left < 4) left = 4;
 

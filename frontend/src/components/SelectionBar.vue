@@ -39,19 +39,15 @@
       <FbIcon name="rename" size="16px" />
       <span>{{ t("buttons.rename") }}</span>
     </button>
-    <button
-      v-if="headerButtons.star"
-      class="fb-act"
-      @click="handleStar"
-    >
+    <button v-if="headerButtons.star" class="fb-act" @click="handleStar">
       <FbIcon name="star" size="16px" />
-      <span>{{ allSelectedStarred ? t("files.unstar", "Unstar") : t("buttons.star", "Star") }}</span>
+      <span>{{
+        allSelectedStarred
+          ? t("files.unstar", "Unstar")
+          : t("buttons.star", "Star")
+      }}</span>
     </button>
-    <button
-      v-if="headerButtons.restore"
-      class="fb-act"
-      @click="onRestore"
-    >
+    <button v-if="headerButtons.restore" class="fb-act" @click="onRestore">
       <FbIcon name="arrow-back" size="16px" />
       <span>{{ t("trash.restore") }}</span>
     </button>
