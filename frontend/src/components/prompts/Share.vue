@@ -4,6 +4,19 @@
       <h2>{{ $t("buttons.share") }}</h2>
     </div>
 
+    <div v-if="showShareViaOS" class="card-content">
+      <button
+        class="button button--block button--blue fb-share-via-os"
+        :aria-label="$t('buttons.shareViaOS')"
+        :title="$t('buttons.shareViaOS')"
+        @click="shareViaOS"
+      >
+        <i class="material-icons">ios_share</i>
+        <span>{{ $t("buttons.shareViaOS") }}</span>
+      </button>
+      <p class="fb-share-via-os-hint">{{ $t("prompts.shareViaOSHint") }}</p>
+    </div>
+
     <template v-if="listing">
       <div class="card-content">
         <table>
@@ -166,10 +179,12 @@
 <script>
 import { mapActions, mapState } from "pinia";
 import { useFileStore } from "@/stores/file";
+import { useAuthStore } from "@/stores/auth";
 import * as api from "@/api/index";
 import dayjs from "dayjs";
 import { useLayoutStore } from "@/stores/layout";
 import { copy } from "@/utils/clipboard";
+import { canShareFiles, shareViaOS } from "@/utils/nativeShare";
 
 export default {
   name: "share",
@@ -191,6 +206,25 @@ export default {
       "selectedCount",
       "isListing",
     ]),
+    ...mapState(useAuthStore, ["user"]),
+    showShareViaOS() {
+      return Boolean(this.user?.perm?.download) && canShareFiles();
+    },
+    shareTargets() {
+      if (this.isListing && this.selectedCount === 1) {
+        const item = this.req.items[this.selected[0]];
+        return [{ name: item.name, url: item.url, isDir: item.isDir }];
+      }
+
+      const path = this.$route.path;
+      const segments = path.split("/").filter(Boolean);
+      const name =
+        segments.length > 0
+          ? decodeURIComponent(segments[segments.length - 1])
+          : "file";
+
+      return [{ name, url: path, isDir: false }];
+    },
     url() {
       if (!this.isListing) {
         return this.$route.path;
@@ -219,6 +253,20 @@ export default {
   },
   methods: {
     ...mapActions(useLayoutStore, ["closeHovers"]),
+    shareViaOS: async function () {
+      try {
+        const outcome = await shareViaOS(this.shareTargets);
+
+        if (outcome === "shared") {
+          this.$showSuccess(this.$t("success.sharedViaOS"));
+        } else if (outcome === "unsupported") {
+          api.files.download(null, this.shareTargets[0].url);
+          this.$showError(this.$t("errors.shareUnsupported"));
+        }
+      } catch (e) {
+        this.$showError(e);
+      }
+    },
     copyToClipboard: function (text) {
       copy({ text }).then(
         () => {

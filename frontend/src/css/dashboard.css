@@ -358,6 +358,24 @@ body.rtl .card .card-action {
   flex: 1;
 }
 
+/* Share via OS — native share sheet button */
+.card#share .fb-share-via-os {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.card#share .fb-share-via-os i {
+  font-size: 18px;
+}
+
+.card#share .fb-share-via-os-hint {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--faint);
+}
+
 /* Share duration — number input + segmented control */
 .fb-share-duration {
   display: flex;

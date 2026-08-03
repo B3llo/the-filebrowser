@@ -85,16 +85,16 @@ export async function put(url: string, content = "") {
   return resourceAction(url, "PUT", content);
 }
 
-export function download(format: any, ...files: string[]) {
-  let url = `${baseURL}/api/raw`;
+export function buildRawURL(paths: string[], format: any = null): string {
+  let url = "/api/raw";
 
-  if (files.length === 1) {
-    url += removePrefix(files[0]) + "?";
+  if (paths.length === 1) {
+    url += removePrefix(paths[0]) + "?";
   } else {
     let arg = "";
 
-    for (const file of files) {
-      arg += removePrefix(file) + ",";
+    for (const path of paths) {
+      arg += removePrefix(path) + ",";
     }
 
     arg = arg.substring(0, arg.length - 1);
@@ -106,7 +106,11 @@ export function download(format: any, ...files: string[]) {
     url += `algo=${format}&`;
   }
 
-  window.open(url);
+  return url;
+}
+
+export function download(format: any, ...files: string[]) {
+  window.open(`${baseURL}${buildRawURL(files, format)}`);
 }
 
 export async function post(

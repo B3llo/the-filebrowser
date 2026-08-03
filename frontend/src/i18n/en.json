@@ -50,6 +50,7 @@
     "select": "Select",
     "selectMultiple": "Select multiple",
     "share": "Share",
+    "shareViaOS": "Share with apps…",
     "shell": "Toggle shell",
     "submit": "Submit",
     "switchView": "Switch view",
@@ -107,7 +108,8 @@
     "forbidden": "You don't have permissions to access this.",
     "internal": "Something really went wrong.",
     "notFound": "This location can't be reached.",
-    "connection": "The server can't be reached."
+    "connection": "The server can't be reached.",
+    "shareUnsupported": "Your browser can't share files, so the download started instead."
   },
   "files": {
     "body": "Body",
@@ -203,6 +205,7 @@
     "downloadMessage": "Choose the format you wish to download.",
     "error": "Something went wrong",
     "fileInfo": "File information",
+    "shareViaOSHint": "Send this item to another app (WhatsApp, AirDrop, …).",
     "filesSelected": "{count} files selected.",
     "lastModified": "Last Modified",
     "move": "Move",
@@ -412,7 +415,8 @@
     "selectFolder": "Select"
   },
   "success": {
-    "linkCopied": "Link copied!"
+    "linkCopied": "Link copied!",
+    "sharedViaOS": "Shared successfully"
   },
   "trash": {
     "restore": "Restore",

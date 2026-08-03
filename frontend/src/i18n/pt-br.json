@@ -48,6 +48,7 @@
     "select": "Selecionar",
     "selectMultiple": "Selecionar múltiplos",
     "share": "Compartilhar",
+    "shareViaOS": "Compartilhar com apps…",
     "shell": "Alternar console",
     "submit": "Enviar",
     "switchView": "Alterar modo de visão",
@@ -105,7 +106,8 @@
     "forbidden": "Você não tem permissões para acessar isto.",
     "internal": "Ops! Algum erro ocorreu.",
     "notFound": "Ops! Nada foi encontrado.",
-    "connection": "O servidor não pode ser alcançado."
+    "connection": "O servidor não pode ser alcançado.",
+    "shareUnsupported": "Seu navegador não consegue compartilhar arquivos. O download foi iniciado."
   },
   "files": {
     "body": "Corpo",
@@ -195,6 +197,7 @@
     "downloadMessage": "Escolha o formato do arquivo.",
     "error": "Algo de errado ocorreu",
     "fileInfo": "Informação do arquivo",
+    "shareViaOSHint": "Envie este item para outro aplicativo (WhatsApp, AirDrop, …).",
     "filesSelected": "{count} arquivos selecionados.",
     "lastModified": "Última modificação",
     "move": "Mover",
@@ -402,7 +405,8 @@
     "selectFolder": "Selecionar"
   },
   "success": {
-    "linkCopied": "Link copiado!"
+    "linkCopied": "Link copiado!",
+    "sharedViaOS": "Compartilhado com sucesso"
   },
   "trash": {
     "restore": "Restaurar",
