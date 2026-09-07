@@ -7,107 +7,212 @@
           <h2>{{ t("settings.shareManagement") }}</h2>
         </div>
 
-        <div class="card-content full" v-if="links.length > 0">
-          <table>
-            <thead>
-              <tr>
-                <th>{{ t("settings.path") }}</th>
-                <th>{{ t("settings.shareDuration") }}</th>
-                <th v-if="authStore.user?.perm.admin">
-                  {{ t("settings.username") }}
-                </th>
-                <th></th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="link in links" :key="link.hash">
-                <td>
-                  <a
-                    :href="buildLink(link)"
-                    target="_blank"
-                    class="fb-settings-table-link"
-                    >{{ link.path }}</a
-                  >
-                </td>
-                <td>
-                  <template v-if="link.expire !== 0">{{
-                    humanTime(link.expire)
-                  }}</template>
-                  <template v-else>{{ t("permanent") }}</template>
-                </td>
-                <td v-if="authStore.user?.perm.admin">{{ link.username }}</td>
-                <td>
-                  <button
-                    class="button button--icon button--ghost"
-                    @click="deleteLink($event, link)"
-                    :aria-label="t('buttons.delete')"
-                    :title="t('buttons.delete')"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      style="width: 16px; height: 16px"
-                    >
-                      <path d="M3 6h18" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                      <line x1="10" y1="11" x2="10" y2="17" />
-                      <line x1="14" y1="11" x2="14" y2="17" />
-                    </svg>
-                  </button>
-                </td>
-                <td>
-                  <button
-                    class="button button--icon button--ghost copy-clipboard"
-                    :aria-label="t('buttons.copyToClipboard')"
-                    :title="t('buttons.copyToClipboard')"
-                    @click="copyToClipboard(buildLink(link))"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      style="width: 16px; height: 16px"
-                    >
-                      <rect x="9" y="9" width="13" height="13" rx="2" />
-                      <path
-                        d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
-                      />
-                    </svg>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="fb-share-tabs">
+          <button
+            class="button button--flat"
+            :class="{ 'button--blue': activeTab === 'links' }"
+            @click="activeTab = 'links'"
+          >
+            {{ t("grants.links") }}
+          </button>
+          <button
+            class="button button--flat"
+            :class="{ 'button--blue': activeTab === 'grants' }"
+            @click="activeTab = 'grants'"
+          >
+            {{ t("grants.access") }}
+          </button>
         </div>
-        <div v-else class="fb-settings-empty">
-          <div class="fb-settings-empty-icon">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              style="width: 40px; height: 40px"
-            >
-              <circle cx="18" cy="5" r="3" />
-              <circle cx="6" cy="12" r="3" />
-              <circle cx="18" cy="19" r="3" />
-              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-            </svg>
+
+        <template v-if="activeTab === 'grants'">
+          <div class="card-content">
+            <div class="fb-local-search">
+              <input
+                v-model.trim="grantFilter"
+                :placeholder="t('buttons.search')"
+                type="text"
+              />
+            </div>
           </div>
-          <h3 class="fb-settings-empty-title">{{ t("files.lonely") }}</h3>
-        </div>
+
+          <div class="card-content full" v-if="filteredGrants.length > 0">
+            <table>
+              <thead>
+                <tr>
+                  <th>{{ t("settings.path") }}</th>
+                  <th v-if="authStore.user?.perm.admin">
+                    {{ t("grants.owner") }}
+                  </th>
+                  <th>{{ t("grants.people") }}</th>
+                  <th></th>
+                  <th>{{ t("settings.shareDuration") }}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="grant in filteredGrants" :key="grant.id">
+                  <td>{{ grant.path }}</td>
+                  <td v-if="authStore.user?.perm.admin">
+                    {{ grant.ownerUsername || `#${grant.ownerID}` }}
+                  </td>
+                  <td>{{ grant.granteeUsername || `#${grant.granteeID}` }}</td>
+                  <td>
+                    <select
+                      :value="grant.role"
+                      @change="
+                        changeRole(
+                          grant,
+                          ($event.target as HTMLSelectElement).value
+                        )
+                      "
+                      :aria-label="t('grants.access')"
+                    >
+                      <option value="viewer">{{ t("grants.viewer") }}</option>
+                      <option value="editor">{{ t("grants.editor") }}</option>
+                    </select>
+                  </td>
+                  <td>
+                    <template v-if="grant.expire !== 0">{{
+                      humanTime(grant.expire)
+                    }}</template>
+                    <template v-else>{{ t("permanent") }}</template>
+                  </td>
+                  <td>
+                    <button
+                      class="button button--icon button--ghost"
+                      @click="revokeGrant($event, grant)"
+                      :aria-label="t('grants.revoke')"
+                      :title="t('grants.revoke')"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        style="width: 16px; height: 16px"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="fb-settings-empty">
+            <h3 class="fb-settings-empty-title">{{ t("files.lonely") }}</h3>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="card-content full" v-if="links.length > 0">
+            <table>
+              <thead>
+                <tr>
+                  <th>{{ t("settings.path") }}</th>
+                  <th>{{ t("settings.shareDuration") }}</th>
+                  <th v-if="authStore.user?.perm.admin">
+                    {{ t("settings.username") }}
+                  </th>
+                  <th></th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="link in links" :key="link.hash">
+                  <td>
+                    <a
+                      :href="buildLink(link)"
+                      target="_blank"
+                      class="fb-settings-table-link"
+                      >{{ link.path }}</a
+                    >
+                  </td>
+                  <td>
+                    <template v-if="link.expire !== 0">{{
+                      humanTime(link.expire)
+                    }}</template>
+                    <template v-else>{{ t("permanent") }}</template>
+                  </td>
+                  <td v-if="authStore.user?.perm.admin">{{ link.username }}</td>
+                  <td>
+                    <button
+                      class="button button--icon button--ghost"
+                      @click="deleteLink($event, link)"
+                      :aria-label="t('buttons.delete')"
+                      :title="t('buttons.delete')"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        style="width: 16px; height: 16px"
+                      >
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                        <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      class="button button--icon button--ghost copy-clipboard"
+                      :aria-label="t('buttons.copyToClipboard')"
+                      :title="t('buttons.copyToClipboard')"
+                      @click="copyToClipboard(buildLink(link))"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        style="width: 16px; height: 16px"
+                      >
+                        <rect x="9" y="9" width="13" height="13" rx="2" />
+                        <path
+                          d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+                        />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="fb-settings-empty">
+            <div class="fb-settings-empty-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                style="width: 40px; height: 40px"
+              >
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+            </div>
+            <h3 class="fb-settings-empty-title">{{ t("files.lonely") }}</h3>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -116,13 +221,14 @@
 <script setup lang="ts">
 import { useAuthStore } from "@/stores/auth";
 import { useLayoutStore } from "@/stores/layout";
-import { share as api, users } from "@/api";
+import { share as api, grants as grantsApi, users } from "@/api";
 import dayjs from "dayjs";
 import Errors from "@/views/Errors.vue";
-import { inject, ref, onMounted } from "vue";
+import { computed, inject, ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { StatusError } from "@/api/utils";
 import { copy } from "@/utils/clipboard";
+import { filterAdminGrants } from "@/utils/grants";
 
 const $showError = inject<IToastError>("$showError")!;
 const $showSuccess = inject<IToastSuccess>("$showSuccess")!;
@@ -133,6 +239,13 @@ const authStore = useAuthStore();
 
 const error = ref<StatusError | null>(null);
 const links = ref<Share[]>([]);
+const activeTab = ref<"links" | "grants">("links");
+const allGrants = ref<Grant[]>([]);
+const grantFilter = ref("");
+
+const filteredGrants = computed(() =>
+  filterAdminGrants(allGrants.value, grantFilter.value)
+);
 
 onMounted(async () => {
   layoutStore.loading = true;
@@ -149,6 +262,7 @@ onMounted(async () => {
       }
     }
     links.value = newLinks;
+    allGrants.value = await grantsApi.list();
   } catch (err) {
     if (err instanceof Error) {
       error.value = err;
@@ -199,6 +313,42 @@ const deleteLink = async (event: Event, link: any) => {
 
 const humanTime = (time: number) => {
   return dayjs(time * 1000).fromNow();
+};
+
+const revokeGrant = async (event: Event, grant: Grant) => {
+  event.preventDefault();
+
+  layoutStore.showHover({
+    prompt: "share-delete",
+    confirm: async () => {
+      layoutStore.closeHovers();
+
+      try {
+        await grantsApi.remove(grant.id);
+        allGrants.value = allGrants.value.filter(
+          (item) => item.id !== grant.id
+        );
+        $showSuccess(t("grants.grantRevoked"));
+      } catch (err) {
+        if (err instanceof Error) {
+          $showError(err);
+        }
+      }
+    },
+  });
+};
+
+const changeRole = async (grant: Grant, role: string) => {
+  if (role !== "viewer" && role !== "editor") return;
+  try {
+    const updated = await grantsApi.patch(grant.id, { role });
+    grant.role = updated.role;
+    $showSuccess(t("grants.roleUpdated"));
+  } catch (err) {
+    if (err instanceof Error) {
+      $showError(err);
+    }
+  }
 };
 
 const buildLink = (share: Share) => {

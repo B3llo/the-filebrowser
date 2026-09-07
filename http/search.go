@@ -58,7 +58,12 @@ var searchHandler = withUser(func(w http.ResponseWriter, r *http.Request, d *dat
 	}()
 	query := r.URL.Query().Get("query")
 
-	err := search.Search(ctx, d.user.Fs, r.URL.Path, query, d, func(path string, f os.FileInfo) error {
+	effPath := r.URL.Path
+	if rel, _, ok := tryGrantScope(effPath, d, false); ok {
+		effPath = rel
+	}
+
+	err := search.Search(ctx, d.user.Fs, effPath, query, d, func(path string, f os.FileInfo) error {
 		select {
 		case <-ctx.Done():
 		case response <- map[string]interface{}{

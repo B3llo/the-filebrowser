@@ -8,6 +8,13 @@ export async function get(id: number) {
   return fetchJSON<IUser>(`/api/users/${id}`, {});
 }
 
+export async function searchUsers(q: string) {
+  return fetchJSON<GrantUser[]>(
+    `/api/users/search?q=${encodeURIComponent(q)}`,
+    {}
+  );
+}
+
 export async function create(user: IUser, currentPassword: string) {
   const res = await fetchURL(`/api/users`, {
     method: "POST",

@@ -18,15 +18,21 @@ import (
 	fberrors "github.com/B3llo/the-filebrowser/errors"
 	"github.com/B3llo/the-filebrowser/files"
 	"github.com/B3llo/the-filebrowser/fileutils"
+	"github.com/B3llo/the-filebrowser/grants"
 	"github.com/mholt/archives"
 	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/spf13/afero"
 )
 
 var resourceGetHandler = withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
+	effPath := r.URL.Path
+	if rel, _, ok := tryGrantScope(effPath, d, false); ok {
+		effPath = rel
+	}
+
 	file, err := files.NewFileInfo(&files.FileOptions{
 		Fs:         d.user.Fs,
-		Path:       r.URL.Path,
+		Path:       effPath,
 		Modify:     d.user.Perm.Modify,
 		Expand:     true,
 		ReadHeader: d.server.TypeDetectionByHeader,
@@ -50,7 +56,7 @@ var resourceGetHandler = withUser(func(w http.ResponseWriter, r *http.Request, d
 			return renderJSON(w, r, file)
 		}
 
-		f, err := d.user.Fs.Open(r.URL.Path)
+		f, err := d.user.Fs.Open(effPath)
 		if err != nil {
 			return errToStatus(err), err
 		}
@@ -88,9 +94,19 @@ func resourceDeleteHandler(fileCache FileCache) handleFunc {
 			return http.StatusForbidden, nil
 		}
 
+		effPath := r.URL.Path
+		var g *grants.Grant
+		if rel, gg, ok := tryGrantScope(effPath, d, false); ok {
+			if status, allow := grantWriteStatus(gg); !allow {
+				return status, nil
+			}
+			g = gg
+			effPath = rel
+		}
+
 		file, err := files.NewFileInfo(&files.FileOptions{
 			Fs:         d.user.Fs,
-			Path:       r.URL.Path,
+			Path:       effPath,
 			Modify:     d.user.Perm.Modify,
 			Expand:     false,
 			ReadHeader: d.server.TypeDetectionByHeader,
@@ -100,9 +116,19 @@ func resourceDeleteHandler(fileCache FileCache) handleFunc {
 			return errToStatus(err), err
 		}
 
-		err = d.store.Share.DeleteWithPathPrefix(file.Path, d.user.ID)
+		// Cascades are tracked in owner coordinates: in a grant context the
+		// deleted path belongs to the grant owner's scope.
+		cascadePath, cascadeUser := file.Path, d.user.ID
+		if g != nil {
+			cascadePath, cascadeUser = grantOwnerPath(g, effPath), g.OwnerID
+		}
+
+		err = d.store.Share.DeleteWithPathPrefix(cascadePath, cascadeUser)
 		if err != nil {
 			log.Printf("WARNING: Error(s) occurred while deleting associated shares with file: %s", err)
+		}
+		if err := d.store.Grants.DeleteWithPathPrefix(cascadePath, cascadeUser); err != nil {
+			log.Printf("WARNING: Error(s) occurred while deleting associated grants with file: %s", err)
 		}
 
 		// delete thumbnails
@@ -112,8 +138,8 @@ func resourceDeleteHandler(fileCache FileCache) handleFunc {
 		}
 
 		err = d.RunHook(func() error {
-			return d.user.Fs.RemoveAll(r.URL.Path)
-		}, "delete", r.URL.Path, "", d.user)
+			return d.user.Fs.RemoveAll(effPath)
+		}, "delete", effPath, "", d.user)
 
 		if err != nil {
 			return errToStatus(err), err
@@ -125,19 +151,27 @@ func resourceDeleteHandler(fileCache FileCache) handleFunc {
 
 func resourcePostHandler(fileCache FileCache) handleFunc {
 	return withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
-		if !d.user.Perm.Create || !d.Check(r.URL.Path) {
+		effPath := r.URL.Path
+		if rel, gg, ok := tryGrantScope(effPath, d, true); ok {
+			if status, allow := grantWriteStatus(gg); !allow {
+				return status, nil
+			}
+			effPath = rel
+		}
+
+		if !d.user.Perm.Create || !d.Check(effPath) {
 			return http.StatusForbidden, nil
 		}
 
 		// Directories creation on POST.
-		if strings.HasSuffix(r.URL.Path, "/") {
-			err := d.user.Fs.MkdirAll(r.URL.Path, d.settings.DirMode)
+		if strings.HasSuffix(effPath, "/") {
+			err := d.user.Fs.MkdirAll(effPath, d.settings.DirMode)
 			return errToStatus(err), err
 		}
 
 		file, err := files.NewFileInfo(&files.FileOptions{
 			Fs:         d.user.Fs,
-			Path:       r.URL.Path,
+			Path:       effPath,
 			Modify:     d.user.Perm.Modify,
 			Expand:     false,
 			ReadHeader: d.server.TypeDetectionByHeader,
@@ -160,7 +194,7 @@ func resourcePostHandler(fileCache FileCache) handleFunc {
 		}
 
 		err = d.RunHook(func() error {
-			info, writeErr := writeFile(d.user.Fs, r.URL.Path, r.Body, d.settings.FileMode, d.settings.DirMode)
+			info, writeErr := writeFile(d.user.Fs, effPath, r.Body, d.settings.FileMode, d.settings.DirMode)
 			if writeErr != nil {
 				return writeErr
 			}
@@ -168,10 +202,10 @@ func resourcePostHandler(fileCache FileCache) handleFunc {
 			etag := fmt.Sprintf(`"%x%x"`, info.ModTime().UnixNano(), info.Size())
 			w.Header().Set("ETag", etag)
 			return nil
-		}, "upload", r.URL.Path, "", d.user)
+		}, "upload", effPath, "", d.user)
 
 		if err != nil {
-			_ = d.user.Fs.RemoveAll(r.URL.Path)
+			_ = d.user.Fs.RemoveAll(effPath)
 		}
 
 		return errToStatus(err), err
@@ -179,16 +213,24 @@ func resourcePostHandler(fileCache FileCache) handleFunc {
 }
 
 var resourcePutHandler = withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
-	if !d.user.Perm.Modify || !d.Check(r.URL.Path) {
+	effPath := r.URL.Path
+	if rel, gg, ok := tryGrantScope(effPath, d, false); ok {
+		if status, allow := grantWriteStatus(gg); !allow {
+			return status, nil
+		}
+		effPath = rel
+	}
+
+	if !d.user.Perm.Modify || !d.Check(effPath) {
 		return http.StatusForbidden, nil
 	}
 
 	// Only allow PUT for files.
-	if strings.HasSuffix(r.URL.Path, "/") {
+	if strings.HasSuffix(effPath, "/") {
 		return http.StatusMethodNotAllowed, nil
 	}
 
-	exists, err := afero.Exists(d.user.Fs, r.URL.Path)
+	exists, err := afero.Exists(d.user.Fs, effPath)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -197,7 +239,7 @@ var resourcePutHandler = withUser(func(w http.ResponseWriter, r *http.Request, d
 	}
 
 	err = d.RunHook(func() error {
-		info, writeErr := writeFile(d.user.Fs, r.URL.Path, r.Body, d.settings.FileMode, d.settings.DirMode)
+		info, writeErr := writeFile(d.user.Fs, effPath, r.Body, d.settings.FileMode, d.settings.DirMode)
 		if writeErr != nil {
 			return writeErr
 		}
@@ -205,7 +247,7 @@ var resourcePutHandler = withUser(func(w http.ResponseWriter, r *http.Request, d
 		etag := fmt.Sprintf(`"%x%x"`, info.ModTime().UnixNano(), info.Size())
 		w.Header().Set("ETag", etag)
 		return nil
-	}, "save", r.URL.Path, "", d.user)
+	}, "save", effPath, "", d.user)
 
 	return errToStatus(err), err
 })
@@ -214,6 +256,17 @@ func resourcePatchHandler(fileCache FileCache) handleFunc {
 	return withUser(func(_ http.ResponseWriter, r *http.Request, d *data) (int, error) {
 		src := path.Clean("/" + r.URL.Path)
 		action := r.URL.Query().Get("action")
+
+		// Grant scoping for the source (exact: these actions target existing paths).
+		var srcGrant *grants.Grant
+		if rel, gg, ok := tryGrantScope(src, d, false); ok {
+			if status, allow := grantWriteStatus(gg); !allow {
+				return status, nil
+			}
+			srcGrant = gg
+			src = rel
+			r.URL.Path = rel
+		}
 
 		// extract has no destination: it unpacks the archive alongside src.
 		if action == "extract" {
@@ -234,6 +287,35 @@ func resourcePatchHandler(fileCache FileCache) handleFunc {
 			return errToStatus(err), err
 		}
 		dst = path.Clean("/" + dst)
+
+		if srcGrant != nil {
+			// In a grant context the destination must stay inside the same
+			// grant (addressed in owner coordinates, like the source was).
+			// Cross-scope copies are rejected.
+			if dst != srcGrant.Path && !strings.HasPrefix(dst, srcGrant.Path+"/") {
+				return http.StatusForbidden, nil
+			}
+			dst = strings.TrimPrefix(dst, srcGrant.Path)
+			if dst == "" {
+				dst = "/"
+			}
+			q := r.URL.Query()
+			q.Set("destination", dst)
+			r.URL.RawQuery = q.Encode()
+		} else if _, statErr := d.user.Fs.Stat(dst); statErr != nil {
+			if _, pErr := d.user.Fs.Stat(path.Dir(dst)); pErr != nil {
+				// The destination only resolves inside a grant scope:
+				// cross-scope copies are rejected.
+				if gg, owner := matchGrant(dst, d); gg != nil {
+					if _, serr := owner.Fs.Stat(dst); serr == nil {
+						return http.StatusForbidden, nil
+					}
+					if _, serr := owner.Fs.Stat(path.Dir(dst)); serr == nil {
+						return http.StatusForbidden, nil
+					}
+				}
+			}
+		}
 		if !d.Check(src) || !d.Check(dst) {
 			return http.StatusForbidden, nil
 		}
@@ -495,6 +577,9 @@ var resourceGetRecursiveHandler = withUser(func(w http.ResponseWriter, r *http.R
 	if rootPath == "" {
 		rootPath = "/"
 	}
+	if rel, _, ok := tryGrantScope(rootPath, d, false); ok {
+		rootPath = rel
+	}
 
 	// Make sure the root itself exists and is a directory.
 	info, err := d.user.Fs.Stat(rootPath)
@@ -588,6 +673,9 @@ var resourceDirSizeHandler = withUser(func(w http.ResponseWriter, r *http.Reques
 	rootPath := r.URL.Path
 	if rootPath == "" {
 		rootPath = "/"
+	}
+	if rel, _, ok := tryGrantScope(rootPath, d, false); ok {
+		rootPath = rel
 	}
 
 	info, err := d.user.Fs.Stat(rootPath)

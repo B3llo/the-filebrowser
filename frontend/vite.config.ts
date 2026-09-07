@@ -24,12 +24,18 @@ const resolve = {
   },
 };
 
+const test = {
+  // Playwright specs live in e2e/ and must never run under vitest.
+  exclude: ["e2e/**", "node_modules/**", "dist/**"],
+};
+
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => {
   if (command === "serve") {
     return {
       plugins,
       resolve,
+      test,
       server: {
         proxy: {
           "/api/command": {

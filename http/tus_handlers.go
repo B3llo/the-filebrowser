@@ -40,13 +40,21 @@ func keepUploadActive(cache UploadCache, filePath string) func() {
 
 func tusPostHandler(cache UploadCache) handleFunc {
 	return withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
-		if !d.user.Perm.Create || !d.Check(r.URL.Path) {
+		effPath := r.URL.Path
+		if rel, gg, ok := tryGrantScope(effPath, d, true); ok {
+			if status, allow := grantWriteStatus(gg); !allow {
+				return status, nil
+			}
+			effPath = rel
+		}
+
+		if !d.user.Perm.Create || !d.Check(effPath) {
 			return http.StatusForbidden, nil
 		}
 
 		file, err := files.NewFileInfo(&files.FileOptions{
 			Fs:         d.user.Fs,
-			Path:       r.URL.Path,
+			Path:       effPath,
 			Modify:     d.user.Perm.Modify,
 			Expand:     false,
 			ReadHeader: d.server.TypeDetectionByHeader,
@@ -54,7 +62,7 @@ func tusPostHandler(cache UploadCache) handleFunc {
 		})
 		switch {
 		case errors.Is(err, afero.ErrFileNotFound):
-			dirPath := filepath.Dir(r.URL.Path)
+			dirPath := filepath.Dir(effPath)
 			if _, statErr := d.user.Fs.Stat(dirPath); os.IsNotExist(statErr) {
 				if mkdirErr := d.user.Fs.MkdirAll(dirPath, d.settings.DirMode); mkdirErr != nil {
 					return http.StatusInternalServerError, err
@@ -85,7 +93,7 @@ func tusPostHandler(cache UploadCache) handleFunc {
 			fileFlags |= os.O_TRUNC
 		}
 
-		openFile, err := d.user.Fs.OpenFile(r.URL.Path, fileFlags, d.settings.FileMode)
+		openFile, err := d.user.Fs.OpenFile(effPath, fileFlags, d.settings.FileMode)
 		if err != nil {
 			return errToStatus(err), err
 		}
@@ -93,7 +101,7 @@ func tusPostHandler(cache UploadCache) handleFunc {
 
 		file, err = files.NewFileInfo(&files.FileOptions{
 			Fs:         d.user.Fs,
-			Path:       r.URL.Path,
+			Path:       effPath,
 			Modify:     d.user.Perm.Modify,
 			Expand:     false,
 			ReadHeader: false,
@@ -125,13 +133,22 @@ func tusPostHandler(cache UploadCache) handleFunc {
 func tusHeadHandler(cache UploadCache) handleFunc {
 	return withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
 		w.Header().Set("Cache-Control", "no-store")
-		if !d.user.Perm.Create || !d.Check(r.URL.Path) {
+
+		effPath := r.URL.Path
+		if rel, gg, ok := tryGrantScope(effPath, d, false); ok {
+			if status, allow := grantWriteStatus(gg); !allow {
+				return status, nil
+			}
+			effPath = rel
+		}
+
+		if !d.user.Perm.Create || !d.Check(effPath) {
 			return http.StatusForbidden, nil
 		}
 
 		file, err := files.NewFileInfo(&files.FileOptions{
 			Fs:         d.user.Fs,
-			Path:       r.URL.Path,
+			Path:       effPath,
 			Modify:     d.user.Perm.Modify,
 			Expand:     false,
 			ReadHeader: d.server.TypeDetectionByHeader,
@@ -155,7 +172,15 @@ func tusHeadHandler(cache UploadCache) handleFunc {
 
 func tusPatchHandler(cache UploadCache) handleFunc {
 	return withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
-		if !d.user.Perm.Create || !d.Check(r.URL.Path) {
+		effPath := r.URL.Path
+		if rel, gg, ok := tryGrantScope(effPath, d, false); ok {
+			if status, allow := grantWriteStatus(gg); !allow {
+				return status, nil
+			}
+			effPath = rel
+		}
+
+		if !d.user.Perm.Create || !d.Check(effPath) {
 			return http.StatusForbidden, nil
 		}
 		if r.Header.Get("Content-Type") != "application/offset+octet-stream" {
@@ -169,7 +194,7 @@ func tusPatchHandler(cache UploadCache) handleFunc {
 
 		file, err := files.NewFileInfo(&files.FileOptions{
 			Fs:         d.user.Fs,
-			Path:       r.URL.Path,
+			Path:       effPath,
 			Modify:     d.user.Perm.Modify,
 			Expand:     false,
 			ReadHeader: d.server.TypeDetectionByHeader,
@@ -203,7 +228,7 @@ func tusPatchHandler(cache UploadCache) handleFunc {
 			)
 		}
 
-		openFile, err := d.user.Fs.OpenFile(r.URL.Path, os.O_WRONLY|os.O_APPEND, d.settings.FileMode)
+		openFile, err := d.user.Fs.OpenFile(effPath, os.O_WRONLY|os.O_APPEND, d.settings.FileMode)
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf("could not open file: %w", err)
 		}
@@ -231,7 +256,7 @@ func tusPatchHandler(cache UploadCache) handleFunc {
 
 		if newOffset >= uploadLength {
 			cache.Complete(file.RealPath())
-			_ = d.RunHook(func() error { return nil }, "upload", r.URL.Path, "", d.user)
+			_ = d.RunHook(func() error { return nil }, "upload", effPath, "", d.user)
 		}
 
 		return http.StatusNoContent, nil
@@ -244,9 +269,17 @@ func tusDeleteHandler(cache UploadCache) handleFunc {
 			return http.StatusForbidden, nil
 		}
 
+		effPath := r.URL.Path
+		if rel, gg, ok := tryGrantScope(effPath, d, false); ok {
+			if status, allow := grantWriteStatus(gg); !allow {
+				return status, nil
+			}
+			effPath = rel
+		}
+
 		file, err := files.NewFileInfo(&files.FileOptions{
 			Fs:         d.user.Fs,
-			Path:       r.URL.Path,
+			Path:       effPath,
 			Modify:     d.user.Perm.Modify,
 			Expand:     false,
 			ReadHeader: d.server.TypeDetectionByHeader,
@@ -261,7 +294,7 @@ func tusDeleteHandler(cache UploadCache) handleFunc {
 			return http.StatusNotFound, err
 		}
 
-		err = d.user.Fs.RemoveAll(r.URL.Path)
+		err = d.user.Fs.RemoveAll(effPath)
 		if err != nil {
 			return errToStatus(err), err
 		}

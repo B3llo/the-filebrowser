@@ -55,6 +55,7 @@ func NewHandler(
 	users := api.PathPrefix("/users").Subrouter()
 	users.Handle("", monkey(usersGetHandler, "")).Methods("GET")
 	users.Handle("", monkey(userPostHandler, "")).Methods("POST")
+	users.Handle("/search", monkey(usersSearchHandler, "")).Methods("GET")
 	users.Handle("/{id:[0-9]+}", monkey(userPutHandler, "")).Methods("PUT")
 	users.Handle("/{id:[0-9]+}", monkey(userGetHandler, "")).Methods("GET")
 	users.Handle("/{id:[0-9]+}", monkey(userDeleteHandler, "")).Methods("DELETE")
@@ -89,6 +90,12 @@ func NewHandler(
 	api.PathPrefix("/share").Handler(monkey(shareGetsHandler, "/api/share")).Methods("GET")
 	api.PathPrefix("/share").Handler(monkey(sharePostHandler, "/api/share")).Methods("POST")
 	api.PathPrefix("/share").Handler(monkey(shareDeleteHandler, "/api/share")).Methods("DELETE")
+
+	api.Handle("/grants", monkey(grantsListHandler, "")).Methods("GET")
+	api.Handle("/grants", monkey(grantsPostHandler, "")).Methods("POST")
+	api.Handle("/grants/shared-with-me", monkey(grantsSharedWithMeHandler, "")).Methods("GET")
+	api.Handle("/grants/{id:[0-9]+}", monkey(grantsDeleteHandler, "")).Methods("DELETE")
+	api.Handle("/grants/{id:[0-9]+}", monkey(grantsPatchHandler, "")).Methods("PATCH")
 
 	api.Handle("/settings", monkey(settingsGetHandler, "")).Methods("GET")
 	api.Handle("/settings", monkey(settingsPutHandler, "")).Methods("PUT")

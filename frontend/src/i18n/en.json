@@ -125,7 +125,7 @@
     "lonely": "It feels lonely here...",
     "emptyFolderTitle": "This folder is empty",
     "emptyFolderSub": "Drag files here or use the New button to get started.",
-    "emptySearchTitle": "No results for \u201c{query}\u201d",
+    "emptySearchTitle": "No results for “{query}”",
     "emptySearchSub": "Try a different name or check another folder.",
     "emptyRecentTitle": "No recent files",
     "emptyRecentSub": "Files you open will appear here.",
@@ -407,7 +407,8 @@
     "adding": "Adding…",
     "noSubfolders": "No folders",
     "expand": "Expand",
-    "collapse": "Collapse"
+    "collapse": "Collapse",
+    "sharedWithMe": "Shared with me"
   },
   "browse": {
     "filterFolders": "Filter folders…",
@@ -432,5 +433,22 @@
     "minutes": "Minutes",
     "seconds": "Seconds",
     "unit": "Time Unit"
+  },
+  "grants": {
+    "people": "People",
+    "links": "Links",
+    "access": "Access",
+    "searchPlaceholder": "Search users…",
+    "viewer": "Viewer",
+    "editor": "Editor",
+    "revoke": "Revoke access",
+    "grantCreated": "Access granted!",
+    "grantRevoked": "Access revoked!",
+    "roleUpdated": "Role updated!",
+    "alreadyShared": "Already shared with this user.",
+    "sharedWithMe": "Shared with me",
+    "sharedBy": "Shared by {user}",
+    "owner": "Owner",
+    "onlyYou": "Only you have access."
   }
 }

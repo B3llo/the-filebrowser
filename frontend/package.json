@@ -15,7 +15,9 @@
     "lint": "eslint src/",
     "lint:fix": "eslint --fix src/",
     "format": "prettier --write .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e:prepare": "node e2e/prepare.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@chenfengyuan/vue-number-input": "^2.0.1",
@@ -55,6 +57,7 @@
   },
   "devDependencies": {
     "@intlify/unplugin-vue-i18n": "^11.0.1",
+    "@playwright/test": "^1.63.0",
     "@tsconfig/node24": "^24.0.2",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^24.10.1",

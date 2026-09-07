@@ -4,6 +4,7 @@ import (
 	"github.com/asdine/storm/v3"
 
 	"github.com/B3llo/the-filebrowser/auth"
+	"github.com/B3llo/the-filebrowser/grants"
 	"github.com/B3llo/the-filebrowser/settings"
 	"github.com/B3llo/the-filebrowser/share"
 	"github.com/B3llo/the-filebrowser/sources"
@@ -15,6 +16,7 @@ import (
 func NewStorage(db *storm.DB) (*storage.Storage, error) {
 	userStore := users.NewStorage(usersBackend{db: db})
 	shareStore := share.NewStorage(shareBackend{db: db})
+	grantsStore := grants.NewStorage(grantsBackend{db: db})
 	settingsStore := settings.NewStorage(settingsBackend{db: db})
 	authStore := auth.NewStorage(authBackend{db: db}, userStore)
 	sourcesStore := sources.NewStorage(sourcesBackend{db: db})
@@ -28,6 +30,7 @@ func NewStorage(db *storm.DB) (*storage.Storage, error) {
 		Auth:     authStore,
 		Users:    userStore,
 		Share:    shareStore,
+		Grants:   grantsStore,
 		Settings: settingsStore,
 		Sources:  sourcesStore,
 	}, nil

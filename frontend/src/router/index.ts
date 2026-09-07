@@ -14,6 +14,7 @@ import ProfileSettings from "@/views/settings/Profile.vue";
 import Shares from "@/views/settings/Shares.vue";
 import Recents from "@/views/Recents.vue";
 import Starred from "@/views/Starred.vue";
+import SharedWithMe from "@/views/SharedWithMe.vue";
 import Trash from "@/views/Trash.vue";
 import Errors from "@/views/Errors.vue";
 import { useAuthStore } from "@/stores/auth";
@@ -37,6 +38,7 @@ const titles = {
   Source: "settings.source",
   Recents: "sidebar.recent",
   Starred: "sidebar.starred",
+  SharedWithMe: "grants.sharedWithMe",
   Trash: "sidebar.trash",
   Forbidden: "errors.forbidden",
   NotFound: "errors.notFound",
@@ -85,6 +87,12 @@ const routes = [
     component: Layout,
     meta: { requiresAuth: true },
     children: [{ path: "", name: "Starred", component: Starred }],
+  },
+  {
+    path: "/shared",
+    component: Layout,
+    meta: { requiresAuth: true },
+    children: [{ path: "", name: "SharedWithMe", component: SharedWithMe }],
   },
   {
     path: "/trash",

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"github.com/B3llo/the-filebrowser/auth"
+	"github.com/B3llo/the-filebrowser/grants"
 	"github.com/B3llo/the-filebrowser/settings"
 	"github.com/B3llo/the-filebrowser/share"
 	"github.com/B3llo/the-filebrowser/sources"
@@ -13,6 +14,7 @@ import (
 type Storage struct {
 	Users    users.Store
 	Share    *share.Storage
+	Grants   *grants.Storage
 	Auth     *auth.Storage
 	Settings *settings.Storage
 	Sources  sources.Store

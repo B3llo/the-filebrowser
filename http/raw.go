@@ -85,9 +85,14 @@ var rawHandler = withUser(func(w http.ResponseWriter, r *http.Request, d *data) 
 		return http.StatusAccepted, nil
 	}
 
+	effPath := r.URL.Path
+	if rel, _, ok := tryGrantScope(effPath, d, false); ok {
+		effPath = rel
+	}
+
 	file, err := files.NewFileInfo(&files.FileOptions{
 		Fs:         d.user.Fs,
-		Path:       r.URL.Path,
+		Path:       effPath,
 		Modify:     d.user.Perm.Modify,
 		Expand:     false,
 		ReadHeader: d.server.TypeDetectionByHeader,

@@ -33,6 +33,12 @@ type data struct {
 	// original scope — are still matched against the real path instead of the
 	// rebased one. Empty for regular requests.
 	checkerPrefix string
+
+	// grantOwner is set when the request is served through a user-to-user
+	// grant (see http/grant_access.go). The owner's rules and HideDotfiles
+	// keep applying on top of the requester's own — mirroring public shares,
+	// where the owner context evaluates the rules. Nil for regular requests.
+	grantOwner *users.User
 }
 
 // Check implements rules.Checker.
@@ -48,6 +54,9 @@ func (d *data) Check(path string) bool {
 	if d.user.HideDotfiles && rules.MatchHidden(path) {
 		return false
 	}
+	if d.grantOwner != nil && d.grantOwner.HideDotfiles && rules.MatchHidden(path) {
+		return false
+	}
 
 	allow := true
 	for _, rule := range d.settings.Rules {
@@ -59,6 +68,14 @@ func (d *data) Check(path string) bool {
 	for _, rule := range d.user.Rules {
 		if rule.Matches(path) {
 			allow = rule.Allow
+		}
+	}
+
+	if d.grantOwner != nil {
+		for _, rule := range d.grantOwner.Rules {
+			if rule.Matches(path) {
+				allow = rule.Allow
+			}
 		}
 	}
 

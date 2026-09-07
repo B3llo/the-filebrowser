@@ -17,7 +17,111 @@
       <p class="fb-share-via-os-hint">{{ $t("prompts.shareViaOSHint") }}</p>
     </div>
 
-    <template v-if="listing">
+    <div class="fb-share-tabs">
+      <button
+        class="button button--flat"
+        :class="{ 'button--blue': tab === 'links' }"
+        @click="tab = 'links'"
+      >
+        {{ $t("grants.links") }}
+      </button>
+      <button
+        class="button button--flat"
+        :class="{ 'button--blue': tab === 'people' }"
+        @click="() => switchGrantTab()"
+      >
+        {{ $t("grants.people") }}
+      </button>
+    </div>
+
+    <template v-if="tab === 'people'">
+      <div class="card-content">
+        <div v-if="grants.length > 0">
+          <table>
+            <tbody>
+              <tr v-for="grant in grants" :key="grant.id">
+                <td>
+                  <span class="fb-grant-user">{{
+                    grant.granteeUsername || grant.granteeID
+                  }}</span>
+                  <span class="fb-grant-role">{{ grantRoleLabel(grant) }}</span>
+                </td>
+                <td class="small">
+                  <button
+                    class="action"
+                    @click="deleteGrant($event, grant)"
+                    :aria-label="$t('grants.revoke')"
+                    :title="$t('grants.revoke')"
+                  >
+                    <i class="material-icons">delete</i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p v-else>{{ $t("grants.onlyYou") }}</p>
+
+        <p>{{ $t("grants.searchPlaceholder") }}</p>
+        <input
+          class="input input--block"
+          type="text"
+          v-model.trim="searchQuery"
+          @input="onSearchInput"
+        />
+        <div v-if="searchResults.length > 0" class="fb-grant-results">
+          <button
+            v-for="u in searchResults"
+            :key="u.id"
+            class="button button--flat button--block"
+            @click="() => pickUser(u)"
+          >
+            {{ u.username }}
+          </button>
+        </div>
+        <div v-if="selectedUser" class="fb-grant-picked">
+          <span>{{ selectedUser.username }}</span>
+          <div class="fb-settings-seg">
+            <button
+              class="fb-settings-seg-btn"
+              :class="{ 'fb-settings-seg-btn--active': grantRole === 'viewer' }"
+              @click="grantRole = 'viewer'"
+            >
+              {{ $t("grants.viewer") }}
+            </button>
+            <button
+              class="fb-settings-seg-btn"
+              :class="{ 'fb-settings-seg-btn--active': grantRole === 'editor' }"
+              @click="grantRole = 'editor'"
+            >
+              {{ $t("grants.editor") }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-action">
+        <button
+          class="button button--flat button--grey"
+          @click="closeHovers"
+          :aria-label="$t('buttons.close')"
+          :title="$t('buttons.close')"
+        >
+          {{ $t("buttons.close") }}
+        </button>
+        <button
+          class="button button--flat button--blue"
+          @click="submitGrant"
+          :disabled="!selectedUser"
+          :aria-label="$t('buttons.share')"
+          :title="$t('buttons.share')"
+        >
+          {{ $t("buttons.share") }}
+        </button>
+      </div>
+    </template>
+
+    <template v-else-if="listing">
       <div class="card-content">
         <table>
           <tr>
@@ -185,6 +289,7 @@ import dayjs from "dayjs";
 import { useLayoutStore } from "@/stores/layout";
 import { copy } from "@/utils/clipboard";
 import { canShareFiles, shareViaOS } from "@/utils/nativeShare";
+import { removePrefix } from "@/api/utils";
 
 export default {
   name: "share",
@@ -196,6 +301,13 @@ export default {
       clip: null,
       password: "",
       listing: true,
+      tab: "links",
+      grants: [],
+      searchQuery: "",
+      searchResults: [],
+      selectedUser: null,
+      grantRole: "viewer",
+      searchTimer: null,
     };
   },
   inject: ["$showError", "$showSuccess"],
@@ -247,6 +359,11 @@ export default {
       if (this.links.length == 0) {
         this.listing = false;
       }
+    } catch (e) {
+      this.$showError(e);
+    }
+    try {
+      await this.loadGrants();
     } catch (e) {
       this.$showError(e);
     }
@@ -356,6 +473,80 @@ export default {
       }
 
       this.listing = !this.listing;
+    },
+    normalizedGrantPath() {
+      if (!this.url) return undefined;
+      return removePrefix(this.url);
+    },
+    switchGrantTab() {
+      this.tab = "people";
+      this.loadGrants().catch((e) => this.$showError(e));
+    },
+    async loadGrants() {
+      const path = this.normalizedGrantPath();
+      if (!path) {
+        this.grants = [];
+        return;
+      }
+      const all = await api.grants.list();
+      this.grants = all.filter((g) => g.path === path);
+    },
+    onSearchInput() {
+      if (this.searchTimer) clearTimeout(this.searchTimer);
+      this.searchTimer = setTimeout(() => {
+        this.runUserSearch().catch((e) => this.$showError(e));
+      }, 250);
+    },
+    async runUserSearch() {
+      const q = (this.searchQuery || "").trim();
+      if (q.length < 2) {
+        this.searchResults = [];
+        return;
+      }
+      this.searchResults = await api.users.searchUsers(q);
+    },
+    pickUser(u) {
+      this.selectedUser = u;
+      this.searchResults = [];
+      this.searchQuery = u.username;
+    },
+    grantRoleLabel(grant) {
+      return grant.role === "editor"
+        ? this.$t("grants.editor")
+        : this.$t("grants.viewer");
+    },
+    async submitGrant() {
+      try {
+        if (!this.selectedUser) return;
+        const path = this.normalizedGrantPath();
+        if (!path) return;
+        const res = await api.grants.create({
+          path,
+          grantee: this.selectedUser.username,
+          role: this.grantRole,
+        });
+        this.grants.push(res);
+        this.selectedUser = null;
+        this.searchQuery = "";
+        this.grantRole = "viewer";
+        this.$showSuccess(this.$t("grants.grantCreated"));
+      } catch (e) {
+        if (e && e.status === 409) {
+          this.$showError(this.$t("grants.alreadyShared"));
+        } else {
+          this.$showError(e);
+        }
+      }
+    },
+    async deleteGrant(event, grant) {
+      event.preventDefault();
+      try {
+        await api.grants.remove(grant.id);
+        this.grants = this.grants.filter((item) => item.id !== grant.id);
+        this.$showSuccess(this.$t("grants.grantRevoked"));
+      } catch (e) {
+        this.$showError(e);
+      }
     },
   },
 };

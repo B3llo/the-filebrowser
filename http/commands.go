@@ -39,6 +39,14 @@ func wsErr(ws *websocket.Conn, r *http.Request, status int, err error) {
 }
 
 var commandsHandler = withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
+	// Commands execute on the host inside the user's own scope: never run
+	// them against grant-rebased paths.
+	if _, err := d.user.Fs.Stat(cleanReqPath(r.URL.Path)); err != nil {
+		if g, _ := matchGrant(cleanReqPath(r.URL.Path), d); g != nil {
+			return http.StatusForbidden, nil
+		}
+	}
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return http.StatusInternalServerError, err

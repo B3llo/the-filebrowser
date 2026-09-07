@@ -29,6 +29,27 @@ interface Share {
   username?: string;
 }
 
+type GrantRole = "viewer" | "editor";
+
+interface Grant {
+  id: number;
+  path: string;
+  ownerID: number;
+  granteeID: number;
+  role: GrantRole;
+  createdBy: number;
+  createdAt: number;
+  expire: number;
+  ownerUsername?: string;
+  granteeUsername?: string;
+}
+
+interface GrantUser {
+  id: number;
+  username: string;
+  displayName: string;
+}
+
 interface SearchParams {
   [key: string]: string;
 }

@@ -128,6 +128,10 @@ var userDeleteHandler = withSelfOrAdmin(func(_ http.ResponseWriter, r *http.Requ
 		return errToStatus(err), err
 	}
 
+	if err := d.store.Grants.DeleteByUser(d.raw.(uint)); err != nil {
+		log.Printf("WARNING: Error(s) occurred while deleting grants of user: %s", err)
+	}
+
 	return http.StatusOK, nil
 })
 
@@ -266,4 +270,49 @@ var userPutHandler = withSelfOrAdmin(func(w http.ResponseWriter, r *http.Request
 	}
 
 	return http.StatusOK, nil
+})
+
+// userSearchResult is the privacy-scoped user projection served to
+// non-admins for the grant picker. It never exposes scope, permissions,
+// rules or any other sensitive field.
+type userSearchResult struct {
+	ID          uint   `json:"id"`
+	Username    string `json:"username"`
+	DisplayName string `json:"displayName"`
+}
+
+// usersSearchHandler backs the grant-picker autocomplete. Any authenticated
+// user may search by username substring (min 2 chars, max 10 results); the
+// requester themself is excluded since self-grants are rejected anyway.
+var usersSearchHandler = withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	if len([]rune(q)) < 2 {
+		return http.StatusBadRequest, fberrors.ErrInvalidRequestParams
+	}
+
+	all, err := d.store.Users.Gets(d.server.Root, d.server.FollowExternalSymlinks)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	lower := strings.ToLower(q)
+	out := make([]userSearchResult, 0, 10)
+	for _, u := range all {
+		if u.ID == d.user.ID {
+			continue
+		}
+		if !strings.Contains(strings.ToLower(u.Username), lower) {
+			continue
+		}
+		out = append(out, userSearchResult{
+			ID:          u.ID,
+			Username:    u.Username,
+			DisplayName: u.DisplayName,
+		})
+		if len(out) >= 10 {
+			break
+		}
+	}
+
+	return renderJSON(w, r, out)
 })

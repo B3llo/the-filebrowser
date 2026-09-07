@@ -45,3 +45,11 @@ docs/vision.md
 docs/ui-principles.md
 test/the-filebrowser/
 design-overhaul/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/
+
+# Playwright e2e local artifacts (backend DB, seeded root, traces).
+/frontend/e2e/.work/
+/frontend/test-results/
+/frontend/playwright-report/

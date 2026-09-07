@@ -91,6 +91,18 @@
       <li>
         <button
           class="fb-nav-item"
+          :class="{ 'is-active': $route.path === '/shared' }"
+          @click="toShared"
+          :aria-label="$t('sidebar.sharedWithMe')"
+          :title="$t('sidebar.sharedWithMe')"
+        >
+          <fb-icon name="users" size="18px" />
+          <span>{{ $t("sidebar.sharedWithMe", "Shared with me") }}</span>
+        </button>
+      </li>
+      <li>
+        <button
+          class="fb-nav-item"
           @click="toShares"
           :aria-label="$t('sidebar.shares', 'Shares')"
         >
@@ -439,6 +451,10 @@ export default {
     },
     toStarred() {
       this.$router.push({ path: "/starred" });
+      this.closeHovers();
+    },
+    toShared() {
+      this.$router.push({ path: "/shared" });
       this.closeHovers();
     },
     toTrash() {

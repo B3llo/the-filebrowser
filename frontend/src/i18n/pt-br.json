@@ -312,7 +312,7 @@
       "create": "Criar arquivos e diretórios",
       "delete": "Apagar arquivos e diretórios",
       "download": "Baixar",
-    "extract": "Extrair",
+      "extract": "Extrair",
       "execute": "Executar comandos",
       "modify": "Editar arquivos",
       "rename": "Renomear ou mover arquivos e diretórios",
@@ -397,7 +397,8 @@
     "adding": "Adicionando…",
     "noSubfolders": "Sem pastas",
     "expand": "Expandir",
-    "collapse": "Recolher"
+    "collapse": "Recolher",
+    "sharedWithMe": "Compartilhados comigo"
   },
   "browse": {
     "filterFolders": "Filtrar pastas…",
@@ -422,5 +423,22 @@
     "minutes": "Minutos",
     "seconds": "Segundos",
     "unit": "Unidades de Tempo"
+  },
+  "grants": {
+    "people": "Pessoas",
+    "links": "Links",
+    "access": "Acessos",
+    "searchPlaceholder": "Buscar usuários…",
+    "viewer": "Leitor",
+    "editor": "Editor",
+    "revoke": "Revogar acesso",
+    "grantCreated": "Acesso concedido!",
+    "grantRevoked": "Acesso revogado!",
+    "roleUpdated": "Papel atualizado!",
+    "alreadyShared": "Já compartilhado com este usuário.",
+    "sharedWithMe": "Compartilhados comigo",
+    "sharedBy": "Compartilhado por {user}",
+    "owner": "Dono",
+    "onlyYou": "Somente você tem acesso."
   }
 }
