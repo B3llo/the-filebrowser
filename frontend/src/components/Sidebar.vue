@@ -392,6 +392,11 @@ export default {
       // switch, so the meter stays stable while navigating within a source.
       const path = `/files/${this.activeId}/`;
       let usageStats = USAGE_DEFAULT;
+      // Anonymous visits (e.g. public share pages) have no session: skip the
+      // authenticated call instead of 401-spamming the backend.
+      if (!this.isLoggedIn) {
+        return Object.assign(this.usage, usageStats);
+      }
       if (this.disableUsedPercentage) {
         return Object.assign(this.usage, usageStats);
       }
@@ -410,6 +415,12 @@ export default {
     },
     async fetchSourceDirSize() {
       const source = this.active;
+      // Anonymous visits have no session: skip the authenticated call.
+      if (!this.isLoggedIn) {
+        this.sourceDirSize = null;
+        this.loadingSourceDirSize = false;
+        return;
+      }
       // Skip the implicit source (id=0 / no explicit path): computing its size
       // would walk the user's entire default scope, which can be very slow.
       if (!source || source.path === undefined || source.path === "") {

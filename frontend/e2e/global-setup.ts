@@ -4,7 +4,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const workDir = join(here, ".work");
+const workDir = join(here, "..", "..", ".e2e-work");
 const API = "http://127.0.0.1:8080";
 
 export const ADMIN = { username: "admin", password: "e2e-admin-pass" };
@@ -72,7 +72,7 @@ async function apiIdempotent(token: string, method: string, path: string, body?:
 }
 
 async function globalSetup(_config: FullConfig) {
-  // Seed files on disk (server root is e2e/.work/root; user scopes are
+  // Seed files on disk (server root is .e2e-work/root; user scopes are
   // created by the user-creation calls below, MkdirAll is idempotent).
   const docs = join(workDir, "root", "alice", "docs");
   mkdirSync(docs, { recursive: true });

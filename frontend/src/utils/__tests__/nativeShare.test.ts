@@ -120,7 +120,7 @@ describe("shareViaOS", () => {
     ]);
 
     expect(outcome).toBe("shared");
-    expect(mockFetchURL).toHaveBeenCalledWith("/api/raw/docs/report.pdf?");
+    expect(mockFetchURL).toHaveBeenCalledWith("/api/raw/docs/report.pdf?", {});
     expect(share).toHaveBeenCalledTimes(1);
     const files = share.mock.calls[0][0].files;
     expect(files).toHaveLength(1);
@@ -140,7 +140,8 @@ describe("shareViaOS", () => {
 
     expect(outcome).toBe("shared");
     expect(mockFetchURL).toHaveBeenCalledWith(
-      "/api/raw/docs/photos/?algo=zip&"
+      "/api/raw/docs/photos/?algo=zip&",
+      {}
     );
     const files = share.mock.calls[0][0].files;
     expect(files[0].name).toBe("my folder.zip");
@@ -160,7 +161,8 @@ describe("shareViaOS", () => {
 
     expect(outcome).toBe("shared");
     expect(mockFetchURL).toHaveBeenCalledWith(
-      "/api/raw/?files=%2Fa.txt%2C%2Fb.txt&algo=zip&"
+      "/api/raw/?files=%2Fa.txt%2C%2Fb.txt&algo=zip&",
+      {}
     );
     const files = share.mock.calls[0][0].files;
     expect(files[0].type).toBe("application/zip");

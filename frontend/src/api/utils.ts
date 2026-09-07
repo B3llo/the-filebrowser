@@ -39,6 +39,10 @@ export async function fetchURL(
   opts.headers = opts.headers || {};
 
   const { headers, ...rest } = opts;
+  // Credentials actually sent with this request. A 401 without credentials
+  // (anonymous visit, e.g. a public share page) must NOT log out — there is
+  // no session to expire, and logging out navigates away from public pages.
+  const sentToken = Boolean(authStore.jwt);
   let res;
   try {
     res = await fetch(`${baseURL}${url}`, {
@@ -67,7 +71,7 @@ export async function fetchURL(
       res.status
     );
 
-    if (auth && res.status == 401) {
+    if (auth && res.status == 401 && sentToken) {
       logout();
     }
 

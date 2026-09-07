@@ -87,6 +87,9 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm exec playwright install --with-deps chromium firefox webkit
+          # Fresh dist: the e2e backend embeds it and one spec runs against
+          # that production artifact (prepare builds the binary after this).
+          pnpm run build
           pnpm run test:e2e:prepare
           pnpm run test:e2e
       - uses: actions/upload-artifact@v6

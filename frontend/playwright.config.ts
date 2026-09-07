@@ -4,7 +4,9 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const workDir = join(here, "e2e", ".work");
+// NOTE: outside frontend/ on purpose — vite watches its root and would
+// hard-reload the page on every backend DB write inside e2e/.work.
+const workDir = join(here, "..", ".e2e-work");
 
 function adminHash(): string {
   const f = join(workDir, "admin-hash");
@@ -39,7 +41,7 @@ export default defineConfig({
       // Prebuilt binary from `test:e2e:prepare` (instant start, no recompile).
       // NOTE: the bcrypt hash contains `$` chars, so it goes through FB_PASSWORD
       // env (no shell expansion) instead of the --password flag.
-      command: `e2e/.work/fb-test --database e2e/.work/filebrowser.db --root e2e/.work/root --address 127.0.0.1 --port 8080 --username admin`,
+      command: `../.e2e-work/fb-test --database ../.e2e-work/filebrowser.db --root ../.e2e-work/root --address 127.0.0.1 --port 8080 --username admin`,
       cwd: here,
       env: {
         ...process.env,

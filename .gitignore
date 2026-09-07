@@ -50,6 +50,7 @@ design-overhaul/
 graft/
 
 # Playwright e2e local artifacts (backend DB, seeded root, traces).
+/.e2e-work/
 /frontend/e2e/.work/
 /frontend/test-results/
 /frontend/playwright-report/

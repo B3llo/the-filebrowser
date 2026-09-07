@@ -7,7 +7,9 @@ import { fileURLToPath } from "node:url";
 
 const frontendDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 const repoRoot = join(frontendDir, "..");
-const workDir = join(frontendDir, "e2e", ".work");
+// NOTE: outside frontend/ — vite watches its root and would hard-reload
+// the page on every backend DB write inside e2e/.work.
+const workDir = join(repoRoot, ".e2e-work");
 
 export const ADMIN_PASSWORD = "e2e-admin-pass";
 
