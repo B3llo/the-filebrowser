@@ -135,7 +135,7 @@
       </div>
 
       <!-- File name -->
-      <div class="fb-details-name">{{ selectedItem.name }}</div>
+      <div class="fb-details-name">{{ displayItemName }}</div>
 
       <!-- Sub-line: type label + size -->
       <div class="fb-details-subline">{{ subLine }}</div>
@@ -171,7 +171,13 @@
         </div>
         <div class="fb-details-meta-row">
           <span class="fb-details-meta-key">Location</span>
-          <span class="fb-details-meta-val">{{ location }}</span>
+          <span class="fb-details-meta-val">{{
+            isTrashContext ? trashOriginalLocation : location
+          }}</span>
+        </div>
+        <div v-if="isTrashContext" class="fb-details-meta-row">
+          <span class="fb-details-meta-key">{{ t("trash.deletedAt") }}</span>
+          <span class="fb-details-meta-val">{{ formattedModified }}</span>
         </div>
         <div class="fb-details-meta-row">
           <span class="fb-details-meta-key">Modified</span>
@@ -227,6 +233,11 @@ import * as pdfjsLib from "pdfjs-dist";
 import dayjs from "dayjs";
 import { fetchDocxText, fetchSheetGrid } from "@/utils/officeThumb";
 import { createURL } from "@/api/utils";
+import {
+  cleanTrashName,
+  originalPathFromTrash,
+  parentDir,
+} from "@/utils/trash";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -504,11 +515,28 @@ const formattedCreated = computed(() => {
 });
 
 const location = computed(() => {
+  if (isTrashContext.value) return trashOriginalLocation.value;
   if (!req.value) return "/";
   const dir = req.value.isDir
     ? req.value.path
     : req.value.path.replace(/\/[^/]+$/, "");
   return dir || "/";
+});
+
+/** Inside the trash, names/locations refer to the original hierarchy. */
+const isTrashContext = computed(() =>
+  (req.value?.path ?? "").startsWith("/.Trash/")
+);
+
+const displayItemName = computed(() => {
+  const name = selectedItem.value?.name ?? "";
+  return isTrashContext.value ? cleanTrashName(name) : name;
+});
+
+const trashOriginalLocation = computed(() => {
+  const original = originalPathFromTrash(selectedItem.value?.path ?? "");
+  if (original !== null) return parentDir(original);
+  return "/";
 });
 
 const itemTags = computed((): string[] => {

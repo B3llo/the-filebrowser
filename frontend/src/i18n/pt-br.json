@@ -414,7 +414,10 @@
     "deletePermanent": "Excluir permanentemente",
     "emptyTrash": "Esvaziar Lixeira",
     "confirmEmpty": "Excluir permanentemente todos os itens da lixeira? Essa ação não pode ser desfeita.",
-    "deletedAt": "Excluído"
+    "deletedAt": "Excluído",
+    "originalLocation": "Local original",
+    "treeView": "Pastas",
+    "flatView": "Todos os itens"
   },
   "time": {
     "justNow": "Agora mesmo",

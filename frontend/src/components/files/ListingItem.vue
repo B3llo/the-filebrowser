@@ -140,6 +140,8 @@
         {{ displayName }}
       </p>
 
+      <p v-if="subtitle" class="fb-item-sub">{{ subtitle }}</p>
+
       <p v-if="!hideSize && isDir" class="size" data-order="-1">&mdash;</p>
       <p v-else-if="!hideSize" class="size" :data-order="humanSize()">
         {{ humanSize() }}
@@ -275,6 +277,7 @@ const props = defineProps<{
   path?: string;
   preview?: string;
   hideSize?: boolean;
+  subtitle?: string;
 }>();
 
 const authStore = useAuthStore();

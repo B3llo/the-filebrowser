@@ -21,6 +21,29 @@
         </div>
         <span class="fb-toolbar-title" v-else>{{ $t("sidebar.trash") }}</span>
         <div
+          v-if="isTrash"
+          class="fb-trash-view-toggle"
+          role="group"
+          :aria-label="$t('trash.treeView')"
+        >
+          <button
+            class="fb-tbtn"
+            :class="{ 'fb-tbtn--active': !props.flatView }"
+            :title="$t('trash.treeView')"
+            @click="emit('toggle-flat', false)"
+          >
+            {{ $t("trash.treeView") }}
+          </button>
+          <button
+            class="fb-tbtn"
+            :class="{ 'fb-tbtn--active': !!props.flatView }"
+            :title="$t('trash.flatView')"
+            @click="emit('toggle-flat', true)"
+          >
+            {{ $t("trash.flatView") }}
+          </button>
+        </div>
+        <div
           v-if="sourceStore.sources.length > 1"
           class="fb-source-tabs"
           style="flex: 0 0 auto"
@@ -542,7 +565,7 @@
             v-for="item in dirs"
             :key="base64(item.name)"
             v-bind:index="item.index"
-            v-bind:name="isTrash ? cleanName(item.name) : item.name"
+            v-bind:name="isTrash ? cleanTrashName(item.name) : item.name"
             v-bind:isDir="item.isDir"
             v-bind:url="item.url"
             v-bind:modified="item.modified"
@@ -550,6 +573,9 @@
             v-bind:size="item.size"
             v-bind:path="item.path"
             v-bind:onOpen="isTrash ? handleTrashOpen : undefined"
+            v-bind:subtitle="
+              isTrash && props.flatView ? trashSubtitle(item) : undefined
+            "
           >
           </item>
         </div>
@@ -567,7 +593,7 @@
             v-for="item in files"
             :key="base64(item.name)"
             v-bind:index="item.index"
-            v-bind:name="isTrash ? cleanName(item.name) : item.name"
+            v-bind:name="isTrash ? cleanTrashName(item.name) : item.name"
             v-bind:isDir="item.isDir"
             v-bind:url="item.url"
             v-bind:modified="item.modified"
@@ -575,6 +601,9 @@
             v-bind:size="item.size"
             v-bind:path="item.path"
             v-bind:preview="item.preview"
+            v-bind:subtitle="
+              isTrash && props.flatView ? trashSubtitle(item) : undefined
+            "
             v-bind:noOpen="
               (isTrash && !item.isDir && !trashSubPath) || undefined
             "
@@ -757,6 +786,20 @@ import {
   sortStarredFirst,
 } from "@/utils/starred";
 import { fileKind } from "@/utils/fileKind";
+import { StatusError } from "@/api/utils";
+import {
+  buildTrashInfo,
+  cleanTrashName,
+  isTrashPath,
+  originalPathFromTrash,
+  parentDir,
+  shouldShowInTrash,
+  trashFilesRoot,
+  trashInfoRoot,
+  trashInfoUrl,
+  trashSourcePathFromUrl,
+  withVersionSuffix,
+} from "@/utils/trash";
 
 import HeaderBar from "@/components/header/HeaderBar.vue";
 import Action from "@/components/header/Action.vue";
@@ -790,6 +833,7 @@ const props = defineProps<{
   sortAsc?: boolean;
   trashSubPath?: string;
   breadcrumb?: { label: string; url: string }[];
+  flatView?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -801,6 +845,7 @@ const emit = defineEmits<{
   "empty-trash": [];
   "switch-source": [id: string];
   "navigate-to": [url: string];
+  "toggle-flat": [value: boolean];
 }>();
 
 const showLimit = ref<number>(50);
@@ -907,7 +952,7 @@ const items = computed(() => {
 
   if (q) {
     source = source.filter((item) =>
-      cleanName(item.name).toLowerCase().includes(q)
+      cleanTrashName(item.name).toLowerCase().includes(q)
     );
   }
 
@@ -917,7 +962,7 @@ const items = computed(() => {
     source = [...source].sort((a, b) => {
       let cmp = 0;
       if (by === "name") {
-        cmp = cleanName(a.name).localeCompare(cleanName(b.name));
+        cmp = cleanTrashName(a.name).localeCompare(cleanTrashName(b.name));
       } else if (by === "modified") {
         cmp = new Date(a.modified).getTime() - new Date(b.modified).getTime();
       } else if (by === "size") {
@@ -928,7 +973,11 @@ const items = computed(() => {
   }
 
   source
-    .filter((item) => item.name !== ".Trash")
+    .filter(
+      (item) =>
+        item.name !== ".Trash" &&
+        (!props.isTrash || shouldShowInTrash(item.name))
+    )
     .forEach((item) => {
       if (item.isDir) {
         dirs.push(item);
@@ -1869,34 +1918,138 @@ const toggleStar = () => {
   }
 };
 
+/**
+ * Move one item, resolving name collisions client-side with `(n)` suffixes so
+ * the caller always knows the final destination (needed for the trash sidecar).
+ * Returns the full `/files/<id>/...` destination URL.
+ */
+const moveWithUniqueName = async (
+  fromUrl: string,
+  destDirUrl: string,
+  name: string,
+  isDir: boolean
+): Promise<string> => {
+  const slash = isDir ? "/" : "";
+  for (let attempt = 0; attempt < 1000; attempt++) {
+    const candidate = withVersionSuffix(name, attempt);
+    const to = `${destDirUrl}${candidate}${slash}`;
+    try {
+      await api.move([{ from: fromUrl, to }]);
+      return to;
+    } catch (e: any) {
+      if (e instanceof StatusError && e.status === 409) continue;
+      throw e;
+    }
+  }
+  throw new Error(`could not find a free name for ${name}`);
+};
+
 const moveToTrash = async () => {
   hideContextMenu();
   const items = fileStore.req?.items;
   if (!items || fileStore.selected.length === 0) return;
 
-  const trashBase = `${filesBase.value}/.Trash/`;
+  // Never trash from inside the trash view, and never trash the trash itself.
+  const candidates = fileStore.selected
+    .map((idx) => items[idx])
+    .filter(
+      (item) =>
+        Boolean(item) && item.name !== ".Trash" && !isTrashPath(item.path ?? "")
+    );
+  if (candidates.length === 0) return;
 
-  // Ensure .Trash/ exists (create if missing; ignore error if already exists).
-  try {
-    await api.post(trashBase);
-  } catch {
-    // Already exists or creation failed — the move will surface any real error.
+  const batchId = Date.now();
+  const sourceId = String(route.params.sourceId ?? sourceStore.activeId ?? "0");
+  const filesRoot = `${trashFilesRoot(filesBase.value)}/`;
+  const infoRoot = `${trashInfoRoot(filesBase.value)}/`;
+
+  // Ensure the mirrored trash roots exist (ignore when they already do).
+  for (const dir of [filesRoot, infoRoot]) {
+    try {
+      await api.post(dir);
+    } catch {
+      // The move below surfaces any real error.
+    }
   }
 
-  const timestamp = Date.now();
-  const moveItems = fileStore.selected
-    .map((idx) => items[idx])
-    .filter(Boolean)
-    .map((item) => ({
-      from: item.url,
-      to: `${filesBase.value}/.Trash/${timestamp}_${item.name}${item.isDir ? "/" : ""}`,
-    }));
+  let trashed = 0;
+  let lastError: any = null;
+  for (const item of candidates) {
+    // Mirror the original folder structure inside .Trash/files so files deleted
+    // from the same folder land together instead of scattered at the root.
+    const originalPath: string = item.path;
+    const destDirUrl =
+      parentDir(originalPath) === "/"
+        ? filesRoot
+        : `${filesRoot}${parentDir(originalPath).slice(1)}/`;
+    try {
+      await api.post(destDirUrl);
+    } catch {
+      // May already exist — the move surfaces real errors.
+    }
+    try {
+      const destUrl = await moveWithUniqueName(
+        item.url,
+        destDirUrl,
+        item.name,
+        item.isDir
+      );
+      // Sidecar keyed by the ACTUAL trash destination (post-rename), holding the
+      // original path for an exact restore. Best effort: trashing must succeed
+      // even if the sidecar write fails (fallback restores to the source root).
+      try {
+        const trashSourcePath = trashSourcePathFromUrl(
+          destUrl,
+          filesBase.value
+        );
+        const infoUrl =
+          trashSourcePath !== null
+            ? trashInfoUrl(filesBase.value, trashSourcePath)
+            : null;
+        if (infoUrl !== null) {
+          try {
+            await api.post(`${parentDir(infoUrl)}/`);
+          } catch {
+            // Parent may already exist.
+          }
+          await api.post(
+            infoUrl,
+            new Blob(
+              [
+                JSON.stringify(
+                  buildTrashInfo({
+                    originalPath,
+                    name: item.name,
+                    isDir: item.isDir,
+                    deletedAt: new Date().toISOString(),
+                    sourceId,
+                    batchId,
+                  })
+                ),
+              ],
+              { type: "application/json" }
+            ),
+            true
+          );
+        }
+      } catch (sidecarError) {
+        console.warn(
+          "trash sidecar write failed for",
+          originalPath,
+          sidecarError
+        );
+      }
+      trashed++;
+    } catch (e: any) {
+      lastError = e;
+    }
+  }
 
-  try {
-    await api.move(moveItems);
-    fileStore.reload = true;
-  } catch (e: any) {
-    $showError(e);
+  if (trashed > 0) fileStore.reload = true;
+  if (lastError !== null && trashed === 0) {
+    $showError(lastError);
+  } else if (lastError !== null) {
+    console.warn("some items could not be moved to trash", lastError);
   }
 };
 
@@ -1995,7 +2148,12 @@ const handleEmptyAreaClick = (e: MouseEvent) => {
   }
 };
 
-const cleanName = (trashName: string): string => trashName.replace(/^\d+_/, "");
+/** Original location shown under flat-view trash rows (mirror → parent, legacy → root). */
+const trashSubtitle = (item: { path: string }): string => {
+  const original = originalPathFromTrash(item.path ?? "");
+  if (original !== null) return parentDir(original);
+  return "/";
+};
 
 const noop = () => {};
 
@@ -2059,6 +2217,27 @@ const trashDeletePermanent = () => {
 .fb-trash-breadcrumb-sep {
   margin-right: 4px;
   color: var(--border-strong);
+}
+
+.fb-trash-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--hover);
+  border-radius: 10px;
+  padding: 3px;
+  margin-left: 12px;
+  flex: 0 0 auto;
+}
+
+.fb-trash-view-toggle .fb-tbtn {
+  border: none;
+  background: transparent;
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  border-radius: 7px;
+  white-space: nowrap;
 }
 
 .file-selection-margin-bottom {

@@ -424,7 +424,10 @@
     "deletePermanent": "Delete permanently",
     "emptyTrash": "Empty Trash",
     "confirmEmpty": "Permanently delete all items in Trash? This cannot be undone.",
-    "deletedAt": "Deleted"
+    "deletedAt": "Deleted",
+    "originalLocation": "Original location",
+    "treeView": "Folders",
+    "flatView": "All items"
   },
   "time": {
     "justNow": "Just now",

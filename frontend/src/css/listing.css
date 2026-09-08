@@ -69,6 +69,16 @@ html[dir="rtl"] #listing {
   font-weight: bold;
 }
 
+#listing .item .fb-item-sub {
+  font-size: 0.78em;
+  color: var(--faint);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
 #listing .item i {
   font-size: 4em;
   margin-right: 0.1em;
