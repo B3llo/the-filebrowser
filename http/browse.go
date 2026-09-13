@@ -4,17 +4,25 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/B3llo/the-filebrowser/sources"
 )
 
 // browseHandler lists immediate subdirectories at the given host path.
 // Admin-only: admins can already type arbitrary paths when creating sources,
 // so this adds discoverability, not new capability.
 var browseHandler = withAdmin(func(w http.ResponseWriter, r *http.Request, _ *data) (int, error) {
-	rawPath := r.URL.Query().Get("path")
+	rawPath := strings.TrimSpace(r.URL.Query().Get("path"))
 	if rawPath == "" {
 		rawPath = "/"
 	}
-	absPath := filepath.Clean(rawPath)
+	absPath, err := sources.NormalizePath(rawPath)
+	if err != nil {
+		// Keep browse forgiving: invalid/pasted paths just list nothing so the
+		// picker stays usable instead of surfacing a 400.
+		return renderJSON(w, r, []browseDirEntry{})
+	}
 
 	entries, err := os.ReadDir(absPath)
 	if err != nil {

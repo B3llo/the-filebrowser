@@ -113,6 +113,19 @@ const { t } = useI18n();
 
 const isNew = computed(() => route.path === "/settings/sources/new");
 
+// Mirror of backend sources.NormalizePath for pasted values.
+function cleanSourcePath(raw: string): string {
+  let v = (raw ?? "").trim();
+  if (v.length >= 2) {
+    const first = v[0];
+    const last = v[v.length - 1];
+    if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+      v = v.slice(1, -1).trim();
+    }
+  }
+  return v;
+}
+
 onMounted(() => fetchData());
 watch(route, () => fetchData());
 
@@ -139,19 +152,21 @@ const fetchData = async () => {
 };
 
 const save = async () => {
-  if (!source.value.name || !source.value.path) {
+  const cleanName = source.value.name.trim();
+  const cleanPath = cleanSourcePath(source.value.path);
+  if (!cleanName || !cleanPath) {
     $showError(t("settings.sourceFieldsRequired"));
     return;
   }
   try {
     if (isNew.value) {
-      await api.create({ name: source.value.name, path: source.value.path });
+      await api.create({ name: cleanName, path: cleanPath });
       $showSuccess(t("settings.sourceCreated"));
     } else {
       await api.update(original.value!.id, ["Name", "Path"], {
         id: original.value!.id,
-        name: source.value.name,
-        path: source.value.path,
+        name: cleanName,
+        path: cleanPath,
       });
       $showSuccess(t("settings.sourceUpdated"));
     }

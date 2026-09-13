@@ -64,7 +64,7 @@
       </button>
       <button
         class="button button--flat"
-        :disabled="saving || !name || !path"
+        :disabled="saving || !name.trim() || !path.trim()"
         @click="save"
       >
         {{ saving ? t("sidebar.adding") : t("buttons.save") }}
@@ -94,11 +94,27 @@ const path = ref("/");
 const saving = ref(false);
 const showPicker = ref(false);
 
+// Mirror of backend sources.NormalizePath for pasted values: trim whitespace
+// and one layer of surrounding quotes so "/data " or '"/data"' just works.
+// Full normalization (~, $VAR) happens server-side.
+function cleanSourcePath(raw: string): string {
+  let v = (raw ?? "").trim();
+  if (v.length >= 2) {
+    const first = v[0];
+    const last = v[v.length - 1];
+    if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+      v = v.slice(1, -1).trim();
+    }
+  }
+  return v;
+}
+
 const save = async () => {
-  if (!name.value || !path.value) return;
+  const cleanPath = cleanSourcePath(path.value);
+  if (!name.value || !cleanPath) return;
   saving.value = true;
   try {
-    await api.create({ name: name.value, path: path.value });
+    await api.create({ name: name.value.trim(), path: cleanPath });
     await sourceStore.load();
     $showSuccess(t("settings.sourceCreated"));
     layoutStore.closeHovers();

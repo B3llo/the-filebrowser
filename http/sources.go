@@ -3,9 +3,9 @@ package fbhttp
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"time"
 
@@ -28,7 +28,7 @@ const (
 
 // resolveActiveSource rebinds d.user.Fs to the active source's ScopedFs. The
 // active source is read from the X-Source header, falling back to the "source"
-	// cookie. When it resolves to the implicit source (id 0 / unknown /
+// cookie. When it resolves to the implicit source (id 0 / unknown /
 // inaccessible), the filesystem built by User.Clean — the classic user scope —
 // is left untouched, preserving legacy behavior.
 func resolveActiveSource(r *http.Request, d *data) {
@@ -169,16 +169,17 @@ var sourcePostHandler = withAdmin(func(w http.ResponseWriter, r *http.Request, d
 		return http.StatusBadRequest, fberrors.ErrInvalidRequestParams
 	}
 
+	cleanPath, err := sources.NormalizePath(req.Data.Path)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
 	src := &sources.Source{
 		Name:      req.Data.Name,
-		Path:      filepath.Clean(req.Data.Path),
+		Path:      cleanPath,
 		CreatedAt: time.Now(),
 	}
-	if !filepath.IsAbs(src.Path) {
-		return http.StatusBadRequest, errors.New("source path must be absolute")
-	}
-	if err := os.MkdirAll(src.Path, 0o750); err != nil {
-		return http.StatusInternalServerError, err
+	if code, err := ensureSourceDir(src.Path); err != nil {
+		return code, err
 	}
 
 	if err := d.store.Sources.Save(src); err != nil {
@@ -220,11 +221,17 @@ var sourcePutHandler = withAdmin(func(w http.ResponseWriter, r *http.Request, d 
 			}
 			src.Name = req.Data.Name
 		case "Path":
-			p := filepath.Clean(req.Data.Path)
-			if !filepath.IsAbs(p) {
-				return http.StatusBadRequest, errors.New("source path must be absolute")
+			p, err := sources.NormalizePath(req.Data.Path)
+			if err != nil {
+				return http.StatusBadRequest, err
 			}
 			src.Path = p
+		}
+	}
+
+	if containsField(which, "Path") {
+		if code, err := ensureSourceDir(src.Path); err != nil {
+			return code, err
 		}
 	}
 
@@ -252,4 +259,32 @@ func getSourceID(r *http.Request) (uint, error) {
 		return 0, err
 	}
 	return uint(i), nil
+}
+
+// ensureSourceDir creates the source directory when missing and reports a
+// status code that matches the failure: 400 when the path exists but is not a
+// directory, the mapped OS status (403 for permission, 500 otherwise) when
+// creation fails.
+func ensureSourceDir(path string) (int, error) {
+	if st, err := os.Stat(path); err == nil {
+		if !st.IsDir() {
+			return http.StatusBadRequest, fmt.Errorf("source path %q exists but is not a directory", path)
+		}
+		return 0, nil
+	} else if !os.IsNotExist(err) {
+		return errToStatus(err), fmt.Errorf("cannot access source path %q: %w", path, err)
+	}
+	if err := os.MkdirAll(path, 0o750); err != nil {
+		return errToStatus(err), fmt.Errorf("cannot create source directory %q: %w", path, err)
+	}
+	return 0, nil
+}
+
+func containsField(fields []string, name string) bool {
+	for _, f := range fields {
+		if f == name {
+			return true
+		}
+	}
+	return false
 }

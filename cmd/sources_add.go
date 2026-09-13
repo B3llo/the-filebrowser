@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"errors"
-	"path/filepath"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -20,12 +18,9 @@ var sourcesAddCmd = &cobra.Command{
 	Long:  `Create a new source pointing at an absolute path on disk.`,
 	Args:  cobra.ExactArgs(2),
 	RunE: withStore(func(_ *cobra.Command, args []string, st *store) error {
-		path, err := filepath.Abs(args[1])
+		path, err := sources.NormalizePath(args[1])
 		if err != nil {
 			return err
-		}
-		if !filepath.IsAbs(path) {
-			return errors.New("source path must be absolute")
 		}
 
 		src := &sources.Source{
