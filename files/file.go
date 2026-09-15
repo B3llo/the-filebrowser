@@ -1,6 +1,7 @@
 package files
 
 import (
+	"context"
 	"crypto/md5"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -169,6 +170,13 @@ func stat(opts *FileOptions) (*FileInfo, error) {
 // Checksum checksums a given File for a given User, using a specific
 // algorithm. The checksums data is saved on File object.
 func (i *FileInfo) Checksum(algo string) error {
+	return i.ChecksumWithContext(context.Background(), algo)
+}
+
+// ChecksumWithContext is the cancellable variant of Checksum: the request
+// context (client disconnect / timeout) aborts hashing large files instead
+// of holding the handler until EOF.
+func (i *FileInfo) ChecksumWithContext(ctx context.Context, algo string) error {
 	if i.IsDir {
 		return fberrors.ErrIsDirectory
 	}
@@ -198,13 +206,35 @@ func (i *FileInfo) Checksum(algo string) error {
 		return fberrors.ErrInvalidOption
 	}
 
-	_, err = io.Copy(h, reader)
-	if err != nil {
+	if err := copyHashWithContext(ctx, h, reader); err != nil {
 		return err
 	}
 
 	i.Checksums[algo] = hex.EncodeToString(h.Sum(nil))
 	return nil
+}
+
+// copyHashWithContext streams src into dst in 32KB chunks, checking ctx
+// between iterations so cancellation aborts promptly on large files.
+func copyHashWithContext(ctx context.Context, dst io.Writer, src io.Reader) error {
+	buf := make([]byte, 32*1024)
+	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		n, rerr := src.Read(buf)
+		if n > 0 {
+			if _, werr := dst.Write(buf[:n]); werr != nil {
+				return werr
+			}
+		}
+		if rerr != nil {
+			if errors.Is(rerr, io.EOF) {
+				return ctx.Err()
+			}
+			return rerr
+		}
+	}
 }
 
 func (i *FileInfo) RealPath() string {

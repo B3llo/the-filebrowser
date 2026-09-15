@@ -12,7 +12,10 @@ import {
   isPureTrashChain,
   isLegacyTrashName,
   isMirroredTrashPath,
+  isTrashEnabled,
   isTrashPath,
+  MAX_TRASH_RETENTION_DAYS,
+  DEFAULT_TRASH_RETENTION_DAYS,
   mergeTrashResources,
   mirroredTrashSourcePath,
   originalLocation,
@@ -26,6 +29,7 @@ import {
   trashDestinationUrl,
   trashInfoUrl,
   trashMirrorRelative,
+  trashRetentionDays,
   trashSourcePathFromUrl,
   withVersionSuffix,
 } from "@/utils/trash";
@@ -341,5 +345,35 @@ describe("topLevelNames / sortByDepthDesc", () => {
       "/a/b",
       "/a",
     ]);
+  });
+});
+
+describe("trash config (isTrashEnabled / trashRetentionDays)", () => {
+  it("defaults to enabled when config is missing", () => {
+    expect(isTrashEnabled(null)).toBe(true);
+    expect(isTrashEnabled(undefined)).toBe(true);
+    expect(isTrashEnabled({})).toBe(true);
+  });
+
+  it("respects the enabled flag", () => {
+    expect(isTrashEnabled({ enabled: true })).toBe(true);
+    expect(isTrashEnabled({ enabled: false })).toBe(false);
+  });
+
+  it("falls back to 30 days when retention is missing/invalid", () => {
+    expect(trashRetentionDays(null)).toBe(DEFAULT_TRASH_RETENTION_DAYS);
+    expect(trashRetentionDays({})).toBe(DEFAULT_TRASH_RETENTION_DAYS);
+    expect(trashRetentionDays({ retentionDays: NaN })).toBe(
+      DEFAULT_TRASH_RETENTION_DAYS
+    );
+  });
+
+  it("keeps 0 as forever and clamps to [0, 3650]", () => {
+    expect(trashRetentionDays({ retentionDays: 0 })).toBe(0);
+    expect(trashRetentionDays({ retentionDays: 30 })).toBe(30);
+    expect(trashRetentionDays({ retentionDays: -5 })).toBe(0);
+    expect(trashRetentionDays({ retentionDays: 99999 })).toBe(
+      MAX_TRASH_RETENTION_DAYS
+    );
   });
 });

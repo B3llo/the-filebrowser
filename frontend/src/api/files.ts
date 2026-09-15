@@ -157,6 +157,7 @@ async function postResources(
       `${baseURL}/api/resources${url}?override=${overwrite}`,
       true
     );
+    request.withCredentials = true;
     request.setRequestHeader("X-Auth", authStore.jwt);
 
     if (typeof onupload === "function") {

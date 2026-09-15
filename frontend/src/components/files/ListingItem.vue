@@ -10,6 +10,8 @@
     @dragend="dragEnd"
     @drop="drop"
     @click="itemClick"
+    @keydown.enter.prevent="onEnterKey"
+    @keydown.space.prevent="onSpaceKey"
     @mousedown="handleMouseDown"
     @mouseup="handleMouseUp"
     @mouseleave="handleMouseLeave"
@@ -27,7 +29,7 @@
     :data-dotfile="isDotfile ? 'true' : 'false'"
     :data-path="path"
     :aria-label="name"
-    :aria-selected="isSelected"
+    :aria-pressed="isSelected"
     :data-ext="getExtension(name).toLowerCase()"
     @contextmenu="contextMenu"
   >
@@ -798,6 +800,14 @@ const open = () => {
   } else {
     router.push({ path: props.url });
   }
+};
+
+const onEnterKey = () => {
+  open();
+};
+
+const onSpaceKey = (event: KeyboardEvent) => {
+  click(event);
 };
 
 const getExtension = (fileName: string): string => {

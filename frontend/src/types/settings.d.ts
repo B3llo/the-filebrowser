@@ -11,6 +11,7 @@ interface ISettings {
   tus: SettingsTus;
   shell: string[];
   commands: SettingsCommand;
+  trash: SettingsTrash;
 }
 
 interface SettingsDefaults {
@@ -40,6 +41,11 @@ interface SettingsBranding {
 interface SettingsTus {
   chunkSize: number;
   retryCount: number;
+}
+
+interface SettingsTrash {
+  enabled: boolean;
+  retentionDays: number;
 }
 
 interface SettingsCommand {

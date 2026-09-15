@@ -135,11 +135,15 @@
         </div>
 
         <!-- Sort button — 38×38, bordered, opens dropdown -->
-        <div style="position: relative">
+        <div style="position: relative" ref="sortMenuWrap">
           <button
             class="fb-tbtn fb-tbtn--bordered"
             :title="t('files.sort', 'Sort')"
+            :aria-label="t('files.sort', 'Sort')"
+            aria-haspopup="menu"
+            :aria-expanded="sortMenuOpen"
             @click="toggleSortMenu"
+            @keydown.esc.stop="closeSortMenu"
           >
             <svg
               viewBox="0 0 24 24"
@@ -160,7 +164,9 @@
           <div
             v-show="sortMenuOpen"
             class="fb-sort-menu"
+            role="menu"
             @click.self="closeSortMenu"
+            @keydown.esc.stop="closeSortMenu"
           >
             <button
               class="fb-sort-item"
@@ -264,7 +270,10 @@
           <button
             class="fb-tbtn fb-tbtn--accent"
             :title="t('buttons.new', 'New')"
+            aria-haspopup="menu"
+            :aria-expanded="newMenuOpen"
             @click="newMenuOpen = !newMenuOpen"
+            @keydown.esc.stop="newMenuOpen = false"
           >
             <svg
               viewBox="0 0 24 24"
@@ -284,7 +293,9 @@
           <div
             v-show="newMenuOpen"
             class="fb-new-menu"
+            role="menu"
             @click="newMenuOpen = false"
+            @keydown.esc.stop="newMenuOpen = false"
           >
             <button
               v-if="authStore.user?.perm.create"
@@ -432,7 +443,20 @@
       />
     </div>
 
-    <div v-if="layoutStore.loading" :class="currentViewMode">
+    <div
+      v-if="layoutStore.loading"
+      :class="currentViewMode"
+      role="status"
+      aria-live="polite"
+      :aria-label="t('files.loading')"
+    >
+      <div class="loading delayed" aria-hidden="true">
+        <div class="spinner">
+          <div class="bounce1"></div>
+          <div class="bounce2"></div>
+          <div class="bounce3"></div>
+        </div>
+      </div>
       <!-- Mosaic skeleton -->
       <div v-if="currentViewMode === 'mosaic'" class="fb-skeleton-wrap">
         <div class="fb-skeleton fb-skeleton-label"></div>
@@ -503,14 +527,23 @@
         @contextmenu="showContextMenu"
       >
         <div>
-          <div class="fb-col-header">
-            <div>
+          <div class="fb-col-header" role="row">
+            <div role="row">
               <p
                 :class="{ active: nameSorted }"
                 class="name"
-                role="button"
+                role="columnheader"
                 tabindex="0"
+                :aria-sort="
+                  nameSorted
+                    ? ascOrdered
+                      ? 'ascending'
+                      : 'descending'
+                    : 'none'
+                "
                 @click="sort('name')"
+                @keydown.enter.prevent="sort('name')"
+                @keydown.space.prevent="sort('name')"
                 :title="t('files.sortByName')"
                 :aria-label="t('files.sortByName')"
               >
@@ -521,9 +554,18 @@
               <p
                 :class="{ active: sizeSorted }"
                 class="size"
-                role="button"
+                role="columnheader"
                 tabindex="0"
+                :aria-sort="
+                  sizeSorted
+                    ? ascOrdered
+                      ? 'ascending'
+                      : 'descending'
+                    : 'none'
+                "
                 @click="sort('size')"
+                @keydown.enter.prevent="sort('size')"
+                @keydown.space.prevent="sort('size')"
                 :title="t('files.sortBySize')"
                 :aria-label="t('files.sortBySize')"
               >
@@ -533,9 +575,18 @@
               <p
                 :class="{ active: modifiedSorted }"
                 class="modified"
-                role="button"
+                role="columnheader"
                 tabindex="0"
+                :aria-sort="
+                  modifiedSorted
+                    ? ascOrdered
+                      ? 'ascending'
+                      : 'descending'
+                    : 'none'
+                "
                 @click="sort('modified')"
+                @keydown.enter.prevent="sort('modified')"
+                @keydown.space.prevent="sort('modified')"
                 :title="
                   isTrash ? t('trash.deletedAt') : t('files.sortByLastModified')
                 "
@@ -894,6 +945,7 @@ const newMenuOpen = ref<boolean>(false);
 const sortMenuOpen = ref<boolean>(false);
 
 const $showError = inject<IToastError>("$showError")!;
+const $showSuccess = inject<IToastSuccess>("$showSuccess")!;
 
 const clipboardStore = useClipboardStore();
 const authStore = useAuthStore();
@@ -921,6 +973,7 @@ const { t } = useI18n();
 
 const listing = ref<HTMLElement | null>(null);
 const searchRef = ref<InstanceType<typeof Search> | null>(null);
+const sortMenuWrap = ref<HTMLElement | null>(null);
 
 const nameSorted = computed(() =>
   props.isTrash
@@ -1090,11 +1143,36 @@ const isEmpty = computed(
   () => (fileStore.req?.numDirs ?? 0) + (fileStore.req?.numFiles ?? 0) === 0
 );
 
-const emptyIconName = computed<IconName>(() => "empty-folder");
+// Empty states differ by context: trash, active search filter, shared view,
+// or a plain empty folder. The search branch uses the current filter text.
+const isSearchEmpty = computed(() => {
+  const q = (props.searchQuery ?? "").trim();
+  return q.length > 0 && isEmpty.value;
+});
 
-const emptyTitle = computed(() => t("files.emptyFolderTitle"));
+const isSharedContext = computed(() => route.path.startsWith("/shared"));
 
-const emptySub = computed(() => t("files.emptyFolderSub"));
+const emptyIconName = computed<IconName>(() => {
+  if (props.isTrash) return "trash";
+  if (isSearchEmpty.value) return "empty-search";
+  if (isSharedContext.value) return "share";
+  return "empty-folder";
+});
+
+const emptyTitle = computed(() => {
+  if (props.isTrash) return t("files.emptyTrashTitle");
+  if (isSearchEmpty.value)
+    return t("files.emptySearchTitle", { query: props.searchQuery?.trim() });
+  if (isSharedContext.value) return t("files.emptySharedTitle");
+  return t("files.emptyFolderTitle");
+});
+
+const emptySub = computed(() => {
+  if (props.isTrash) return t("files.emptyTrashSub");
+  if (isSearchEmpty.value) return t("files.emptySearchSub");
+  if (isSharedContext.value) return t("files.emptySharedSub");
+  return t("files.emptyFolderSub");
+});
 
 const currentViewMode = computed(() => {
   const mode = authStore.user?.viewMode ?? "list";
@@ -1167,6 +1245,7 @@ onMounted(() => {
   window.addEventListener("keydown", keyEvent);
   window.addEventListener("scroll", scrollEvent, true);
   window.addEventListener("resize", windowsResize);
+  document.addEventListener("click", closeMenusOnOutside);
   if (!props.isTrash) {
     document.addEventListener("click", closeNewMenu);
   }
@@ -1184,6 +1263,7 @@ onBeforeUnmount(() => {
   window.removeEventListener("keydown", keyEvent);
   window.removeEventListener("scroll", scrollEvent, true);
   window.removeEventListener("resize", windowsResize);
+  document.removeEventListener("click", closeMenusOnOutside);
   stopDragScroll();
   if (fadeResetTimer) {
     window.clearTimeout(fadeResetTimer);
@@ -1210,6 +1290,17 @@ const closeNewMenu = (e: MouseEvent) => {
   }
 };
 
+const closeMenusOnOutside = (e: MouseEvent) => {
+  const target = e.target as Node;
+  if (
+    sortMenuOpen.value &&
+    sortMenuWrap.value &&
+    !sortMenuWrap.value.contains(target)
+  ) {
+    sortMenuOpen.value = false;
+  }
+};
+
 const keyEvent = (event: KeyboardEvent) => {
   // No prompts are shown
   if (layoutStore.currentPrompt !== null) {
@@ -1217,6 +1308,12 @@ const keyEvent = (event: KeyboardEvent) => {
   }
 
   if (event.key === "Escape") {
+    if (sortMenuOpen.value || newMenuOpen.value || isContextMenuVisible.value) {
+      sortMenuOpen.value = false;
+      newMenuOpen.value = false;
+      hideContextMenu();
+      return;
+    }
     // Reset files selection.
     fileStore.selected = [];
   }
@@ -1269,6 +1366,19 @@ const keyEvent = (event: KeyboardEvent) => {
       for (const dir of items.value.dirs) {
         if (fileStore.selected.indexOf(dir.index) === -1) {
           fileStore.selected.push(dir.index);
+        }
+      }
+      {
+        const total =
+          (fileStore.req?.numDirs ?? 0) + (fileStore.req?.numFiles ?? 0);
+        const loaded = items.value.files.length + items.value.dirs.length;
+        if (total > loaded) {
+          $showSuccess(
+            t("files.partialSelection", {
+              selected: fileStore.selected.length,
+              total,
+            })
+          );
         }
       }
       break;
@@ -1493,6 +1603,8 @@ const scrollEvent = throttle((e?: Event) => {
 
   // All items are displayed
   if (showLimit.value >= totalItems) return;
+
+  if (!Number.isFinite(itemWeight.value) || itemWeight.value <= 0) return;
 
   // Support both window scroll (mobile) and container scroll (desktop)
   const scroller =
@@ -1888,8 +2000,19 @@ const setItemWeight = () => {
   let itemQuantity = fileStore.req.numDirs + fileStore.req.numFiles;
   if (itemQuantity > showLimit.value) itemQuantity = showLimit.value;
 
+  if (!Number.isFinite(itemQuantity) || itemQuantity <= 0) {
+    itemWeight.value = 0;
+    return;
+  }
+
+  const height = listing.value.offsetHeight;
+  if (!Number.isFinite(height) || height <= 0) {
+    itemWeight.value = 0;
+    return;
+  }
+
   // How much every listing item affects the window height
-  itemWeight.value = listing.value.offsetHeight / itemQuantity;
+  itemWeight.value = height / itemQuantity;
 };
 
 const fillWindow = (fit = false) => {
@@ -1903,7 +2026,7 @@ const fillWindow = (fit = false) => {
   const container = document.querySelector("main") ?? document.documentElement;
   const viewHeight = container.clientHeight || window.innerHeight;
 
-  if (itemWeight.value <= 0) {
+  if (!Number.isFinite(itemWeight.value) || itemWeight.value <= 0) {
     showLimit.value = Math.max(50, totalItems);
     return;
   }
@@ -1921,17 +2044,21 @@ const fillWindow = (fit = false) => {
 };
 
 const revealPreviousItem = () => {
-  if (!fileStore.req || !fileStore.oldReq) return;
+  if (!fileStore.req || !fileStore.oldReq) return false;
 
   const index = fileStore.selected[0];
-  if (index === undefined) return;
+  if (index === undefined) return false;
+
+  if (!Number.isFinite(itemWeight.value) || itemWeight.value <= 0) {
+    return false;
+  }
 
   showLimit.value =
     index + Math.ceil((window.innerHeight * 2) / itemWeight.value);
 
   nextTick(() => {
     const items = document.querySelectorAll("#listing .item");
-    items[index].scrollIntoView({ block: "center" });
+    items[index]?.scrollIntoView({ block: "center" });
   });
 
   return true;

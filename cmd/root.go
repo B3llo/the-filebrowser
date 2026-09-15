@@ -277,6 +277,9 @@ user created with the credentials from options "username" and "password".`,
 		log.Println("Listening on", listener.Addr().String())
 		srv := &http.Server{
 			Handler:           handler,
+			ReadTimeout:       30 * time.Second,
+			WriteTimeout:      5 * time.Minute,
+			IdleTimeout:       120 * time.Second,
 			ReadHeaderTimeout: 60 * time.Second,
 		}
 
@@ -473,6 +476,10 @@ func quickSetup(v *viper.Viper, s *storage.Storage) error {
 		Commands: nil,
 		Shell:    nil,
 		Rules:    nil,
+		Trash: settings.Trash{
+			Enabled:       settings.DefaultTrashEnabled,
+			RetentionDays: settings.DefaultTrashRetentionDays,
+		},
 	}
 
 	var err error

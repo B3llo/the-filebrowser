@@ -2,6 +2,7 @@ package settings
 
 import (
 	"crypto/rand"
+	"fmt"
 	"io/fs"
 	"log"
 	"strings"
@@ -16,8 +17,37 @@ const DefaultMinimumPasswordLength = 12
 const DefaultFileMode = 0640
 const DefaultDirMode = 0750
 
+// DefaultTrashEnabled is the default for Trash.Enabled on fresh installs
+// and on databases that predate the trash settings.
+const DefaultTrashEnabled = true
+
+// DefaultTrashRetentionDays is the default number of days trashed items are
+// kept before permanent deletion. 0 means "keep forever".
+const DefaultTrashRetentionDays = 30
+
+// MaxTrashRetentionDays caps Trash.RetentionDays (10 years).
+const MaxTrashRetentionDays = 3650
+
 // AuthMethod describes an authentication method.
 type AuthMethod string
+
+// Trash holds the trash-bin settings of the application.
+type Trash struct {
+	// Enabled controls whether deleted files go to the per-source .Trash
+	// directory (and whether the trash UI is shown). Defaults to true.
+	Enabled bool `json:"enabled"`
+	// RetentionDays is how many days trashed items are kept before they may
+	// be permanently deleted. 0 means "keep forever". Valid range: 0-3650.
+	RetentionDays int `json:"retentionDays"`
+}
+
+// Validate rejects out-of-range retention settings.
+func (t Trash) Validate() error {
+	if t.RetentionDays < 0 || t.RetentionDays > MaxTrashRetentionDays {
+		return fmt.Errorf("trash retentionDays must be between 0 and %d", MaxTrashRetentionDays)
+	}
+	return nil
+}
 
 // Settings contain the main settings of the application.
 type Settings struct {
@@ -38,6 +68,7 @@ type Settings struct {
 	FileMode              fs.FileMode         `json:"fileMode"`
 	DirMode               fs.FileMode         `json:"dirMode"`
 	HideDotfiles          bool                `json:"hideDotfiles"`
+	Trash                 Trash               `json:"trash"`
 }
 
 // GetRules implements rules.Provider.

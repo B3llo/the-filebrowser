@@ -299,3 +299,33 @@
   --folder-stroke: oklch(0.62 0.10 190);
   --folder-soft: oklch(0.23 0.04 190);
 }
+
+/* ============================================================
+   Accessibility tokens (P2)
+   ============================================================ */
+
+:root {
+  --focus-ring: 2px solid var(--accent);
+  --spinner-delay: 100ms;
+}
+
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .delayed {
+    animation: none;
+  }
+
+  main .spinner > div,
+  #previewer .spinner > div,
+  .fb-details-office-spinner,
+  .doc-loading-spinner,
+  .sheet-loading-spinner,
+  .pdf-loading-spinner {
+    animation-duration: 2.4s;
+  }
+}

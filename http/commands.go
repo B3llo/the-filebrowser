@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os/exec"
 	"slices"
 	"strings"
@@ -19,9 +20,43 @@ const (
 	WSWriteDeadline = 10 * time.Second
 )
 
+func checkWebsocketOrigin(r *http.Request, baseURL string) bool {
+	origin := r.Header.Get("Origin")
+	if origin == "" {
+		return true
+	}
+	u, err := url.Parse(origin)
+	if err != nil || u.Host == "" {
+		return false
+	}
+	if u.Host == r.Host {
+		return true
+	}
+	// Allowlist BaseURL when configured as an absolute URL
+	// (e.g. behind a reverse proxy). BaseURL is normally a path
+	// prefix, in which case same-host check above already applies.
+	if baseURL != "" && strings.Contains(baseURL, "://") {
+		if bu, err := url.Parse(baseURL); err == nil && bu.Host != "" && u.Host == bu.Host {
+			return true
+		}
+	}
+	return false
+}
+
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true
+		}
+		u, err := url.Parse(origin)
+		if err != nil || u.Host == "" {
+			return false
+		}
+		return u.Host == r.Host
+	},
 }
 
 var (
@@ -47,7 +82,18 @@ var commandsHandler = withUser(func(w http.ResponseWriter, r *http.Request, d *d
 		}
 	}
 
-	conn, err := upgrader.Upgrade(w, r, nil)
+	// Fail fast before upgrading: don't hold a websocket when exec is disabled.
+	if !d.server.EnableExec || !d.user.Perm.Execute {
+		return http.StatusForbidden, nil
+	}
+
+	up := upgrader
+	baseURL := d.server.BaseURL
+	up.CheckOrigin = func(r *http.Request) bool {
+		return checkWebsocketOrigin(r, baseURL)
+	}
+
+	conn, err := up.Upgrade(w, r, nil)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -68,15 +114,7 @@ var commandsHandler = withUser(func(w http.ResponseWriter, r *http.Request, d *d
 		}
 	}
 
-	// Fail fast
-	if !d.server.EnableExec || !d.user.Perm.Execute {
-		if err := conn.WriteMessage(websocket.TextMessage, cmdNotAllowed); err != nil {
-			wsErr(conn, r, http.StatusInternalServerError, err)
-		}
-
-		return 0, nil
-	}
-
+	// Fail fast already checked before Upgrade; proceed to command parsing.
 	command, name, err := runner.ParseCommand(d.settings, raw)
 	if err != nil {
 		if err := conn.WriteMessage(websocket.TextMessage, []byte(err.Error())); err != nil {

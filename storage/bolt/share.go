@@ -77,6 +77,22 @@ func (s shareBackend) Delete(hash string) error {
 	return err
 }
 
+func (s shareBackend) DeleteByUser(userID uint) error {
+	var links []share.Link
+	if err := s.db.Select(q.Eq("UserID", userID)).Find(&links); err != nil {
+		if errors.Is(err, storm.ErrNotFound) {
+			return nil
+		}
+		return err
+	}
+
+	var err error
+	for _, link := range links {
+		err = errors.Join(err, s.db.DeleteStruct(&share.Link{Hash: link.Hash}))
+	}
+	return err
+}
+
 func (s shareBackend) DeleteWithPathPrefix(pathPrefix string, userID uint) error {
 	var links []share.Link
 	if err := s.db.Prefix("Path", pathPrefix, &links); err != nil {

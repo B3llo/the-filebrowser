@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,6 +24,49 @@ import (
 	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/spf13/afero"
 )
+
+// trashDir is the per-source trash directory. It is hidden from normal
+// listings, searches, recursive walks, size calculations and archives, but
+// stays directly accessible so the trash UI keeps working.
+const trashDir = "/.Trash"
+
+// isTrashPath reports whether p is the trash directory itself or lives under it.
+func isTrashPath(p string) bool {
+	return p == trashDir || strings.HasPrefix(p, trashDir+"/")
+}
+
+// hideTrash reports whether trash entries must be filtered out of a view
+// rooted at rootPath. Views rooted inside the trash itself (the trash UI)
+// keep their contents.
+func hideTrash(rootPath string) bool {
+	return !isTrashPath(path.Clean("/" + strings.TrimPrefix(rootPath, "/")))
+}
+
+// filterTrashItems drops trash entries from an expanded directory listing,
+// keeping the dir/file counters consistent. Listings of the trash itself
+// are left untouched.
+func filterTrashItems(file *files.FileInfo, rootPath string) {
+	if file == nil || file.Listing == nil || !file.IsDir || !hideTrash(rootPath) {
+		return
+	}
+	kept := make([]*files.FileInfo, 0, len(file.Items))
+	dirs, filesCount := 0, 0
+	for _, item := range file.Items {
+		if isTrashPath(item.Path) {
+			log.Printf("[DEBUG] hiding trash entry from listing: %s", item.Path)
+			continue
+		}
+		kept = append(kept, item)
+		if item.IsDir {
+			dirs++
+		} else {
+			filesCount++
+		}
+	}
+	file.Items = kept
+	file.NumDirs = dirs
+	file.NumFiles = filesCount
+}
 
 var resourceGetHandler = withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
 	effPath := r.URL.Path
@@ -46,6 +90,7 @@ var resourceGetHandler = withUser(func(w http.ResponseWriter, r *http.Request, d
 	encoding := r.Header.Get("X-Encoding")
 	if file.IsDir {
 		file.Sorting = d.user.Sorting
+		filterTrashItems(file, effPath)
 		file.ApplySort()
 		return renderJSON(w, r, file)
 	} else if encoding == "true" {
@@ -62,19 +107,24 @@ var resourceGetHandler = withUser(func(w http.ResponseWriter, r *http.Request, d
 		}
 		defer f.Close()
 
-		data, err := io.ReadAll(f)
-		if err != nil {
-			return http.StatusInternalServerError, err
-		}
-
+		const maxInlineTextBytes = 10 << 20
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.WriteHeader(http.StatusOK)
-		_, err = w.Write(data)
-		return 0, err
+		_, err = io.CopyN(w, f, maxInlineTextBytes+1)
+		if err != nil && !errors.Is(err, io.EOF) {
+			return http.StatusInternalServerError, err
+		}
+		return 0, nil
 	}
 
 	if checksum := r.URL.Query().Get("checksum"); checksum != "" {
-		err := file.Checksum(checksum)
+		err := file.ChecksumWithContext(r.Context(), checksum)
+		if errors.Is(err, context.Canceled) {
+			return 0, nil
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			return http.StatusGatewayTimeout, err
+		}
 		if errors.Is(err, fberrors.ErrInvalidOption) {
 			return http.StatusBadRequest, nil
 		} else if err != nil {
@@ -90,11 +140,12 @@ var resourceGetHandler = withUser(func(w http.ResponseWriter, r *http.Request, d
 
 func resourceDeleteHandler(fileCache FileCache) handleFunc {
 	return withUser(func(_ http.ResponseWriter, r *http.Request, d *data) (int, error) {
-		if r.URL.Path == "/" || !d.user.Perm.Delete {
+		cleaned := cleanUserPath(r.URL.Path)
+		if cleaned == "/" || !d.user.Perm.Delete {
 			return http.StatusForbidden, nil
 		}
 
-		effPath := r.URL.Path
+		effPath := cleaned
 		var g *grants.Grant
 		if rel, gg, ok := tryGrantScope(effPath, d, false); ok {
 			if status, allow := grantWriteStatus(gg); !allow {
@@ -402,9 +453,18 @@ func writeFile(afs afero.Fs, dst string, in io.Reader, fileMode, dirMode fs.File
 	}
 	defer file.Close()
 
-	_, err = io.Copy(file, in)
+	// P1: global upload ceiling (10GB). The HTTP layer cannot use
+	// http.MaxBytesReader here (no w/r in scope), so enforce with a
+	// LimitReader CopyN teto: read at most max+1 bytes and reject overflow.
+	// No per-user quota exists on the user model, so the ceiling doubles
+	// as the quota check.
+	const maxUploadSize int64 = 10 << 30 // 10GB
+	n, err := io.Copy(file, io.LimitReader(in, maxUploadSize+1))
 	if err != nil {
 		return nil, err
+	}
+	if n > maxUploadSize {
+		return nil, fmt.Errorf("upload exceeds maximum size of %d bytes", maxUploadSize)
 	}
 
 	// Sync the file to ensure all data is written to storage.
@@ -560,6 +620,40 @@ func extractArchive(afs afero.Fs, src string, fileMode, dirMode os.FileMode) err
 	})
 }
 
+// Guards for expensive tree walks: cap per-request entries, bound wall time,
+// and expose basic offset/limit pagination. Frontend callers that omit the
+// query params keep receiving a plain JSON array (truncated at the cap).
+const (
+	maxRecursiveEntries  = 10000
+	maxDirSizeEntries    = 10000
+	recursiveWalkTimeout = 30 * time.Second
+	dirSizeWalkTimeout   = 30 * time.Second
+)
+
+var errWalkPageFilled = errors.New("page filled")
+
+// parseOffsetLimit parses ?offset=&limit= for the recursive listing.
+// limit <= 0 means "no explicit limit" (caller caps to maxRecursiveEntries).
+func parseOffsetLimit(r *http.Request) (offset, limit int, err error) {
+	q := r.URL.Query()
+	if s := q.Get("offset"); s != "" {
+		offset, err = strconv.Atoi(s)
+		if err != nil || offset < 0 {
+			return 0, 0, fmt.Errorf("invalid offset: %w", fberrors.ErrInvalidRequestParams)
+		}
+	}
+	if s := q.Get("limit"); s != "" {
+		limit, err = strconv.Atoi(s)
+		if err != nil || limit < 0 {
+			return 0, 0, fmt.Errorf("invalid limit: %w", fberrors.ErrInvalidRequestParams)
+		}
+	}
+	if limit <= 0 || limit > maxRecursiveEntries {
+		limit = maxRecursiveEntries
+	}
+	return offset, limit, nil
+}
+
 // RecursiveEntry is a single file/directory entry returned by the recursive listing endpoint.
 type RecursiveEntry struct {
 	Path    string    `json:"path"`
@@ -590,9 +684,28 @@ var resourceGetRecursiveHandler = withUser(func(w http.ResponseWriter, r *http.R
 		return http.StatusBadRequest, fmt.Errorf("path is not a directory")
 	}
 
-	entries := make([]RecursiveEntry, 0)
+	offset, limit, err := parseOffsetLimit(r)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+	paginated := r.URL.Query().Get("offset") != "" || r.URL.Query().Get("limit") != ""
 
+	// Timeout per request + abort on client disconnect.
+	ctx, cancel := context.WithTimeout(r.Context(), recursiveWalkTimeout)
+	defer cancel()
+
+	entries := make([]RecursiveEntry, 0, min(limit, 1024))
+
+	var matched int64
+	// The flat trash view walks the trash itself; every other recursive
+	// listing skips it.
+	skipTrash := hideTrash(rootPath)
 	err = afero.Walk(d.user.Fs, rootPath, func(fPath string, info os.FileInfo, err error) error {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
 		if err != nil {
 			return nil // skip entries we cannot read
 		}
@@ -602,12 +715,30 @@ var resourceGetRecursiveHandler = withUser(func(w http.ResponseWriter, r *http.R
 			return nil
 		}
 
+		if skipTrash && isTrashPath(fPath) {
+			log.Printf("[DEBUG] skipping trash path in recursive listing: %s", fPath)
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
 		// Respect user rules.
 		if !d.Check(fPath) {
 			if info.IsDir() {
 				return filepath.SkipDir
 			}
 			return nil
+		}
+
+		if matched < int64(offset) {
+			matched++
+			return nil
+		}
+		matched++
+
+		if len(entries) >= limit {
+			return errWalkPageFilled
 		}
 
 		entries = append(entries, RecursiveEntry{
@@ -620,7 +751,27 @@ var resourceGetRecursiveHandler = withUser(func(w http.ResponseWriter, r *http.R
 		return nil
 	})
 	if err != nil {
-		return http.StatusInternalServerError, err
+		switch {
+		case errors.Is(err, errWalkPageFilled):
+			// Page filled: not an error, stop the walk early.
+		case errors.Is(err, context.DeadlineExceeded) || ctx.Err() == context.DeadlineExceeded:
+			return http.StatusGatewayTimeout, fmt.Errorf("recursive listing timed out")
+		case errors.Is(err, context.Canceled) || ctx.Err() == context.Canceled:
+			return 0, nil
+		default:
+			return http.StatusInternalServerError, err
+		}
+	}
+	if ctx.Err() == context.DeadlineExceeded {
+		return http.StatusGatewayTimeout, fmt.Errorf("recursive listing timed out")
+	}
+	if ctx.Err() == context.Canceled {
+		return 0, nil
+	}
+
+	if !paginated && len(entries) >= maxRecursiveEntries {
+		w.Header().Set("X-Truncated", "true")
+		log.Printf("WARNING: recursive listing of %q truncated at %d entries", rootPath, maxRecursiveEntries)
 	}
 
 	return renderJSON(w, r, entries)
@@ -686,11 +837,31 @@ var resourceDirSizeHandler = withUser(func(w http.ResponseWriter, r *http.Reques
 		return http.StatusBadRequest, fmt.Errorf("path is not a directory")
 	}
 
-	var totalSize int64
+	// Timeout per request + abort on client disconnect.
+	ctx, cancel := context.WithTimeout(r.Context(), dirSizeWalkTimeout)
+	defer cancel()
 
+	var totalSize int64
+	var visited int64
+
+	// Dir sizes exclude the trash, unless the walk is rooted inside it.
+	skipTrash := hideTrash(rootPath)
 	err = afero.Walk(d.user.Fs, rootPath, func(fPath string, info os.FileInfo, err error) error {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
 		if err != nil {
 			return nil // skip entries we cannot read
+		}
+
+		if skipTrash && isTrashPath(fPath) && fPath != rootPath {
+			log.Printf("[DEBUG] skipping trash path in dirsize: %s", fPath)
+			if info.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 
 		if !d.Check(fPath) {
@@ -701,12 +872,31 @@ var resourceDirSizeHandler = withUser(func(w http.ResponseWriter, r *http.Reques
 		}
 
 		if !info.IsDir() {
+			visited++
+			if visited > maxDirSizeEntries {
+				return fmt.Errorf("directory too large (>%d entries): %w", maxDirSizeEntries, fberrors.ErrInvalidRequestParams)
+			}
 			totalSize += info.Size()
 		}
 		return nil
 	})
 	if err != nil {
+		switch {
+		case errors.Is(err, context.DeadlineExceeded) || ctx.Err() == context.DeadlineExceeded:
+			return http.StatusGatewayTimeout, fmt.Errorf("dirsize timed out")
+		case errors.Is(err, context.Canceled) || ctx.Err() == context.Canceled:
+			return 0, nil
+		}
+		if errors.Is(err, fberrors.ErrInvalidRequestParams) {
+			return http.StatusRequestEntityTooLarge, err
+		}
 		return http.StatusInternalServerError, err
+	}
+	if ctx.Err() == context.DeadlineExceeded {
+		return http.StatusGatewayTimeout, fmt.Errorf("dirsize timed out")
+	}
+	if ctx.Err() == context.Canceled {
+		return 0, nil
 	}
 
 	return renderJSON(w, r, &DirSizeResponse{Size: totalSize})

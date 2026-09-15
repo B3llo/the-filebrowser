@@ -58,6 +58,18 @@ func (s *Storage) Get() (*Settings, error) {
 		set.DirMode = DefaultDirMode
 	}
 
+	// Databases predating the trash settings unmarshal to the zero value.
+	// Enabled defaults to true; RetentionDays 0 is a valid "keep forever",
+	// so only the untouched zero struct gets the full defaults. An explicit
+	// disabled+forever combination is meaningless (retention only matters
+	// when the trash is enabled) and is treated as "never configured".
+	if set.Trash == (Trash{}) {
+		set.Trash = Trash{
+			Enabled:       DefaultTrashEnabled,
+			RetentionDays: DefaultTrashRetentionDays,
+		}
+	}
+
 	return set, nil
 }
 
@@ -73,6 +85,10 @@ var defaultEvents = []string{
 func (s *Storage) Save(set *Settings) error {
 	if len(set.Key) == 0 {
 		return fberrors.ErrEmptyKey
+	}
+
+	if err := set.Trash.Validate(); err != nil {
+		return err
 	}
 
 	if set.Defaults.Locale == "" {

@@ -452,6 +452,16 @@
   font-size: 12px;
   color: var(--dim);
   padding: 2px 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  border-radius: 4px;
+}
+
+.fb-details-access-more:hover {
+  color: var(--text);
+  background: var(--hover);
 }
 
 /* --- Multi-select summary --- */

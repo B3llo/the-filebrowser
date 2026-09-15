@@ -112,26 +112,40 @@ var sharePostHandler = withPermShare(func(w http.ResponseWriter, r *http.Request
 	var s *share.Link
 	var body share.CreateBody
 	if r.Body != nil {
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			return http.StatusBadRequest, fmt.Errorf("failed to decode body: %w", err)
 		}
 		defer r.Body.Close()
 	}
 
-	bytes := make([]byte, 6)
-	_, err := rand.Read(bytes)
-	if err != nil {
-		return http.StatusInternalServerError, err
-	}
+	var str string
+	for i := 0; i < 5; i++ {
+		bytes := make([]byte, 16)
+		_, err := rand.Read(bytes)
+		if err != nil {
+			return http.StatusInternalServerError, err
+		}
 
-	str := base64.URLEncoding.EncodeToString(bytes)
+		candidate := base64.URLEncoding.EncodeToString(bytes)
+		if _, err := d.store.Share.GetByHash(candidate); err != nil {
+			str = candidate
+			break
+		}
+	}
+	if str == "" {
+		return http.StatusInternalServerError, fmt.Errorf("could not generate unique share hash")
+	}
 
 	var expire int64 = 0
 
-	if body.Expires != "" {
+	if body.Expires != "" && body.Expires != "0" {
 		num, err := strconv.Atoi(body.Expires)
 		if err != nil {
-			return http.StatusInternalServerError, err
+			return http.StatusBadRequest, fmt.Errorf("invalid expires value: %w", err)
+		}
+		if num < 0 {
+			return http.StatusBadRequest, fmt.Errorf("expires must not be negative")
 		}
 
 		var add time.Duration

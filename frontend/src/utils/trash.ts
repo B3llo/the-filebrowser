@@ -18,6 +18,40 @@ export const TRASH_FILES_DIR = "files";
 export const TRASH_INFO_DIR = "info";
 export const TRASH_INFO_EXT = ".trashinfo";
 
+/** Default when the backend predates trash settings (missing `trash` object). */
+export const DEFAULT_TRASH_ENABLED = true;
+/** 0 = keep forever. */
+export const DEFAULT_TRASH_RETENTION_DAYS = 30;
+export const MAX_TRASH_RETENTION_DAYS = 3650;
+
+/** Subset of ISettings.read by the trash UI: only the trash config. */
+export interface TrashConfig {
+  enabled?: boolean;
+  retentionDays?: number;
+}
+
+/**
+ * Whether the trash is enabled. Missing config means "enabled" so old
+ * backends keep showing the trash until an admin explicitly disables it.
+ */
+export function isTrashEnabled(
+  config?: TrashConfig | null
+): boolean {
+  if (!config) return DEFAULT_TRASH_ENABLED;
+  return config.enabled ?? DEFAULT_TRASH_ENABLED;
+}
+
+/** Retention days clamped to [0, MAX]; missing/invalid falls back to default. */
+export function trashRetentionDays(
+  config?: TrashConfig | null
+): number {
+  const v = config?.retentionDays;
+  if (typeof v !== "number" || !Number.isFinite(v)) {
+    return DEFAULT_TRASH_RETENTION_DAYS;
+  }
+  return Math.min(Math.max(Math.floor(v), 0), MAX_TRASH_RETENTION_DAYS);
+}
+
 /** Source-relative prefix of the mirrored tree, e.g. "/.Trash/files". */
 export const TRASH_FILES_PREFIX = `/${TRASH_DIR_NAME}/${TRASH_FILES_DIR}`;
 /** Source-relative prefix of the legacy flat trash, e.g. "/.Trash". */

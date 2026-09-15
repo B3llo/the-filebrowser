@@ -19,7 +19,7 @@ import Trash from "@/views/Trash.vue";
 import Errors from "@/views/Errors.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useSourceStore } from "@/stores/source";
-import { baseURL, name } from "@/utils/constants";
+import { baseURL, name, trashEnabled } from "@/utils/constants";
 import i18n from "@/i18n";
 import { recaptcha, loginPage } from "@/utils/constants";
 import { login, validateLogin } from "@/utils/auth";
@@ -291,6 +291,12 @@ router.beforeResolve(async (to, from, next) => {
         query: { redirect: to.fullPath },
       });
 
+      return;
+    }
+
+    // Trash disabled globally: keep the route unreachable.
+    if (!trashEnabled && to.path === "/trash") {
+      next({ path: `${sourceStore.filesBase}/` });
       return;
     }
 

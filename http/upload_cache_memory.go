@@ -62,6 +62,9 @@ func (c *memoryUploadCache) GetLength(filePath string) (int64, error) {
 	if item == nil {
 		return 0, fmt.Errorf("no active upload found for the given path")
 	}
+	// Renew the 3min TTL on every chunk/HEAD so active uploads survive
+	// between chunks (mirrors redisUploadCache.GetLength Touch).
+	c.cache.Touch(filePath)
 	return item.Value(), nil
 }
 

@@ -6,11 +6,27 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	gopath "path"
 	"strings"
 
 	libErrors "github.com/B3llo/the-filebrowser/errors"
 	imgErrors "github.com/B3llo/the-filebrowser/img"
 )
+
+// cleanUserPath normalizes a request path so root guards cannot be bypassed
+// with "/.", "/..", "//" or "/sub/..". It always returns a path starting
+// with "/". Callers must compare the result against "/" — never the raw
+// r.URL.Path — before destructive operations.
+func cleanUserPath(p string) string {
+	if p == "" {
+		return "/"
+	}
+	cleaned := gopath.Clean("/" + strings.TrimPrefix(p, "/"))
+	if !strings.HasPrefix(cleaned, "/") {
+		return "/" + cleaned
+	}
+	return cleaned
+}
 
 func renderJSON(w http.ResponseWriter, _ *http.Request, data interface{}) (int, error) {
 	marsh, err := json.Marshal(data)

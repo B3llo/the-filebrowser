@@ -1,7 +1,7 @@
 <template>
   <div>
     <header-bar showLogo>
-      <title />
+      <span class="fb-preview-name">{{ t('files.sharedTitle', 'Shared') }}</span>
 
       <action
         v-if="fileStore.selectedCount"

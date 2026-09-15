@@ -2,12 +2,19 @@ package diskcache
 
 import (
 	"context"
+	"log"
+	"sync"
 )
+
+var noopWarnOnce sync.Once
 
 type NoOp struct {
 }
 
 func NewNoOp() *NoOp {
+	noopWarnOnce.Do(func() {
+		log.Println("WARNING: file cache disabled (cacheDir empty) — thumbnails will be regenerated on every request")
+	})
 	return &NoOp{}
 }
 

@@ -271,8 +271,13 @@ main .spinner .bounce2 {
   color: var(--text);
 }
 
-#previewer header > title {
+#previewer header > title,
+#previewer header > .fb-preview-name,
+#editor-container header > .fb-preview-name {
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 @media (min-width: 737px) {

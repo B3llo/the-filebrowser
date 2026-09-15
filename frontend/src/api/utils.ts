@@ -50,6 +50,7 @@ export async function fetchURL(
         "X-Auth": authStore.jwt,
         ...headers,
       },
+      credentials: "include",
       ...rest,
     });
   } catch (e) {
@@ -61,7 +62,7 @@ export async function fetchURL(
   }
 
   if (auth && res.headers.get("X-Renew-Token") === "true") {
-    await renew(authStore.jwt);
+    await renew();
   }
 
   if (res.status < 200 || res.status > 299) {
@@ -72,7 +73,7 @@ export async function fetchURL(
     );
 
     if (auth && res.status == 401 && sentToken) {
-      logout();
+      await logout();
     }
 
     throw error;

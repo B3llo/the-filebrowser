@@ -83,10 +83,10 @@ export function detectLocale() {
       locale = "fr";
       break;
     case /^pt-br\b/.test(locale):
+    case /^pt\b/.test(locale):
       locale = "pt-br";
       break;
     case /^pt-pt\b/.test(locale):
-    case /^pt\b/.test(locale):
       locale = "pt-pt";
       break;
     case /^ja\b/.test(locale):
@@ -165,7 +165,12 @@ export const rtlLanguages = ["he", "ar"];
 
 export const i18n = createI18n({
   locale: detectLocale(),
-  fallbackLocale: "en",
+  fallbackLocale: {
+    pt: ["pt-br", "en"],
+    "pt-br": ["pt", "en"],
+    "pt-pt": ["pt-br", "en"],
+    default: ["en"],
+  },
   messages,
   // expose i18n.global for outside components
   legacy: true,

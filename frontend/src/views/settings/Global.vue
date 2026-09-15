@@ -68,6 +68,37 @@
 
           <div class="fb-settings-divider"></div>
 
+          <h3>{{ t("settings.trash") }}</h3>
+
+          <div class="fb-settings-checkbox-list">
+            <div class="fb-settings-checkbox-item">
+              <input
+                type="checkbox"
+                v-model="settings.trash.enabled"
+                id="trashEnabled"
+              />
+              <label for="trashEnabled">{{
+                t("settings.trashEnabled")
+              }}</label>
+            </div>
+          </div>
+
+          <div class="fb-settings-field" style="margin-top: 12px">
+            <label class="fb-settings-field-label" for="trashRetentionDays">{{
+              t("settings.trashRetentionDays")
+            }}</label>
+            <vue-number-input
+              controls
+              v-model.number="settings.trash.retentionDays"
+              id="trashRetentionDays"
+              :min="0"
+              :max="3650"
+            />
+            <p class="small">{{ t("settings.trashRetentionHelp") }}</p>
+          </div>
+
+          <div class="fb-settings-divider"></div>
+
           <h3>{{ t("settings.rules") }}</h3>
           <p class="small">{{ t("settings.globalRules") }}</p>
           <rules v-model:rules="settings.rules" />
@@ -432,6 +463,10 @@ onMounted(async () => {
   try {
     layoutStore.loading = true;
     const original: ISettings = await api.get();
+    // Backends predating trash settings omit the object: fall back to defaults.
+    if (!original.trash) {
+      original.trash = { enabled: true, retentionDays: 30 };
+    }
     const newSettings: ISettings = { ...original, commands: {} };
 
     const keys = Object.keys(original.commands) as Array<keyof SettingsCommand>;

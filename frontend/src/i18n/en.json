@@ -68,7 +68,34 @@
     "overrideAll": "Replace all files in destination folder",
     "skipAll": "Skip all conflicting files",
     "renameAll": "Rename all files (create a copy)",
-    "singleDecision": "Decide for each conflicting file"
+    "singleDecision": "Decide for each conflicting file",
+    "retry": "Retry",
+    "showMore": "Show more",
+    "showLess": "Show less"
+  },
+  "details": {
+    "title": "Details",
+    "close": "Close details panel",
+    "empty": "Select a file or folder to see its details",
+    "open": "Open",
+    "download": "Download",
+    "share": "Share",
+    "kind": "Kind",
+    "kindFolder": "Folder",
+    "kindFile": "File",
+    "size": "Size",
+    "location": "Location",
+    "modified": "Modified",
+    "manage": "Manage",
+    "accessTitle": "Who has access",
+    "private": "Private to you",
+    "loadingAccess": "Loading…",
+    "sharedWithOne": "Shared with 1 person",
+    "sharedWithMany": "Shared with {count} people",
+    "viewer": "Viewer",
+    "editor": "Editor",
+    "moreAccess": "+{count} more",
+    "lessAccess": "Show less"
   },
   "contextMenu": {
     "color": "Color"
@@ -147,6 +174,9 @@
     "sortBySize": "Sort by size",
     "noPreview": "Preview is not available for this file.",
     "officeLoadFailed": "Unable to load document preview. Please download to view.",
+    "officeTooLarge": "This document is larger than {size} and can't be previewed. Please download to view.",
+    "previewLoadFailed": "Unable to load preview. Please try again.",
+    "partialSelection": "Only the first {selected} of {total} items were selected. Scroll to load more, then press Ctrl+A again.",
     "csvTooLarge": "CSV file is too large for preview (>5MB). Please download to view.",
     "csvLoadFailed": "Failed to load CSV file.",
     "showingRows": "Showing {count} row(s)",
@@ -376,7 +406,11 @@
     "userUpdated": "User updated!",
     "username": "Username",
     "users": "Users",
-    "currentPassword": "Your Current Password"
+    "currentPassword": "Your Current Password",
+    "trash": "Trash",
+    "trashEnabled": "Enable trash",
+    "trashRetentionDays": "Trash retention (days)",
+    "trashRetentionHelp": "Days trashed items are kept before they may be permanently deleted. 0 keeps them forever (max 3650)."
   },
   "sidebar": {
     "comingSoon": "Coming soon",
@@ -428,7 +462,8 @@
     "originalLocation": "Original location",
     "treeView": "Folders",
     "flatView": "All items",
-    "groupedFolders": "Folders with many items"
+    "groupedFolders": "Folders with many items",
+    "disabled": "Trash is disabled. Ask an administrator to enable it in Settings."
   },
   "time": {
     "justNow": "Just now",

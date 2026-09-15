@@ -9,7 +9,7 @@
   >
     <header-bar>
       <span class="fb-preview-type">{{ typeLabel }}</span>
-      <title class="fb-preview-name">{{ name }}</title>
+      <span class="fb-preview-name">{{ name }}</span>
 
       <template #actions>
         <action
@@ -82,7 +82,13 @@
       </template>
     </header-bar>
 
-    <div class="loading delayed" v-if="layoutStore.loading">
+    <div
+      class="loading delayed"
+      v-if="layoutStore.loading"
+      role="status"
+      aria-live="polite"
+      :aria-label="t('files.loading')"
+    >
       <div class="spinner">
         <div class="bounce1"></div>
         <div class="bounce2"></div>
@@ -121,6 +127,25 @@
           </div>
         </div>
         <CsvViewer v-else-if="isCsv" :content="csvContent" :error="csvError" />
+        <div v-else-if="textLoadError" class="info">
+          <div class="title">
+            <i class="material-icons">feedback</i>
+            {{ $t("files.previewLoadFailed") }}
+          </div>
+          <div>
+            <button class="button button--flat" @click="updatePreview">
+              <div>
+                <i class="material-icons">refresh</i>{{ $t("buttons.retry") }}
+              </div>
+            </button>
+            <a target="_blank" :href="downloadUrl" class="button button--flat">
+              <div>
+                <i class="material-icons">file_download</i
+                >{{ $t("buttons.download") }}
+              </div>
+            </a>
+          </div>
+        </div>
         <div
           v-else-if="isMarkdown"
           class="md_preview markdown-body"
@@ -176,6 +201,20 @@
           :filename="name"
           :download-url="downloadUrl"
         />
+        <div v-else-if="isOfficeTooLarge" class="info">
+          <div class="title">
+            <i class="material-icons">feedback</i>
+            {{ $t("files.officeTooLarge", { size: "50MB" }) }}
+          </div>
+          <div>
+            <a target="_blank" :href="downloadUrl" class="button button--flat">
+              <div>
+                <i class="material-icons">file_download</i
+                >{{ $t("buttons.download") }}
+              </div>
+            </a>
+          </div>
+        </div>
         <div v-else-if="fileStore.req?.type == 'blob'" class="info">
           <div class="title">
             <i class="material-icons">feedback</i>
@@ -205,20 +244,24 @@
     </template>
 
     <button
+      v-if="hasPrevious"
       @click="prev"
       @mouseover="hoverNav = true"
       @mouseleave="hoverNav = false"
-      :class="{ hidden: !hasPrevious || !showNav }"
+      :class="{ hidden: !showNav }"
+      :tabindex="showNav ? 0 : -1"
       :aria-label="$t('buttons.previous')"
       :title="$t('buttons.previous')"
     >
       <i class="material-icons">chevron_left</i>
     </button>
     <button
+      v-if="hasNext"
       @click="next"
       @mouseover="hoverNav = true"
       @mouseleave="hoverNav = false"
-      :class="{ hidden: !hasNext || !showNav }"
+      :class="{ hidden: !showNav }"
+      :tabindex="showNav ? 0 : -1"
       :aria-label="$t('buttons.next')"
       :title="$t('buttons.next')"
     >
@@ -485,6 +528,17 @@ const isSheet = computed(() => {
   return SHEET_EXTS.has(ext) && (fileStore.req?.size ?? 0) <= OFFICE_MAX_SIZE;
 });
 
+// Office file that exceeds the in-browser parse cap: explain why there is no
+// preview instead of falling through to the generic "no preview" message.
+const isOfficeTooLarge = computed(() => {
+  const ext = fileStore.req?.extension.toLowerCase() || "";
+  const isOfficeExt = DOCX_EXTS.has(ext) || SHEET_EXTS.has(ext);
+  return isOfficeExt && (fileStore.req?.size ?? 0) > OFFICE_MAX_SIZE;
+});
+
+// Inline load failure for markdown/code/text (render/parse errors), with retry.
+const textLoadError = ref(false);
+
 // Short type label shown as a chip in the unified preview toolbar (#13).
 const typeLabel = computed(() => {
   const ext = fileStore.req?.extension.toLowerCase() || "";
@@ -693,6 +747,8 @@ const updatePreview = async () => {
     autoPlay.value = false;
   }
 
+  textLoadError.value = false;
+
   const dirs = route.path.split("/");
   name.value = decodeURIComponent(dirs[dirs.length - 1]);
 
@@ -724,6 +780,7 @@ const updatePreview = async () => {
   // Load markdown content if it's a markdown file
   if (isMarkdown.value && fileStore.req) {
     markdownContent.value = "";
+    textLoadError.value = false;
     const raw =
       fileStore.req.rawContent != null
         ? typeof fileStore.req.rawContent === "string"
@@ -736,31 +793,44 @@ const updatePreview = async () => {
     } catch (e) {
       console.error("Failed to render markdown:", e);
       markdownContent.value = "";
+      textLoadError.value = true;
     }
   }
 
   // Load code content if it's a code file
   if (isCode.value && fileStore.req) {
     codeContent.value = "";
-    const raw =
-      fileStore.req.rawContent != null
-        ? typeof fileStore.req.rawContent === "string"
-          ? fileStore.req.rawContent
-          : new TextDecoder().decode(fileStore.req.rawContent)
-        : (fileStore.req.content ?? "");
-    codeContent.value = raw;
+    textLoadError.value = false;
+    try {
+      const raw =
+        fileStore.req.rawContent != null
+          ? typeof fileStore.req.rawContent === "string"
+            ? fileStore.req.rawContent
+            : new TextDecoder().decode(fileStore.req.rawContent)
+          : (fileStore.req.content ?? "");
+      codeContent.value = raw;
+    } catch (e) {
+      console.error("Failed to load code preview:", e);
+      textLoadError.value = true;
+    }
   }
 
   // Load text content if it's a text file
   if (isText.value && fileStore.req) {
     textContent.value = "";
-    const raw =
-      fileStore.req.rawContent != null
-        ? typeof fileStore.req.rawContent === "string"
-          ? fileStore.req.rawContent
-          : new TextDecoder().decode(fileStore.req.rawContent)
-        : (fileStore.req.content ?? "");
-    textContent.value = raw;
+    textLoadError.value = false;
+    try {
+      const raw =
+        fileStore.req.rawContent != null
+          ? typeof fileStore.req.rawContent === "string"
+            ? fileStore.req.rawContent
+            : new TextDecoder().decode(fileStore.req.rawContent)
+          : (fileStore.req.content ?? "");
+      textContent.value = raw;
+    } catch (e) {
+      console.error("Failed to load text preview:", e);
+      textLoadError.value = true;
+    }
   }
 
   if (!listing.value) {

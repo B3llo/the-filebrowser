@@ -6,13 +6,42 @@ import { authMethod, baseURL, noAuth, logoutPage } from "./constants";
 import { StatusError } from "@/api/utils";
 import { setSafeTimeout } from "@/api/utils";
 
+// Only same-origin relative paths are allowed as logout destinations.
+// Rejects protocol-relative ("//evil"), schemes ("http:", "javascript:"),
+// backslashes and anything that escapes the origin.
+export function isSafeLogoutPage(page: unknown): page is string {
+  if (typeof page !== "string" || page === "") return false;
+  if (!page.startsWith("/") || page.startsWith("//")) return false;
+  if (page.includes("\\") || page.includes(":") || /[\s<>"]/.test(page))
+    return false;
+  if (/^javascript:/i.test(page)) return false;
+  try {
+    const url = new URL(page, window.location.origin);
+    if (url.origin !== window.location.origin) return false;
+    if (url.protocol !== "http:" && url.protocol !== "https:")
+      return false;
+  } catch {
+    return false;
+  }
+  return true;
+}
+
+function safeLogoutPage(): string {
+  return isSafeLogoutPage(logoutPage) ? logoutPage : "/login";
+}
+
 export function parseToken(token: string) {
   // falsy or malformed jwt will throw InvalidTokenError
   const data = jwtDecode<JwtPayload & { user: IUser }>(token);
 
-  document.cookie = `auth=${token}; Path=/; SameSite=Strict;`;
-
-  localStorage.setItem("jwt", token);
+  // The JWT lives only in memory (pinia). The server also sets an HttpOnly
+  // refresh cookie — never persist the token in localStorage or a readable
+  // document.cookie (XSS exfiltration). Remove legacy copies if present.
+  try {
+    localStorage.removeItem("jwt");
+  } catch {
+    /* storage unavailable */
+  }
 
   const authStore = useAuthStore();
   authStore.jwt = token;
@@ -32,20 +61,14 @@ export function parseToken(token: string) {
   const timeout = expiresAt.getTime() - Date.now();
   authStore.setLogoutTimer(
     setSafeTimeout(() => {
-      logout("inactivity");
+      void logout("inactivity");
     }, timeout)
   );
 }
 
 export async function validateLogin() {
-  try {
-    if (localStorage.getItem("jwt")) {
-      await renew(<string>localStorage.getItem("jwt"));
-    }
-  } catch (error) {
-    console.warn("Invalid JWT token in storage");
-    throw error;
-  }
+  // Session restore goes through the HttpOnly cookie — no localStorage.
+  await renew();
 }
 
 export async function login(
@@ -61,6 +84,7 @@ export async function login(
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
+    credentials: "include",
   });
 
   const body = await res.text();
@@ -75,12 +99,16 @@ export async function login(
   }
 }
 
-export async function renew(jwt: string) {
+export async function renew(jwt?: string) {
+  const authStore = useAuthStore();
+  const token = jwt ?? authStore.jwt;
+
   const res = await fetch(`${baseURL}/api/renew`, {
     method: "POST",
     headers: {
-      "X-Auth": jwt,
+      ...(token ? { "X-Auth": token } : {}),
     },
+    credentials: "include",
   });
 
   const body = await res.text();
@@ -115,27 +143,54 @@ export async function signup(username: string, password: string) {
   }
 }
 
-export function logout(reason?: string) {
-  document.cookie = "auth=; Max-Age=0; Path=/; SameSite=Strict;";
-
+export async function logout(reason?: string) {
   const authStore = useAuthStore();
+  const timer = authStore.logoutTimer;
+
+  // Best effort: invalidate the server session (LastUpdate bump + cookie
+  // clear) before dropping local state.
+  try {
+    await fetch(`${baseURL}/api/logout`, {
+      method: "POST",
+      headers: {
+        ...(authStore.jwt ? { "X-Auth": authStore.jwt } : {}),
+      },
+      credentials: "include",
+    });
+  } catch {
+    /* offline — still clear local state */
+  }
+
+  if (timer) {
+    clearTimeout(timer);
+  }
+
   authStore.clearUser();
 
-  localStorage.setItem("jwt", "");
+  // Drop any legacy token copies from older versions.
+  try {
+    localStorage.removeItem("jwt");
+  } catch {
+    /* storage unavailable */
+  }
+
   if (noAuth) {
     window.location.reload();
-  } else if (logoutPage !== "/login") {
-    document.location.href = `${logoutPage}`;
   } else {
-    if (typeof reason === "string" && reason.trim() !== "") {
-      router.push({
-        path: "/login",
-        query: { "logout-reason": reason },
-      });
+    const page = safeLogoutPage();
+    if (page !== "/login") {
+      document.location.href = page;
     } else {
-      router.push({
-        path: "/login",
-      });
+      if (typeof reason === "string" && reason.trim() !== "") {
+        await router.push({
+          path: "/login",
+          query: { "logout-reason": reason },
+        });
+      } else {
+        await router.push({
+          path: "/login",
+        });
+      }
     }
   }
 }

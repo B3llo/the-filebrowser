@@ -30,6 +30,17 @@ func (s *Settings) MakeUserDir(username, userScope, serverRoot string) (string, 
 		userScope = path.Join(s.UserHomeBasePath, username)
 	}
 
+	// An empty scope resolves to the server root via path.Join below.
+	// Explicit "/" is rejected to force callers to pass "." for root,
+	// keeping empty (legacy defaults) working with a warning.
+	if userScope == "/" {
+		return "", errors.New("invalid user scope: must not be \"/\", use \".\" for root")
+	}
+	if userScope == "" {
+		log.Printf("warning: empty user scope, defaulting to server root; set an explicit scope in settings")
+		userScope = "."
+	}
+
 	userScope = path.Join("/", userScope)
 
 	fs := afero.NewBasePathFs(afero.NewOsFs(), serverRoot)

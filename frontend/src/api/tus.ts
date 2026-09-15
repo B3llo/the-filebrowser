@@ -37,6 +37,14 @@ export async function upload(
       headers: {
         "X-Auth": authStore.jwt,
       },
+      onBeforeRequest: function (req) {
+        // Send the HttpOnly auth cookie alongside the in-memory X-Auth
+        // header so resumable uploads survive a page reload.
+        const xhr = req.getUnderlyingObject();
+        if (xhr && "withCredentials" in xhr) {
+          xhr.withCredentials = true;
+        }
+      },
       onShouldRetry: function (err) {
         const status = err.originalResponse
           ? err.originalResponse.getStatus()

@@ -7,6 +7,9 @@
         <div class="bounce3"></div>
       </div>
     </div>
+    <div v-else-if="trashDisabled" class="fb-trash-disabled">
+      <p>{{ t("trash.disabled") }}</p>
+    </div>
     <template v-else>
       <div class="fb-content-row">
         <div class="fb-content-main">
@@ -61,11 +64,12 @@
 <script setup lang="ts">
 import { ref, inject, onMounted, onUnmounted, watch, computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { files as api } from "@/api";
+import { files as api, settings as settingsApi } from "@/api";
 import { fetchURL, removePrefix, StatusError } from "@/api/utils";
 import { useSourceStore } from "@/stores/source";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
+import { trashEnabled as bootTrashEnabled } from "@/utils/constants";
 import FileListing from "@/views/files/FileListing.vue";
 import DetailsPanel from "@/components/DetailsPanel.vue";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
@@ -74,6 +78,7 @@ import {
   buildFlatTrashResource,
   cleanTrashName,
   isMirroredTrashPath,
+  isTrashEnabled,
   legacyTrashRoot,
   mergeTrashResources,
   originalPathFromTrash,
@@ -93,6 +98,9 @@ const fileStore = useFileStore();
 const layoutStore = useLayoutStore();
 
 const loading = ref(false);
+// Bootstrap default (public index.html flag); refined via /api/settings
+// when the user is allowed to read it (admins).
+const trashDisabled = ref(!bootTrashEnabled);
 const activeSourceId = ref(String(sourceStore.activeId));
 const trashSubPath = ref("");
 const flatView = ref(false);
@@ -134,7 +142,7 @@ const breadcrumbSegments = computed(() => {
   return segs;
 });
 
-onMounted(() => loadTrash());
+onMounted(() => initTrash());
 onUnmounted(() => {
   fileStore.updateRequest(null);
 });
@@ -156,7 +164,19 @@ const setFlatView = (value: boolean) => {
   loadTrash();
 };
 
+/** Refresh the enabled flag (admins), then load unless disabled. */
+const initTrash = async () => {
+  try {
+    const s = await settingsApi.get();
+    trashDisabled.value = !isTrashEnabled(s.trash);
+  } catch {
+    // Non-admins cannot read settings: keep the bootstrap value.
+  }
+  if (!trashDisabled.value) await loadTrash();
+};
+
 const loadTrash = async () => {
+  if (trashDisabled.value) return;
   loading.value = true;
   fileStore.updateRequest(null);
   try {

@@ -119,6 +119,15 @@ func getFiles(d *data, path, commonPath string) ([]archives.FileInfo, error) {
 		return nil, nil
 	}
 
+	// Archives exclude the trash, unless the download itself is rooted
+	// inside it (e.g. downloading trashed items for inspection).
+	slashPath := filepath.ToSlash(path)
+	slashCommon := filepath.ToSlash(commonPath)
+	if isTrashPath(slashPath) && !isTrashPath(slashCommon) {
+		log.Printf("[DEBUG] skipping trash path in archive: %s", slashPath)
+		return nil, nil
+	}
+
 	info, err := d.user.Fs.Stat(path)
 	if err != nil {
 		return nil, err
@@ -228,7 +237,7 @@ func rawFileHandler(w http.ResponseWriter, r *http.Request, file *files.FileInfo
 	defer fd.Close()
 
 	setContentDisposition(w, r, file)
-	w.Header().Add("Content-Security-Policy", `script-src 'none';`)
+	w.Header().Set("Content-Security-Policy", `script-src 'none'; sandbox`)
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Cache-Control", "private")
 	http.ServeContent(w, r, file.Name, file.ModTime, fd)

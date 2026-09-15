@@ -2,10 +2,10 @@
   <div class="fb-details-panel fb-scroll">
     <!-- Sticky header -->
     <div class="fb-details-header">
-      <span class="fb-details-title">Details</span>
+      <span class="fb-details-title">{{ t("details.title") }}</span>
       <button
         class="fb-details-close"
-        aria-label="Close"
+        :aria-label="t('details.close')"
         @click="layoutStore.toggleDetails()"
       >
         <FbIcon name="x" size="16px" />
@@ -16,7 +16,7 @@
     <div v-if="!selectedItem && !multiSelected" class="fb-details-empty">
       <FbIcon name="info" size="38px" />
       <p class="fb-details-empty-sub">
-        Select a file or folder to see its details
+        {{ t("details.empty") }}
       </p>
     </div>
 
@@ -144,15 +144,15 @@
       <div class="fb-details-actions">
         <button class="fb-details-act" @click="openItem">
           <FbIcon name="open" size="16px" />
-          <span>Open</span>
+          <span>{{ t("details.open") }}</span>
         </button>
         <button class="fb-details-act" @click="downloadItem">
           <FbIcon name="download" size="16px" />
-          <span>Download</span>
+          <span>{{ t("details.download") }}</span>
         </button>
         <button class="fb-details-act" @click="shareItem">
           <FbIcon name="share" size="16px" />
-          <span>Share</span>
+          <span>{{ t("details.share") }}</span>
         </button>
       </div>
 
@@ -162,15 +162,15 @@
       <!-- Metadata rows -->
       <div class="fb-details-meta">
         <div class="fb-details-meta-row">
-          <span class="fb-details-meta-key">Kind</span>
+          <span class="fb-details-meta-key">{{ t("details.kind") }}</span>
           <span class="fb-details-meta-val">{{ kindLabel }}</span>
         </div>
         <div class="fb-details-meta-row">
-          <span class="fb-details-meta-key">Size</span>
+          <span class="fb-details-meta-key">{{ t("details.size") }}</span>
           <span class="fb-details-meta-val">{{ formattedSize }}</span>
         </div>
         <div class="fb-details-meta-row">
-          <span class="fb-details-meta-key">Location</span>
+          <span class="fb-details-meta-key">{{ t("details.location") }}</span>
           <span class="fb-details-meta-val">{{
             isTrashContext ? trashOriginalLocation : location
           }}</span>
@@ -180,42 +180,26 @@
           <span class="fb-details-meta-val">{{ formattedModified }}</span>
         </div>
         <div class="fb-details-meta-row">
-          <span class="fb-details-meta-key">Modified</span>
+          <span class="fb-details-meta-key">{{ t("details.modified") }}</span>
           <span class="fb-details-meta-val">{{ formattedModified }}</span>
         </div>
-        <div class="fb-details-meta-row">
-          <span class="fb-details-meta-key">Created</span>
-          <span class="fb-details-meta-val">{{ formattedCreated }}</span>
-        </div>
-      </div>
-
-      <!-- Separator -->
-      <div class="fb-details-sep" />
-
-      <!-- Tags section -->
-      <div class="fb-details-section-title">Tags</div>
-      <div class="fb-details-tags">
-        <span v-for="tag in itemTags" :key="tag" class="fb-details-tag">
-          {{ tag }}
-        </span>
-        <button class="fb-details-tag-add">+ Add</button>
       </div>
 
       <!-- Separator -->
       <div class="fb-details-sep" />
 
       <!-- Who has access -->
-      <div class="fb-details-section-title">Who has access</div>
+      <div class="fb-details-section-title">{{ t("details.accessTitle") }}</div>
       <div class="fb-details-access">
         <AvatarBadge :user="authStore.user" :size="30" />
         <div class="fb-details-access-info">{{ accessLabel }}</div>
         <button class="fb-details-access-manage" @click="manageAccess">
-          Manage
+          {{ t("details.manage") }}
         </button>
       </div>
       <div v-if="accessGrants.length > 0" class="fb-details-access-list">
         <div
-          v-for="g in accessGrants.slice(0, 5)"
+          v-for="g in visibleAccessGrants"
           :key="g.id"
           class="fb-details-access-row"
         >
@@ -223,12 +207,23 @@
             g.granteeUsername || `#${g.granteeID}`
           }}</span>
           <span class="fb-details-access-role">{{
-            g.role === "editor" ? "Editor" : "Viewer"
+            g.role === "editor" ? t("details.editor") : t("details.viewer")
           }}</span>
         </div>
-        <div v-if="accessGrants.length > 5" class="fb-details-access-more">
-          +{{ accessGrants.length - 5 }} more
-        </div>
+        <button
+          v-if="accessGrants.length > 5"
+          class="fb-details-access-more"
+          :aria-expanded="showAllAccess"
+          @click="showAllAccess = !showAllAccess"
+        >
+          {{
+            showAllAccess
+              ? t("details.lessAccess")
+              : t("details.moreAccess", {
+                  count: accessGrants.length - 5,
+                })
+          }}
+        </button>
       </div>
     </div>
   </div>
@@ -472,7 +467,8 @@ const extLabelText = computed(() => {
 });
 
 const kindLabel = computed(() => {
-  if (!selectedItem.value) return "File";
+  if (!selectedItem.value) return t("details.kindFile");
+  if (selectedItem.value.isDir) return t("details.kindFolder");
   return fileTypeLabel({
     isDir: selectedItem.value.isDir,
     type: selectedItem.value.type,
@@ -528,12 +524,6 @@ const formattedModified = computed(() => {
   return dayjs(selectedItem.value.modified).fromNow();
 });
 
-const formattedCreated = computed(() => {
-  if (!selectedItem.value) return "";
-  // created is not available from API; show modified + 30 days as approximation
-  return dayjs(selectedItem.value.modified).add(30, "day").fromNow();
-});
-
 const location = computed(() => {
   if (isTrashContext.value) return trashOriginalLocation.value;
   if (!req.value) return "/";
@@ -559,10 +549,8 @@ const trashOriginalLocation = computed(() => {
   return "/";
 });
 
-const itemTags = computed((): string[] => {
-  // Tags not yet available from API
-  return [];
-});
+// Tags are not yet available from the API, so the section stays hidden
+// until a backend exists (no dead "+ Add" button).
 
 const openItem = () => {
   if (!selectedItem.value) return;
@@ -588,12 +576,19 @@ const manageAccess = () => {
 // the Share prompt). Owners see their outgoing grants; grantees see received.
 const accessGrants = ref<Grant[]>([]);
 const accessLoading = ref(false);
+const showAllAccess = ref(false);
+
+const visibleAccessGrants = computed(() =>
+  showAllAccess.value ? accessGrants.value : accessGrants.value.slice(0, 5)
+);
 
 const accessLabel = computed(() => {
-  if (accessLoading.value) return "Loading…";
+  if (accessLoading.value) return t("details.loadingAccess");
   const n = accessGrants.value.length;
-  if (n === 0) return "Private to you";
-  return n === 1 ? "Shared with 1 person" : `Shared with ${n} people`;
+  if (n === 0) return t("details.private");
+  return n === 1
+    ? t("details.sharedWithOne")
+    : t("details.sharedWithMany", { count: n });
 });
 
 const selectedGrantPath = computed(() => {
@@ -609,6 +604,7 @@ watch(
   selectedGrantPath,
   async (path) => {
     accessGrants.value = [];
+    showAllAccess.value = false;
     if (!path) return;
     accessLoading.value = true;
     try {

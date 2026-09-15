@@ -53,8 +53,33 @@ type Regexp struct {
 // MatchString checks if a string matches the regexp.
 func (r *Regexp) MatchString(s string) bool {
 	if r.regexp == nil {
-		r.regexp = regexp.MustCompile(r.Raw)
+		compiled, err := regexp.Compile(r.Raw)
+		if err != nil {
+			return false
+		}
+		r.regexp = compiled
 	}
 
 	return r.regexp.MatchString(s)
+}
+
+// Validate compiles the raw expression eagerly so invalid regexes are
+// rejected at save time instead of panicking on first match.
+func (r *Regexp) Validate() error {
+	if r == nil {
+		return nil
+	}
+	_, err := regexp.Compile(r.Raw)
+	return err
+}
+
+// Validate checks rule fields, including regex compilation.
+func (r *Rule) Validate() error {
+	if r.Regex {
+		if r.Regexp == nil {
+			return nil
+		}
+		return r.Regexp.Validate()
+	}
+	return nil
 }

@@ -132,6 +132,10 @@ var userDeleteHandler = withSelfOrAdmin(func(_ http.ResponseWriter, r *http.Requ
 		log.Printf("WARNING: Error(s) occurred while deleting grants of user: %s", err)
 	}
 
+	if err := d.store.Share.DeleteByUser(d.raw.(uint)); err != nil {
+		log.Printf("WARNING: Error(s) occurred while deleting shares of user: %s", err)
+	}
+
 	return http.StatusOK, nil
 })
 

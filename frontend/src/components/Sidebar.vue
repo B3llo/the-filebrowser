@@ -112,7 +112,7 @@
           <span>{{ $t("sidebar.shares", "Shares") }}</span>
         </button>
       </li>
-      <li>
+      <li v-if="trashEnabled">
         <button
           class="fb-nav-item"
           :class="{ 'is-active': $route.path === '/trash' }"
@@ -244,6 +244,7 @@ import {
   logoutPage,
   loginPage,
   logoURL,
+  trashEnabled,
 } from "@/utils/constants";
 import { files as api, users } from "@/api";
 import {
@@ -342,6 +343,7 @@ export default {
     },
     signup: () => signup,
     hideLoginButton: () => hideLoginButton,
+    trashEnabled: () => trashEnabled,
     version: () => version,
     disableExternal: () => disableExternal,
     disableUsedPercentage: () => disableUsedPercentage,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"os"
 	"sync"
@@ -63,7 +64,13 @@ var searchHandler = withUser(func(w http.ResponseWriter, r *http.Request, d *dat
 		effPath = rel
 	}
 
+	// Searches skip the trash, unless the search itself is scoped inside it.
+	skipTrash := hideTrash(effPath)
 	err := search.Search(ctx, d.user.Fs, effPath, query, d, func(path string, f os.FileInfo) error {
+		if skipTrash && isTrashPath("/"+path) {
+			log.Printf("[DEBUG] skipping trash path in search: %s", path)
+			return context.Cause(ctx)
+		}
 		select {
 		case <-ctx.Done():
 		case response <- map[string]interface{}{

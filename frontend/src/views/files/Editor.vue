@@ -2,7 +2,7 @@
   <div id="editor-container">
     <header-bar>
       <span class="fb-preview-type">{{ editorTypeLabel }}</span>
-      <title>{{ fileName }}</title>
+      <span class="fb-preview-name">{{ fileName }}</span>
 
       <template #actions>
         <action
@@ -32,7 +32,13 @@
       </template>
     </header-bar>
 
-    <div class="loading delayed" v-if="layoutStore.loading">
+    <div
+      class="loading delayed"
+      v-if="layoutStore.loading"
+      role="status"
+      aria-live="polite"
+      :aria-label="t('files.loading')"
+    >
       <div class="spinner">
         <div class="bounce1"></div>
         <div class="bounce2"></div>

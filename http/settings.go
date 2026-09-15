@@ -2,6 +2,7 @@ package fbhttp
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/B3llo/the-filebrowser/rules"
@@ -21,6 +22,7 @@ type settingsData struct {
 	Tus                   settings.Tus          `json:"tus"`
 	Shell                 []string              `json:"shell"`
 	Commands              map[string][]string   `json:"commands"`
+	Trash                 settings.Trash        `json:"trash"`
 }
 
 var settingsGetHandler = withAdmin(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
@@ -37,15 +39,29 @@ var settingsGetHandler = withAdmin(func(w http.ResponseWriter, r *http.Request, 
 		Tus:                   d.settings.Tus,
 		Shell:                 d.settings.Shell,
 		Commands:              d.settings.Commands,
+		Trash:                 d.settings.Trash,
 	}
 
 	return renderJSON(w, r, data)
 })
 
 var settingsPutHandler = withAdmin(func(_ http.ResponseWriter, r *http.Request, d *data) (int, error) {
+	r.Body = http.MaxBytesReader(nil, r.Body, 1<<20)
 	req := &settingsData{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	for i := range req.Rules {
+		if err := req.Rules[i].Validate(); err != nil {
+			return http.StatusBadRequest, err
+		}
+	}
+	if req.MinimumPasswordLength < 8 {
+		return http.StatusBadRequest, fmt.Errorf("minimumPasswordLength must be >= 8")
+	}
+	if err := req.Trash.Validate(); err != nil {
 		return http.StatusBadRequest, err
 	}
 
@@ -60,6 +76,7 @@ var settingsPutHandler = withAdmin(func(_ http.ResponseWriter, r *http.Request, 
 	d.settings.Shell = req.Shell
 	d.settings.Commands = req.Commands
 	d.settings.HideLoginButton = req.HideLoginButton
+	d.settings.Trash = req.Trash
 
 	err = d.store.Settings.Save(d.settings)
 	return errToStatus(err), err

@@ -114,17 +114,27 @@ func handle(fn handleFunc, prefix string, store *storage.Storage, server *settin
 
 		settings, err := store.Settings.Get()
 		if err != nil {
-			log.Fatalf("ERROR: couldn't get settings: %v\n", err)
+			log.Printf("ERROR: couldn't get settings: %v", err)
+			http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
 		tw := &trackedWriter{ResponseWriter: w}
-		status, err := fn(tw, r, &data{
-			Runner:   &runner.Runner{Enabled: server.EnableExec, Settings: settings},
-			store:    store,
-			settings: settings,
-			server:   server,
-		})
+		status, err := func() (st int, e error) {
+			defer func() {
+				if rec := recover(); rec != nil {
+					log.Printf("PANIC recovered in %s: %v", r.URL.Path, rec)
+					st = http.StatusInternalServerError
+					e = errors.New("internal server error")
+				}
+			}()
+			return fn(tw, r, &data{
+				Runner:   &runner.Runner{Enabled: server.EnableExec, Settings: settings},
+				store:    store,
+				settings: settings,
+				server:   server,
+			})
+		}()
 
 		if isClientDisconnect(err) {
 			return

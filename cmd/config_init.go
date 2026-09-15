@@ -35,6 +35,14 @@ override the options.`,
 			return err
 		}
 
+		// No CLI flags for trash yet: fresh databases get the defaults.
+		if s.Trash == (settings.Trash{}) {
+			s.Trash = settings.Trash{
+				Enabled:       settings.DefaultTrashEnabled,
+				RetentionDays: settings.DefaultTrashRetentionDays,
+			}
+		}
+
 		// Save updated config
 		err = st.Settings.Save(s)
 		if err != nil {

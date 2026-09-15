@@ -31,7 +31,13 @@ func NewHandler(
 	r := mux.NewRouter()
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Content-Security-Policy", `default-src 'self'; style-src 'unsafe-inline';`)
+			w.Header().Set("Content-Security-Policy", `default-src 'self'; style-src 'unsafe-inline'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'`)
+			w.Header().Set("X-Frame-Options", "SAMEORIGIN")
+			w.Header().Set("Referrer-Policy", "same-origin")
+			w.Header().Set("X-Content-Type-Options", "nosniff")
+			if r.TLS != nil {
+				w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+			}
 			next.ServeHTTP(w, r)
 		})
 	})
@@ -48,9 +54,10 @@ func NewHandler(
 	api := r.PathPrefix("/api").Subrouter()
 
 	tokenExpirationTime := server.GetTokenExpirationTime(DefaultTokenExpirationTime)
-	api.Handle("/login", monkey(loginHandler(tokenExpirationTime), ""))
-	api.Handle("/signup", monkey(signupHandler, ""))
-	api.Handle("/renew", monkey(renewHandler(tokenExpirationTime), ""))
+	api.Handle("/login", monkey(withAuthRateLimit(loginHandler(tokenExpirationTime)), ""))
+	api.Handle("/signup", monkey(withAuthRateLimit(signupHandler), ""))
+	api.Handle("/renew", monkey(withAuthRateLimit(renewHandler(tokenExpirationTime)), ""))
+	api.Handle("/logout", monkey(logoutHandler, ""))
 
 	users := api.PathPrefix("/users").Subrouter()
 	users.Handle("", monkey(usersGetHandler, "")).Methods("GET")

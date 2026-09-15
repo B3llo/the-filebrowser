@@ -21,6 +21,9 @@ const tusSettings = window.FileBrowser.TusSettings;
 const origin = window.location.origin;
 const tusEndpoint = `/api/tus`;
 const hideLoginButton = window.FileBrowser.HideLoginButton;
+// Public bootstrap flag (see http/static.go). Defaults to true so cached
+// index.html files keep showing the trash until the backend says otherwise.
+const trashEnabled: boolean = window.FileBrowser.TrashEnabled ?? true;
 
 export {
   name,
@@ -45,4 +48,5 @@ export {
   origin,
   tusEndpoint,
   hideLoginButton,
+  trashEnabled,
 };

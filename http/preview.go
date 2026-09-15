@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -42,6 +43,10 @@ type FileCache interface {
 	Load(ctx context.Context, key string) ([]byte, bool, error)
 	Delete(ctx context.Context, key string) error
 }
+
+// imagePreviewTimeout bounds CPU spent resizing a single image preview.
+// The context derives from r.Context so a client disconnect aborts the work.
+const imagePreviewTimeout = 30 * time.Second
 
 // previewExtensionSupported checks if a file extension is supported for preview
 func previewExtensionSupported(ext string) bool {
@@ -157,11 +162,25 @@ func handleImagePreview(
 	cacheKey := previewCacheKey(file, previewSize)
 	resizedImage, ok, err := fileCache.Load(r.Context(), cacheKey)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return 0, nil
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			return http.StatusGatewayTimeout, err
+		}
 		return errToStatus(err), err
 	}
 	if !ok {
-		resizedImage, err = createPreview(imgSvc, fileCache, file, previewSize)
+		ctx, cancel := context.WithTimeout(r.Context(), imagePreviewTimeout)
+		defer cancel()
+		resizedImage, err = createPreview(ctx, imgSvc, fileCache, file, previewSize)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return 0, nil
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+				return http.StatusGatewayTimeout, err
+			}
 			return errToStatus(err), err
 		}
 	}
@@ -172,8 +191,11 @@ func handleImagePreview(
 	return 0, nil
 }
 
-func createPreview(imgSvc ImgService, fileCache FileCache,
+func createPreview(ctx context.Context, imgSvc ImgService, fileCache FileCache,
 	file *files.FileInfo, previewSize PreviewSize) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	fd, err := file.Fs.Open(file.Path)
 	if err != nil {
 		return nil, err
@@ -200,13 +222,16 @@ func createPreview(imgSvc ImgService, fileCache FileCache,
 	}
 
 	buf := &bytes.Buffer{}
-	if err := imgSvc.Resize(context.Background(), fd, width, height, buf, options...); err != nil {
+	if err := imgSvc.Resize(ctx, fd, width, height, buf, options...); err != nil {
 		return nil, err
 	}
 
+	// Best-effort async cache fill bound to the request context: a client
+	// disconnect aborts the store instead of writing stale data late.
+	cached := append([]byte(nil), buf.Bytes()...)
 	go func() {
 		cacheKey := previewCacheKey(file, previewSize)
-		if err := fileCache.Store(context.Background(), cacheKey, buf.Bytes()); err != nil {
+		if err := fileCache.Store(ctx, cacheKey, cached); err != nil {
 			fmt.Printf("failed to cache resized image: %v", err)
 		}
 	}()
@@ -227,11 +252,25 @@ func handleVideoPreview(w http.ResponseWriter, r *http.Request, imgSvc ImgServic
 	cacheKey := previewCacheKey(file, previewSize)
 	thumb, ok, err := fileCache.Load(r.Context(), cacheKey)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			return 0, nil
+		}
+		if errors.Is(err, context.DeadlineExceeded) {
+			return http.StatusGatewayTimeout, err
+		}
 		return errToStatus(err), err
 	}
 	if !ok {
+		// r.Context carries the client disconnect; the video service applies
+		// its own videoThumbnailTimeout internally via execTimeout.
 		thumb, err = createVideoThumbnail(r.Context(), imgSvc, videoSvc, fileCache, file, previewSize)
 		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return 0, nil
+			}
+			if errors.Is(err, context.DeadlineExceeded) {
+				return http.StatusGatewayTimeout, err
+			}
 			log.Printf("[WARN] video thumbnail generation failed for %q: %v — falling back to raw stream", file.RealPath(), err)
 			return serveRawVideo(w, r, file)
 		}
@@ -245,6 +284,9 @@ func handleVideoPreview(w http.ResponseWriter, r *http.Request, imgSvc ImgServic
 
 func createVideoThumbnail(ctx context.Context, imgSvc ImgService, videoSvc VideoService, fileCache FileCache,
 	file *files.FileInfo, previewSize PreviewSize) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	realPath := file.RealPath()
 	if info, err := os.Stat(realPath); err != nil || info.IsDir() {
 		return nil, fmt.Errorf("video source not addressable on local disk: %w", err)
@@ -263,9 +305,12 @@ func createVideoThumbnail(ctx context.Context, imgSvc ImgService, videoSvc Video
 		return nil, err
 	}
 
+	// Best-effort async cache fill bound to the request context: a client
+	// disconnect aborts the store instead of writing stale data late.
+	cached := append([]byte(nil), buf.Bytes()...)
 	go func() {
 		cacheKey := previewCacheKey(file, previewSize)
-		if err := fileCache.Store(context.Background(), cacheKey, buf.Bytes()); err != nil {
+		if err := fileCache.Store(ctx, cacheKey, cached); err != nil {
 			log.Printf("[WARN] failed to cache video thumbnail: %v", err)
 		}
 	}()
@@ -346,8 +391,12 @@ func handlePDFPreview(w http.ResponseWriter, r *http.Request, file *files.FileIn
 	}
 	defer fd.Close()
 
-	w.Header().Set("Content-Type", "application/pdf")
-	w.Header().Set("Content-Disposition", "inline; filename=\""+file.Name+"\"")
+	setContentDisposition(w, r, file)
+	if r.URL.Query().Get("inline") == "true" {
+		w.Header().Set("Content-Type", "application/pdf")
+	}
+	w.Header().Set("Content-Security-Policy", "script-src 'none'; sandbox")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Cache-Control", "private")
 
 	http.ServeContent(w, r, file.Name, file.ModTime, fd)
@@ -367,10 +416,15 @@ func handleTextPreview(w http.ResponseWriter, r *http.Request, file *files.FileI
 		return errToStatus(err), err
 	}
 
-	// Determine content type based on extension
-	contentType := getTextContentType(file.Extension)
+	setContentDisposition(w, r, file)
+	if r.URL.Query().Get("inline") == "true" {
+		// Determine content type based on extension
+		contentType := getTextContentType(file.Extension)
+		w.Header().Set("Content-Type", contentType)
+	}
 
-	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Security-Policy", "script-src 'none'; sandbox")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
 	w.Header().Set("Cache-Control", "private")
 	w.Header().Set("Content-Length", fmt.Sprintf("%d", stat.Size()))
 

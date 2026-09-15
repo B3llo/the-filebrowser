@@ -7,6 +7,7 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from "vue";
 import hljs from "highlight.js";
+import DOMPurify from "dompurify";
 import "highlight.js/styles/github.css";
 
 interface Props {
@@ -70,10 +71,10 @@ const highlightCode = async () => {
     if (lang === "plaintext" || !hljs.getLanguage(lang)) {
       // Fallback to auto-detection
       const result = hljs.highlightAuto(props.content);
-      highlightedCode.value = result.value;
+      highlightedCode.value = DOMPurify.sanitize(result.value);
     } else {
       const result = hljs.highlight(props.content, { language: lang });
-      highlightedCode.value = result.value;
+      highlightedCode.value = DOMPurify.sanitize(result.value);
     }
   } catch (e) {
     console.error("Failed to highlight code:", e);

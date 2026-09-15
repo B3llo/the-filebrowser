@@ -9,21 +9,34 @@ services:
     volumes:
       - filebrowser:/flux/vault
       - filebrowser_cache:/config/cache
+      - filebrowser_db:/database
     environment:
-      - FB_REDIS_CACHE_URL=redis://default:filebrowser@redis:6379 # Use rediss:// for ssl
+      - FB_REDIS_CACHE_URL=redis://default:${FB_REDIS_PASSWORD:-filebrowser}@redis:6379 # Use rediss:// for ssl, set FB_REDIS_PASSWORD in .env
       - FB_CACHE_DIR=/config/cache # without this, thumbnail caching is a no-op and regenerates on every request
+    restart: unless-stopped
+    mem_limit: 1g
+    depends_on:
+      redis:
+        condition: service_healthy
 
   redis:
     container_name: redis
-    image: redis:latest
+    image: redis:7-alpine
     networks:
       - filebrowser
+    restart: unless-stopped
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "-a", "${FB_REDIS_PASSWORD:-filebrowser}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
     command:
       - sh
       - -c
       - |
         cat > /tmp/users.acl <<EOF
-        user default on >filebrowser ~* +@all
+        user default on >${FB_REDIS_PASSWORD:-filebrowser} ~* +@all
         EOF
         redis-server --aclfile /tmp/users.acl
 
@@ -33,3 +46,4 @@ networks:
 volumes:
   filebrowser:
   filebrowser_cache:
+  filebrowser_db:

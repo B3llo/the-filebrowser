@@ -9,11 +9,22 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/B3llo/the-filebrowser/files"
 	"github.com/spf13/afero"
 )
+
+// tusWriteLocks serializes concurrent PATCH writes per destination file.
+// O_WRONLY (without O_APPEND) honors Seek, so overlapping chunks must not
+// interleave; the lock key is the resolved RealPath.
+var tusWriteLocks sync.Map // string -> *sync.Mutex
+
+func tusLockFor(realPath string) *sync.Mutex {
+	mu, _ := tusWriteLocks.LoadOrStore(realPath, &sync.Mutex{})
+	return mu.(*sync.Mutex)
+}
 
 // keepUploadActive periodically touches the cache entry to prevent eviction during transfer
 func keepUploadActive(cache UploadCache, filePath string) func() {
@@ -65,7 +76,7 @@ func tusPostHandler(cache UploadCache) handleFunc {
 			dirPath := filepath.Dir(effPath)
 			if _, statErr := d.user.Fs.Stat(dirPath); os.IsNotExist(statErr) {
 				if mkdirErr := d.user.Fs.MkdirAll(dirPath, d.settings.DirMode); mkdirErr != nil {
-					return http.StatusInternalServerError, err
+					return http.StatusInternalServerError, mkdirErr
 				}
 			}
 		case err != nil:
@@ -162,6 +173,7 @@ func tusHeadHandler(cache UploadCache) handleFunc {
 		if err != nil {
 			return http.StatusNotFound, err
 		}
+		cache.Touch(file.RealPath())
 
 		w.Header().Set("Upload-Offset", strconv.FormatInt(file.Size, 10))
 		w.Header().Set("Upload-Length", strconv.FormatInt(uploadLength, 10))
@@ -170,7 +182,7 @@ func tusHeadHandler(cache UploadCache) handleFunc {
 	})
 }
 
-func tusPatchHandler(cache UploadCache) handleFunc {
+func tusPatchHandler(cache UploadCache, fileCaches ...FileCache) handleFunc {
 	return withUser(func(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
 		effPath := r.URL.Path
 		if rel, gg, ok := tryGrantScope(effPath, d, false); ok {
@@ -212,6 +224,7 @@ func tusPatchHandler(cache UploadCache) handleFunc {
 		if err != nil {
 			return http.StatusNotFound, err
 		}
+		cache.Touch(file.RealPath())
 
 		// Prevent the upload from being evicted during the transfer
 		stop := keepUploadActive(cache, file.RealPath())
@@ -226,21 +239,37 @@ func tusPatchHandler(cache UploadCache) handleFunc {
 				file.RealPath(),
 				uploadOffset,
 			)
+		case uploadOffset > uploadLength:
+			return http.StatusRequestEntityTooLarge, fmt.Errorf(
+				"%s upload offset exceeds declared length: %d > %d",
+				file.RealPath(),
+				uploadOffset,
+				uploadLength,
+			)
 		}
 
-		openFile, err := d.user.Fs.OpenFile(effPath, os.O_WRONLY|os.O_APPEND, d.settings.FileMode)
+		// Serialize writers per destination: O_WRONLY honors Seek (O_APPEND
+		// would ignore it), so concurrent chunks must not interleave.
+		mu := tusLockFor(file.RealPath())
+		mu.Lock()
+		defer mu.Unlock()
+
+		openFile, err := d.user.Fs.OpenFile(effPath, os.O_WRONLY, d.settings.FileMode)
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf("could not open file: %w", err)
 		}
 		defer openFile.Close()
 
-		_, err = openFile.Seek(uploadOffset, 0)
+		_, err = openFile.Seek(uploadOffset, io.SeekStart)
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf("could not seek file: %w", err)
 		}
 
+		// Never write past the declared length: cap the body at the
+		// remaining bytes (+1 to detect an overflowing chunk).
+		remaining := uploadLength - uploadOffset
 		defer r.Body.Close()
-		bytesWritten, err := io.Copy(openFile, r.Body)
+		bytesWritten, err := io.Copy(openFile, io.LimitReader(r.Body, remaining+1))
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf("could not write to file: %w", err)
 		}
@@ -252,10 +281,25 @@ func tusPatchHandler(cache UploadCache) handleFunc {
 		}
 
 		newOffset := uploadOffset + bytesWritten
+		if newOffset > uploadLength {
+			// Best effort: discard the overflowing byte(s) so the file
+			// never exceeds the declared length.
+			_ = openFile.Truncate(uploadLength)
+			_ = openFile.Sync()
+			return http.StatusRequestEntityTooLarge, fmt.Errorf(
+				"%s upload exceeds declared length: %d > %d",
+				file.RealPath(),
+				newOffset,
+				uploadLength,
+			)
+		}
 		w.Header().Set("Upload-Offset", strconv.FormatInt(newOffset, 10))
 
 		if newOffset >= uploadLength {
 			cache.Complete(file.RealPath())
+			if len(fileCaches) > 0 && fileCaches[0] != nil {
+				_ = delThumbs(r.Context(), fileCaches[0], file)
+			}
 			_ = d.RunHook(func() error { return nil }, "upload", effPath, "", d.user)
 		}
 
@@ -265,11 +309,12 @@ func tusPatchHandler(cache UploadCache) handleFunc {
 
 func tusDeleteHandler(cache UploadCache) handleFunc {
 	return withUser(func(_ http.ResponseWriter, r *http.Request, d *data) (int, error) {
-		if r.URL.Path == "/" || !d.user.Perm.Delete {
+		cleaned := cleanUserPath(r.URL.Path)
+		if cleaned == "/" || !d.user.Perm.Delete {
 			return http.StatusForbidden, nil
 		}
 
-		effPath := r.URL.Path
+		effPath := cleaned
 		if rel, gg, ok := tryGrantScope(effPath, d, false); ok {
 			if status, allow := grantWriteStatus(gg); !allow {
 				return status, nil
