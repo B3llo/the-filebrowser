@@ -129,6 +129,13 @@ func TestGrantsPostHandler(t *testing.T) {
 	bobTok := signGrantToken(t, 3, "bob", fx.bob, fx.key)
 	adminTok := signGrantToken(t, 1, "admin", fx.admin, fx.key)
 
+	// Numeric username: stored as username "123" with a real auto ID (5).
+	// Regression test for POST /api/grants 404ing on such users because the
+	// ref was parsed as a user ID instead of a username.
+	if err := fx.store.Users.Save(&users.User{Username: "123", Password: "pw", Perm: fx.bob}); err != nil {
+		t.Fatalf("failed to save numeric user: %v", err)
+	}
+
 	cases := map[string]struct {
 		token      string
 		body       string
@@ -194,6 +201,22 @@ func TestGrantsPostHandler(t *testing.T) {
 			`{"path":"/docs","grantee":"bob","role":"viewer"}`, aliceTok, nil)
 		if rec.Code != http.StatusConflict {
 			t.Fatalf("status = %d, want 409 (body=%q)", rec.Code, rec.Body.String())
+		}
+	})
+
+	// Numeric usernames resolve by username when no user has that ID.
+	t.Run("numeric username grant resolves to username", func(t *testing.T) {
+		rec := doGrantRequest(t, fx, grantsPostHandler, http.MethodPost, "/api/grants",
+			`{"path":"/docs","grantee":"123","role":"viewer"}`, aliceTok, nil)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("status = %d, want 200 (body=%q)", rec.Code, rec.Body.String())
+		}
+		var created grants.Grant
+		if err := json.Unmarshal(rec.Body.Bytes(), &created); err != nil {
+			t.Fatalf("failed to decode grant: %v", err)
+		}
+		if created.GranteeID != 5 {
+			t.Fatalf("granteeID = %d, want 5 (user \"123\")", created.GranteeID)
 		}
 	})
 

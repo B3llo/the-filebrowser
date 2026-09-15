@@ -6,7 +6,7 @@ export async function list() {
 
 export async function get(url: string) {
   url = removePrefix(url);
-  return fetchJSON<Share>(`/api/share${url}`);
+  return fetchJSON<Share[]>(`/api/share${url}`);
 }
 
 export async function remove(hash: string) {

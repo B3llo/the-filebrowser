@@ -96,15 +96,17 @@
           :aria-label="$t('sidebar.sharedWithMe')"
           :title="$t('sidebar.sharedWithMe')"
         >
-          <fb-icon name="users" size="18px" />
+          <fb-icon name="share" size="18px" />
           <span>{{ $t("sidebar.sharedWithMe", "Shared with me") }}</span>
         </button>
       </li>
       <li>
         <button
           class="fb-nav-item"
+          :class="{ 'is-active': $route.path === '/settings/shares' }"
           @click="toShares"
           :aria-label="$t('sidebar.shares', 'Shares')"
+          :title="$t('sidebar.shares', 'Shares')"
         >
           <fb-icon name="users" size="18px" />
           <span>{{ $t("sidebar.shares", "Shares") }}</span>

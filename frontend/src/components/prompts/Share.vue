@@ -293,6 +293,12 @@ import { removePrefix } from "@/api/utils";
 
 export default {
   name: "share",
+  props: {
+    initialTab: {
+      type: String,
+      default: "links",
+    },
+  },
   data: function () {
     return {
       time: 0,
@@ -350,7 +356,20 @@ export default {
       return this.req.items[this.selected[0]].url;
     },
   },
+  watch: {
+    initialTab(newVal) {
+      if (newVal === "people" || newVal === "links") {
+        this.tab = newVal;
+        if (newVal === "people") {
+          this.loadGrants().catch((e) => this.$showError(e));
+        }
+      }
+    },
+  },
   async beforeMount() {
+    if (this.initialTab === "people") {
+      this.tab = "people";
+    }
     try {
       const links = await api.share.get(this.url);
       this.links = links;
@@ -522,7 +541,9 @@ export default {
         if (!path) return;
         const res = await api.grants.create({
           path,
-          grantee: this.selectedUser.username,
+          // Send the exact user ID from the picker (unambiguous even for
+          // numeric usernames like "123", which the API would parse as IDs).
+          grantee: String(this.selectedUser.id),
           role: this.grantRole,
         });
         this.grants.push(res);

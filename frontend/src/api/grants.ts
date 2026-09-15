@@ -4,6 +4,7 @@ export type GrantRole = "viewer" | "editor";
 
 export interface GrantCreate {
   path: string;
+  // User ID (preferred, unambiguous) or username.
   grantee: string;
   owner?: string;
   role: GrantRole;

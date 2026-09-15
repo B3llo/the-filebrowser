@@ -208,8 +208,27 @@
       <div class="fb-details-section-title">Who has access</div>
       <div class="fb-details-access">
         <AvatarBadge :user="authStore.user" :size="30" />
-        <div class="fb-details-access-info">Private to you</div>
-        <button class="fb-details-access-manage">Manage</button>
+        <div class="fb-details-access-info">{{ accessLabel }}</div>
+        <button class="fb-details-access-manage" @click="manageAccess">
+          Manage
+        </button>
+      </div>
+      <div v-if="accessGrants.length > 0" class="fb-details-access-list">
+        <div
+          v-for="g in accessGrants.slice(0, 5)"
+          :key="g.id"
+          class="fb-details-access-row"
+        >
+          <span class="fb-details-access-user">{{
+            g.granteeUsername || `#${g.granteeID}`
+          }}</span>
+          <span class="fb-details-access-role">{{
+            g.role === "editor" ? "Editor" : "Viewer"
+          }}</span>
+        </div>
+        <div v-if="accessGrants.length > 5" class="fb-details-access-more">
+          +{{ accessGrants.length - 5 }} more
+        </div>
       </div>
     </div>
   </div>
@@ -221,7 +240,8 @@ import { storeToRefs } from "pinia";
 import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
 import { useAuthStore } from "@/stores/auth";
-import { files as api } from "@/api";
+import { files as api, grants as grantsApi } from "@/api";
+import { removePrefix } from "@/api/utils";
 import { fileKind, fileTypeLabel } from "@/utils/fileKind";
 import { filesize } from "@/utils";
 import { enableThumbs, enableVideoThumbs } from "@/utils/constants";
@@ -556,6 +576,50 @@ const downloadItem = () => {
 
 const shareItem = () => {
   if (!selectedItem.value) return;
-  layoutStore.showHover("share");
+  layoutStore.showHover({ prompt: "share", props: { initialTab: "links" } });
 };
+
+const manageAccess = () => {
+  if (!selectedItem.value) return;
+  layoutStore.showHover({ prompt: "share", props: { initialTab: "people" } });
+};
+
+// Who has access: live grants for the selected path (same normalization as
+// the Share prompt). Owners see their outgoing grants; grantees see received.
+const accessGrants = ref<Grant[]>([]);
+const accessLoading = ref(false);
+
+const accessLabel = computed(() => {
+  if (accessLoading.value) return "Loading…";
+  const n = accessGrants.value.length;
+  if (n === 0) return "Private to you";
+  return n === 1 ? "Shared with 1 person" : `Shared with ${n} people`;
+});
+
+const selectedGrantPath = computed(() => {
+  if (!selectedItem.value?.url) return "";
+  try {
+    return removePrefix(selectedItem.value.url);
+  } catch {
+    return "";
+  }
+});
+
+watch(
+  selectedGrantPath,
+  async (path) => {
+    accessGrants.value = [];
+    if (!path) return;
+    accessLoading.value = true;
+    try {
+      const all = await grantsApi.list();
+      accessGrants.value = all.filter((g) => g.path === path);
+    } catch {
+      accessGrants.value = [];
+    } finally {
+      accessLoading.value = false;
+    }
+  },
+  { immediate: true }
+);
 </script>

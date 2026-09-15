@@ -94,7 +94,7 @@ describe("share prompt grants tab", () => {
     await (SharePrompt as any).methods.submitGrant.call(ctx);
     expect(grantApi.create).toHaveBeenCalledWith({
       path: "/docs",
-      grantee: "bob",
+      grantee: "2",
       role: "editor",
     });
     expect(ctx.grants).toEqual([{ id: 5, path: "/docs" }]);

@@ -48,13 +48,22 @@ func enrichGrants(d *data, list []*grants.Grant) []grantJSON {
 }
 
 // resolveUserRef resolves a grantee/owner reference that may be a numeric
-// ID or a username.
+// ID or a username. Numeric strings are tried as IDs first; when no user
+// with that ID exists the reference falls back to a username lookup, so
+// numeric usernames (e.g. "123") keep working instead of 404ing.
 func resolveUserRef(d *data, ref string) (*users.User, error) {
 	if ref == "" {
 		return nil, fberrors.ErrInvalidRequestParams
 	}
 	if id, err := strconv.ParseUint(ref, 10, 0); err == nil {
-		return d.store.Users.Get(d.server.Root, d.server.FollowExternalSymlinks, uint(id))
+		u, gerr := d.store.Users.Get(d.server.Root, d.server.FollowExternalSymlinks, uint(id))
+		if gerr == nil {
+			return u, nil
+		}
+		if !errors.Is(gerr, fberrors.ErrNotExist) {
+			return nil, gerr
+		}
+		// No user with that ID — fall through to username lookup below.
 	}
 	return d.store.Users.Get(d.server.Root, d.server.FollowExternalSymlinks, ref)
 }

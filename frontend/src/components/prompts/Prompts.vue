@@ -1,7 +1,7 @@
 <template>
   <base-modal v-if="modal != null" :prompt="currentPromptName" @closed="close">
     <keep-alive>
-      <component :is="modal" />
+      <component :is="modal" v-bind="currentPrompt?.props ?? {}" />
     </keep-alive>
   </base-modal>
 </template>
@@ -33,7 +33,7 @@ import AddSource from "./AddSource.vue";
 
 const layoutStore = useLayoutStore();
 
-const { currentPromptName } = storeToRefs(layoutStore);
+const { currentPrompt, currentPromptName } = storeToRefs(layoutStore);
 
 const components = new Map<string, any>([
   ["help", Help],
