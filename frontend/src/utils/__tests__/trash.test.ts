@@ -5,6 +5,11 @@ import {
   buildTrashInfo,
   cleanTrashName,
   collapseChainLabel,
+  FLAT_TRASH_GROUP_THRESHOLD,
+  flatTrashGroupKey,
+  flatTrashGroupLabel,
+  groupFlatTrashItems,
+  isPureTrashChain,
   isLegacyTrashName,
   isMirroredTrashPath,
   isTrashPath,
@@ -216,6 +221,103 @@ describe("buildFlatTrashResource", () => {
     expect(res.items[1].index).toBe(1);
     expect(res.numDirs).toBe(1);
     expect(res.numFiles).toBe(1);
+  });
+});
+
+describe("flat trash grouping", () => {
+  it("labels groups with collapsed chains", () => {
+    expect(flatTrashGroupLabel("/")).toBe("/");
+    expect(flatTrashGroupLabel("/Docs")).toBe("Docs");
+    expect(flatTrashGroupLabel("/Docs/Viagem")).toBe("Docs › Viagem");
+  });
+
+  it("keys rows by original parent dir, legacy to root", () => {
+    expect(flatTrashGroupKey("/.Trash/files/Docs/Viagem/f.jpg", "f.jpg")).toBe(
+      "/Docs/Viagem"
+    );
+    expect(flatTrashGroupKey("/.Trash/files/a.jpg", "a.jpg")).toBe("/");
+    expect(flatTrashGroupKey("/.Trash/123_a.jpg", "123_a.jpg")).toBe("/");
+  });
+
+  it(`only groups above the threshold (${FLAT_TRASH_GROUP_THRESHOLD})`, () => {
+    const row = (path: string, name: string) => ({ path, name });
+    const small = [
+      row("/.Trash/files/Docs/a.jpg", "a.jpg"),
+      row("/.Trash/files/Docs/b.jpg", "b.jpg"),
+      row("/.Trash/files/Docs/c.jpg", "c.jpg"),
+    ];
+    expect(groupFlatTrashItems(small).groups).toHaveLength(0);
+    expect(groupFlatTrashItems(small).loose).toHaveLength(3);
+    const big = [...small, row("/.Trash/files/Docs/d.jpg", "d.jpg")];
+    const { groups, loose } = groupFlatTrashItems(big);
+    expect(groups).toHaveLength(1);
+    expect(groups[0].location).toBe("/Docs");
+    expect(loose).toHaveLength(0);
+  });
+
+  it("sorts groups with / first then alphabetical, loose order preserved", () => {
+    const row = (path: string, name: string) => ({ path, name });
+    const photo = (dir: string, n: number) =>
+      row(`/.Trash/files/${dir}/f${n}.jpg`, `f${n}.jpg`);
+    const rows = [
+      photo("Docs", 1),
+      photo("Docs", 2),
+      photo("Docs", 3),
+      photo("Docs", 4),
+      photo("Fotos", 1),
+      photo("Fotos", 2),
+      photo("Fotos", 3),
+      photo("Fotos", 4),
+      row("/.Trash/files/loose.txt", "loose.txt"),
+    ];
+    const { groups, loose } = groupFlatTrashItems(rows);
+    expect(groups.map((g) => g.location)).toEqual(["/Docs", "/Fotos"]);
+    expect(loose.map((r) => r.name)).toEqual(["loose.txt"]);
+  });
+
+  it("detects pure single-child chains for ellipsis labels", () => {
+    const counts = new Map([
+      ["/.Trash/files", 1],
+      ["/.Trash/files/a", 1],
+      ["/.Trash/files/a/b", 1],
+      ["/.Trash/files/a/b/c", 4],
+    ]);
+    expect(isPureTrashChain("/.Trash/files/a/b/c", counts)).toBe(true);
+    const withSiblings = new Map([
+      ["/.Trash/files", 2],
+      ["/.Trash/files/a", 1],
+    ]);
+    expect(isPureTrashChain("/.Trash/files/a/b", withSiblings)).toBe(false);
+    expect(isPureTrashChain("/.Trash/123_x.jpg", new Map())).toBe(false);
+  });
+
+  it("uses … only for deep pure chains, full path otherwise", () => {
+    const row = (path: string, name: string) => ({ path, name });
+    const deep = (n: number) =>
+      row(`/.Trash/files/a/b/c/f${n}.jpg`, `f${n}.jpg`);
+    const pureCounts = new Map([
+      ["/.Trash/files", 1],
+      ["/.Trash/files/a", 1],
+      ["/.Trash/files/a/b", 1],
+      ["/.Trash/files/a/b/c", 4],
+    ]);
+    const pure = groupFlatTrashItems(
+      [deep(1), deep(2), deep(3), deep(4)],
+      pureCounts
+    );
+    expect(pure.groups[0].label).toBe("a › … › c");
+    expect(pure.groups[0].mirrorDir).toBe("/.Trash/files/a/b/c");
+    const mixedCounts = new Map([
+      ["/.Trash/files", 1],
+      ["/.Trash/files/a", 3],
+      ["/.Trash/files/a/b", 1],
+      ["/.Trash/files/a/b/c", 4],
+    ]);
+    const mixed = groupFlatTrashItems(
+      [deep(1), deep(2), deep(3), deep(4)],
+      mixedCounts
+    );
+    expect(mixed.groups[0].label).toBe("a › b › c");
   });
 });
 

@@ -15,7 +15,9 @@
       :placeholder="$t('search.search')"
       :aria-label="$t('search.search')"
       @focus="onFocus"
-      @keyup.enter="submit"
+      @keydown.enter="onEnter"
+      @keydown.down.prevent="moveActive(1)"
+      @keydown.up.prevent="moveActive(-1)"
     />
     <button
       v-if="ongoing"
@@ -69,14 +71,31 @@
           </div>
         </template>
       </div>
-      <ul v-show="results.length > 0">
-        <li v-for="(s, k) in filteredResults" :key="k">
-          <router-link @click="close" :to="s.url">
-            <FbIcon :name="s.dir ? 'folder' : 'file'" size="15px" />
-            <span>./{{ s.path }}</span>
-          </router-link>
-        </li>
-      </ul>
+      <div v-if="searchSections.length > 0" class="fb-search-results">
+        <template v-for="section in searchSections" :key="section.id">
+          <h3 class="fb-search-section">{{ sectionHeader(section.id) }}</h3>
+          <ul>
+            <li v-for="entry in section.entries" :key="entry.key">
+              <router-link
+                @click="close"
+                @mousemove="hoverEntry(entry.index)"
+                :to="entry.url"
+                :class="{ active: entry.index === activeIndex }"
+                :data-index="entry.index"
+              >
+                <FbIcon :name="entry.icon" size="15px" />
+                <span
+                  class="fb-search-name"
+                  v-html="highlightMatch(entry.name, highlightTerm)"
+                ></span>
+                <span v-if="entry.dir" class="fb-search-sub">{{
+                  entry.dir
+                }}</span>
+              </router-link>
+            </li>
+          </ul>
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -86,6 +105,11 @@ import { useFileStore } from "@/stores/file";
 import { useLayoutStore } from "@/stores/layout";
 import FbIcon from "@/components/FbIcon.vue";
 import type { IconName } from "@/utils/icons";
+import {
+  buildSearchSections,
+  highlightMatch,
+  highlightTermFromPrompt,
+} from "@/utils/searchResults";
 import url from "@/utils/url";
 import { search } from "@/api";
 import {
@@ -98,7 +122,7 @@ import {
   watch,
 } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { StatusError } from "@/api/utils";
 
 const boxes: Record<string, { label: string; icon: IconName }> = {
@@ -130,6 +154,19 @@ const results = ref<any[]>([]);
 const resultsCount = ref<number>(50);
 const isOpen = ref<boolean>(false);
 const isMobileOpen = ref<boolean>(false);
+// Keyboard navigation over the sectioned results (Ctrl+K parity).
+const activeIndex = ref<number>(-1);
+const kbNav = ref<boolean>(false);
+let liveDebounce: number | null = null;
+
+const scheduleLiveSearch = () => {
+  kbNav.value = false;
+  activeIndex.value = -1;
+  if (liveDebounce) clearTimeout(liveDebounce);
+  if (prompt.value === "") return;
+  // Same debounce as the command palette: search while typing.
+  liveDebounce = window.setTimeout(() => void runSearch(), 180);
+};
 
 const $showError = inject<IToastError>("$showError")!;
 
@@ -139,9 +176,11 @@ const wrapperEl = ref<HTMLElement | null>(null);
 
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 
 watch(prompt, () => {
   reset();
+  scheduleLiveSearch();
 });
 
 const isEmpty = computed(() => results.value.length === 0);
@@ -157,6 +196,25 @@ const filteredResults = computed(() =>
   results.value.slice(0, resultsCount.value)
 );
 
+/** Folders/Files sections like the Ctrl+K palette, with flat keyboard index. */
+const searchSections = computed(() => {
+  const sections = buildSearchSections(filteredResults.value);
+  let i = 0;
+  return sections.map((s) => ({
+    ...s,
+    entries: s.entries.map((e) => ({ ...e, index: i++ })),
+  }));
+});
+
+const flatSearchEntries = computed(() =>
+  searchSections.value.flatMap((s) => s.entries)
+);
+
+const highlightTerm = computed(() => highlightTermFromPrompt(prompt.value));
+
+const sectionHeader = (id: string) =>
+  id === "folders" ? t("files.folders") : t("files.files");
+
 onMounted(() => {
   if (!dropdownEl.value) return;
   dropdownEl.value.addEventListener("scroll", (event: Event) => {
@@ -169,6 +227,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   abortLastSearch();
+  if (liveDebounce) clearTimeout(liveDebounce);
 });
 
 const onFocus = () => {
@@ -208,6 +267,7 @@ const init = (string: string) => {
 
 const reset = () => {
   abortLastSearch();
+  if (liveDebounce) clearTimeout(liveDebounce);
   ongoing.value = false;
   resultsCount.value = 50;
   results.value = [];
@@ -217,9 +277,7 @@ const abortLastSearch = () => {
   searchAbortController.abort();
 };
 
-const submit = async (event: Event) => {
-  event.preventDefault();
-
+const runSearch = async () => {
   if (prompt.value === "") return;
 
   let path = route.path;
@@ -244,6 +302,48 @@ const submit = async (event: Event) => {
   }
 
   ongoing.value = false;
+};
+
+const submit = (event: Event) => {
+  event.preventDefault();
+  if (liveDebounce) clearTimeout(liveDebounce);
+  void runSearch();
+};
+
+const openEntry = (entryUrl: string) => {
+  close();
+  router.push(entryUrl);
+};
+
+/** Enter opens the keyboard/hover-highlighted row, else runs the search. */
+const onEnter = (event: Event) => {
+  const entry =
+    kbNav.value && activeIndex.value >= 0
+      ? flatSearchEntries.value[activeIndex.value]
+      : undefined;
+  if (entry) {
+    event.preventDefault();
+    openEntry(entry.url);
+    return;
+  }
+  submit(event);
+};
+
+const moveActive = (delta: number) => {
+  const n = flatSearchEntries.value.length;
+  if (!n) return;
+  kbNav.value = true;
+  const start =
+    activeIndex.value < 0 ? (delta > 0 ? -1 : 0) : activeIndex.value;
+  activeIndex.value = (start + delta + n) % n;
+  dropdownEl.value
+    ?.querySelector(`[data-index="${activeIndex.value}"]`)
+    ?.scrollIntoView({ block: "nearest" });
+};
+
+const hoverEntry = (index: number) => {
+  activeIndex.value = index;
+  kbNav.value = true;
 };
 
 const focus = () => {

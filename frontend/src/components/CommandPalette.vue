@@ -97,6 +97,11 @@ import { useSourceStore } from "@/stores/source";
 import { search } from "@/api";
 import FbIcon from "@/components/FbIcon.vue";
 import type { IconName } from "@/utils/icons";
+import {
+  highlightMatch,
+  iconForSearchResult,
+  splitSearchPath,
+} from "@/utils/searchResults";
 import { getRecents } from "@/utils/recents";
 
 interface Entry {
@@ -150,107 +155,6 @@ const listEl = ref<HTMLElement | null>(null);
 let controller: AbortController | null = null;
 let debounce: number | null = null;
 let opener: HTMLElement | null = null;
-
-const IMAGE_EXTS = new Set([
-  ".jpg",
-  ".jpeg",
-  ".png",
-  ".gif",
-  ".webp",
-  ".bmp",
-  ".svg",
-  ".ico",
-  ".avif",
-  ".heic",
-  ".tiff",
-]);
-const VIDEO_EXTS = new Set([
-  ".mp4",
-  ".mov",
-  ".webm",
-  ".mkv",
-  ".avi",
-  ".m4v",
-  ".wmv",
-  ".flv",
-]);
-const AUDIO_EXTS = new Set([
-  ".mp3",
-  ".wav",
-  ".flac",
-  ".ogg",
-  ".m4a",
-  ".aac",
-  ".opus",
-]);
-const CODE_EXTS = new Set([
-  ".js",
-  ".mjs",
-  ".cjs",
-  ".ts",
-  ".tsx",
-  ".jsx",
-  ".vue",
-  ".go",
-  ".py",
-  ".rb",
-  ".rs",
-  ".java",
-  ".kt",
-  ".c",
-  ".cpp",
-  ".h",
-  ".cs",
-  ".php",
-  ".sh",
-  ".html",
-  ".css",
-  ".scss",
-  ".json",
-  ".xml",
-  ".yml",
-  ".yaml",
-  ".toml",
-  ".sql",
-]);
-const ARCHIVE_EXTS = new Set([
-  ".zip",
-  ".rar",
-  ".7z",
-  ".tar",
-  ".gz",
-  ".bz2",
-  ".xz",
-  ".tgz",
-]);
-
-const extOf = (name: string) => {
-  const i = name.lastIndexOf(".");
-  return i <= 0 ? "" : name.slice(i).toLowerCase();
-};
-
-// Icon from filename extension (search results carry no resource type).
-const iconForName = (name: string, isDir: boolean): IconName => {
-  if (isDir) return "folder";
-  const ext = extOf(name);
-  if (IMAGE_EXTS.has(ext)) return "image";
-  if (VIDEO_EXTS.has(ext)) return "video";
-  if (AUDIO_EXTS.has(ext)) return "audio";
-  if (ext === ".pdf") return "pdf";
-  if (CODE_EXTS.has(ext)) return "code";
-  if (ARCHIVE_EXTS.has(ext)) return "archive";
-  return "file";
-};
-
-// Split a raw (already-decoded) FS path into name + parent directory. The
-// search backend returns raw paths, so we must NOT decodeURIComponent here.
-const splitPath = (path: string): { name: string; dir: string } => {
-  const clean = path.replace(/\/$/, "");
-  const slash = clean.lastIndexOf("/");
-  return slash === -1
-    ? { name: clean, dir: "" }
-    : { name: clean.slice(slash + 1), dir: clean.slice(0, slash) };
-};
 
 const openUrl = (url: string) => {
   close();
@@ -322,10 +226,12 @@ const sections = computed<Section[]>(() => {
         id: "recent",
         header: t("commandPalette.recent"),
         items: recents.slice(0, 8).map((r) => {
-          const { dir } = splitPath(r.url.replace(/^\/files\/[^/]+\//, ""));
+          const { dir } = splitSearchPath(
+            r.url.replace(/^\/files\/[^/]+\//, "")
+          );
           return {
             key: "recent:" + r.url,
-            icon: iconForName(r.name, false),
+            icon: iconForSearchResult(r.name, false),
             label: r.name,
             sub: dir,
             run: () => openUrl(r.url),
@@ -340,10 +246,10 @@ const sections = computed<Section[]>(() => {
     });
   } else {
     const toEntry = (item: SearchResult): Omit<Entry, "index"> => {
-      const { name, dir } = splitPath(item.path);
+      const { name, dir } = splitSearchPath(item.path);
       return {
         key: "res:" + item.url,
-        icon: iconForName(name, item.dir),
+        icon: iconForSearchResult(name, item.dir),
         label: name,
         sub: dir,
         query: highlightTerm.value,
@@ -378,25 +284,7 @@ const sections = computed<Section[]>(() => {
 
 const flat = computed<Entry[]>(() => sections.value.flatMap((s) => s.items));
 
-const escapeHtml = (s: string) =>
-  s.replace(
-    /[&<>"]/g,
-    (c) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string
-  );
-
-const highlight = (text: string, q?: string): string => {
-  if (!q) return escapeHtml(text);
-  const idx = text.toLowerCase().indexOf(q.toLowerCase());
-  if (idx === -1) return escapeHtml(text);
-  return (
-    escapeHtml(text.slice(0, idx)) +
-    "<mark>" +
-    escapeHtml(text.slice(idx, idx + q.length)) +
-    "</mark>" +
-    escapeHtml(text.slice(idx + q.length))
-  );
-};
+const highlight = highlightMatch;
 
 // Build the backend query string from the active type chip and the typed text.
 //   - active chip      -> `type:<key>` (image/audio/video mime, pdf extension)

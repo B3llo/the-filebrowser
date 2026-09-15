@@ -341,6 +341,141 @@ export function buildFlatTrashResource(
   } as Resource;
 }
 
+/** Display label for a flat-view group location: "/" stays "/", else "a › b". */
+export function flatTrashGroupLabel(location: string): string {
+  if (location === "/") return "/";
+  return collapseChainLabel(location.split("/"));
+}
+
+/**
+ * Above this many trashed items from the same folder, the flat view collapses
+ * them into a single folder row. At or below it they stay loose so small sets
+ * remain easy to scan, restore or delete one by one.
+ */
+export const FLAT_TRASH_GROUP_THRESHOLD = 3;
+
+/** Group key for a flat-view row: original parent dir, "/" for legacy/root items. */
+export function flatTrashGroupKey(
+  sourcePath: string | undefined,
+  name: string
+): string {
+  const original =
+    sourcePath !== undefined ? originalPathFromTrash(sourcePath) : null;
+  if (original !== null) return originalLocation(original);
+  void name;
+  return "/";
+}
+
+export interface FlatTrashGroup<T> {
+  /** Original parent dir, e.g. "/Docs/Viagem" ("/" for legacy/root items). */
+  location: string;
+  /** Header label: middle segments collapsed to "…" on pure chains. */
+  label: string;
+  /** Full original location for tooltips. */
+  fullPath: string;
+  /** Mirror dir source-path ("/.Trash/files/Docs/Viagem"), null for legacy. */
+  mirrorDir: string | null;
+  /** True when every level from the mirror root to the folder is single-child. */
+  pureChain: boolean;
+  items: T[];
+}
+
+/** Mirror dir source-path for an original parent location, null for root/legacy. */
+export function mirrorDirForLocation(location: string): string | null {
+  if (location === "/") return null;
+  const rel = location.startsWith("/") ? location.slice(1) : location;
+  if (rel === "") return null;
+  return `${TRASH_FILES_PREFIX}/${rel}`;
+}
+
+/**
+ * True when the mirror chain from the trash root down to `mirrorDir` holds no
+ * siblings at any level — a pure single-child chain safe to collapse with "…".
+ * Any level with other folders/files ("outras pastas no meio") returns false
+ * so the UI shows the complete path for step-by-step drilling.
+ */
+export function isPureTrashChain(
+  mirrorDir: string,
+  childCounts: Map<string, number>
+): boolean {
+  const rel = trashMirrorRelative(mirrorDir);
+  if (rel === null || rel === "") return false;
+  const segs = rel.split("/");
+  let node = TRASH_FILES_PREFIX;
+  for (let i = 0; i < segs.length; i++) {
+    if ((childCounts.get(node) ?? 0) !== 1) return false;
+    node += `/${segs[i]}`;
+  }
+  return true;
+}
+
+/**
+ * Header label for a group: pure chains of 3+ levels collapse the middle to
+ * "Docs › … › Viagem"; anything with siblings in the middle shows the full
+ * "a › b › c" path.
+ */
+export function trashGroupLabel(location: string, pureChain: boolean): string {
+  if (location === "/") return "/";
+  const parts = location.split("/").filter((p) => p !== "");
+  if (parts.length >= 3 && pureChain) {
+    return `${parts[0]} › … › ${parts[parts.length - 1]}`;
+  }
+  return collapseChainLabel(parts);
+}
+
+export interface GroupedFlatTrash<T> {
+  /** Folders with more than FLAT_TRASH_GROUP_THRESHOLD items: one row each. */
+  groups: FlatTrashGroup<T>[];
+  /** Everything else: renders loose, in incoming order. */
+  loose: T[];
+}
+
+/**
+ * Split flat-view trash rows into collapsed folder groups (only when a folder
+ * holds MORE than the threshold — "mil arquivos" case) and loose rows.
+ * Display-only: items keep their identity/index. Groups sorted with "/"
+ * first, then alphabetically; loose order is preserved.
+ */
+export function groupFlatTrashItems<T extends { path: string; name: string }>(
+  rows: T[],
+  childCounts: Map<string, number> = new Map(),
+  threshold: number = FLAT_TRASH_GROUP_THRESHOLD
+): GroupedFlatTrash<T> {
+  const byLocation = new Map<string, T[]>();
+  for (const row of rows) {
+    const key = flatTrashGroupKey(row.path, row.name);
+    const bucket = byLocation.get(key);
+    if (bucket) bucket.push(row);
+    else byLocation.set(key, [row]);
+  }
+  const groups: FlatTrashGroup<T>[] = [];
+  const loose: T[] = [];
+  for (const [location, items] of byLocation) {
+    if (items.length <= threshold) {
+      loose.push(...items);
+      continue;
+    }
+    const mirrorDir = mirrorDirForLocation(location);
+    const pureChain =
+      mirrorDir !== null && isPureTrashChain(mirrorDir, childCounts);
+    groups.push({
+      location,
+      label: trashGroupLabel(location, pureChain),
+      fullPath: location,
+      mirrorDir,
+      pureChain,
+      items,
+    });
+  }
+  groups.sort((a, b) => {
+    if (a.location === b.location) return 0;
+    if (a.location === "/") return -1;
+    if (b.location === "/") return 1;
+    return a.location.localeCompare(b.location);
+  });
+  return { groups, loose };
+}
+
 /** Top-level entry names (first segment) below a root, for recursive empty-trash. */
 export function topLevelNames(paths: string[], rootPrefix: string): string[] {
   const prefix = rootPrefix.endsWith("/") ? rootPrefix : `${rootPrefix}/`;

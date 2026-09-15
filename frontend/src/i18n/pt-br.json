@@ -417,7 +417,8 @@
     "deletedAt": "Excluído",
     "originalLocation": "Local original",
     "treeView": "Pastas",
-    "flatView": "Todos os itens"
+    "flatView": "Todos os itens",
+    "groupedFolders": "Pastas com muitos itens"
   },
   "time": {
     "justNow": "Agora mesmo",

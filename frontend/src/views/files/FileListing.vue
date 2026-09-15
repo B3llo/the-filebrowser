@@ -611,6 +611,30 @@
           >
           </item>
         </div>
+        <template v-if="flatTrashData && flatTrashData.groups.length > 0">
+          <h2 data-clear-on-click="true">
+            {{ t("trash.groupedFolders") }}
+          </h2>
+          <div
+            class="fb-items fb-items--files"
+            data-clear-on-click="true"
+            @contextmenu="showContextMenu"
+          >
+            <button
+              v-for="group in flatTrashData.groups"
+              :key="group.location"
+              class="fb-trash-group-row"
+              :title="group.fullPath"
+              @click="handleTrashOpen(flatGroupUrl(group), true)"
+            >
+              <FbIcon name="folder" size="18px" />
+              <span class="fb-trash-group-row-label">{{ group.label }}</span>
+              <span class="fb-trash-group-row-count"
+                >({{ group.items.length }})</span
+              >
+            </button>
+          </div>
+        </template>
         <context-menu
           :show="isContextMenuVisible"
           :pos="contextMenuPos"
@@ -790,6 +814,7 @@ import { StatusError } from "@/api/utils";
 import {
   buildTrashInfo,
   cleanTrashName,
+  groupFlatTrashItems,
   isTrashPath,
   originalPathFromTrash,
   parentDir,
@@ -938,7 +963,13 @@ const currentSortAsc = computed(() =>
   props.isTrash ? (props.sortAsc ?? true) : (fileStore.req?.sorting.asc ?? true)
 );
 
-const dirs = computed(() => items.value.dirs.slice(0, showLimit.value));
+const dirs = computed(() => {
+  const list =
+    flatTrashData.value !== null
+      ? items.value.dirs.filter((i) => !flatTrashGroupedPaths.value.has(i.path))
+      : items.value.dirs;
+  return list.slice(0, showLimit.value);
+});
 
 const items = computed(() => {
   const dirs: ResourceItem[] = [];
@@ -997,12 +1028,51 @@ const items = computed(() => {
 });
 
 const files = computed((): ResourceItem[] => {
-  let _showLimit = showLimit.value - items.value.dirs.length;
+  const looseDirs =
+    flatTrashData.value !== null ? dirs.value.length : items.value.dirs.length;
+  let _showLimit = showLimit.value - looseDirs;
 
   if (_showLimit < 0) _showLimit = 0;
 
-  return items.value.files.slice(0, _showLimit);
+  const list =
+    flatTrashData.value !== null
+      ? items.value.files.filter(
+          (i) => !flatTrashGroupedPaths.value.has(i.path)
+        )
+      : items.value.files;
+  return list.slice(0, _showLimit);
 });
+
+/**
+ * Flat trash view split: folders with MORE than FLAT_TRASH_GROUP_THRESHOLD
+ * items collapse into single folder rows (one click jumps straight there),
+ * everything else stays loose for quick scan/restore/delete.
+ */
+const flatTrashData = computed(() => {
+  if (!props.isTrash || !props.flatView) return null;
+  const all = [...items.value.dirs, ...items.value.files];
+  const childCounts = new Map<string, number>();
+  for (const it of all) {
+    const p = parentDir(it.path ?? "");
+    childCounts.set(p, (childCounts.get(p) ?? 0) + 1);
+  }
+  return groupFlatTrashItems(all, childCounts);
+});
+
+const flatTrashGroupedPaths = computed(
+  () =>
+    new Set(
+      (flatTrashData.value?.groups ?? []).flatMap((g) =>
+        g.items.map((i) => i.path)
+      )
+    )
+);
+
+/** Mirror URL a group row jumps to in tree mode (direct, skips the chain). */
+const flatGroupUrl = (group: { mirrorDir: string | null }): string =>
+  group.mirrorDir !== null
+    ? `${filesBase.value}${group.mirrorDir}/`
+    : `${trashFilesRoot(filesBase.value)}/`;
 
 const nameIcon = computed((): IconName => {
   return nameSorted.value && !ascOrdered.value ? "arrow-up" : "arrow-down";
@@ -2238,6 +2308,37 @@ const trashDeletePermanent = () => {
   font-size: 12.5px;
   border-radius: 7px;
   white-space: nowrap;
+}
+
+.fb-trash-group-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: var(--surfacePrimary);
+  border: 1px solid var(--divider);
+  border-radius: 8px;
+  color: var(--textPrimary);
+  cursor: pointer;
+  padding: 10px 12px;
+  font: inherit;
+  text-align: left;
+}
+
+.fb-trash-group-row:hover {
+  background: var(--hover);
+}
+
+.fb-trash-group-row-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.fb-trash-group-row-count {
+  color: var(--dim);
+  flex: 0 0 auto;
 }
 
 .file-selection-margin-bottom {

@@ -427,7 +427,8 @@
     "deletedAt": "Deleted",
     "originalLocation": "Original location",
     "treeView": "Folders",
-    "flatView": "All items"
+    "flatView": "All items",
+    "groupedFolders": "Folders with many items"
   },
   "time": {
     "justNow": "Just now",
