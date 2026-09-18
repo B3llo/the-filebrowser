@@ -2,25 +2,26 @@
 
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Security fixes land on the latest release only. Always run the most recent
+version before reporting.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 2.x     | :white_check_mark: |
-| < 2.0   | :x:                |
+| Version        | Supported          |
+| -------------- | ------------------ |
+| latest release | :white_check_mark: |
+| older          | :x:                |
 
 ## Reporting a Vulnerability
 
-Vulnerabilities with critical impact should be reported on the [Security](https://github.com/filebrowser/filebrowser/security) page of this repository, which is a private way of communicating vulnerabilities to maintainers. This project is in maintenance-only mode and it can take a while until someone gets back to you.
+Report vulnerabilities through the [private security advisory][advisory] page
+of this repository. Do not open a public issue for a critical vulnerability.
 
-If it is not a critical vulnerability, please open an issue and we will categorize it as a security issue. By giving visibility, we can get more help from the community at fixing such issues.
+[advisory]: https://github.com/B3llo/the-filebrowser/security/advisories/new
 
-When reporting an issue, where possible, please provide at least:
+When reporting, include where possible:
 
-* The commit version the issue was identified at
+* The commit or version where the issue was identified
 * A proof of concept (plaintext; no binaries)
 * Steps to reproduce
 * Your recommended remediation(s), if any.
 
-The File Browser team is a volunteer-only effort, and may reach back out for clarification.
+Reports are handled on a best-effort basis by a volunteer maintainer.

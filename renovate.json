@@ -4,9 +4,16 @@
     "config:recommended",
     "group:allNonMajor",
     "group:allDigest",
+    "helpers:pinGitHubActionDigests",
+    ":enableVulnerabilityAlerts",
     ":disableDependencyDashboard",
-    ":disableMajorUpdates",
     ":semanticCommitTypeAll(chore)"
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": ["docker"],
+      "pinDigests": true
+    }
   ],
   "postUpdateOptions": [
     "gomodUpdateImportPaths",
