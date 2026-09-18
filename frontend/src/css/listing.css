@@ -677,18 +677,18 @@ html[dir="rtl"] #listing {
 }
 
 /* ---- Selection (overrides legacy blue rule below) ---- */
-#listing.mosaic .item[data-dir="true"][aria-selected="true"] {
+#listing.mosaic .item[data-dir="true"][data-selected="true"] {
   background: var(--sel);
   border-color: var(--sel-border);
   color: var(--text);
 }
-#listing.mosaic .item:not([data-dir="true"])[aria-selected="true"] {
+#listing.mosaic .item:not([data-dir="true"])[data-selected="true"] {
   background: var(--sel);
   border-color: var(--sel-border);
   box-shadow: none;
   color: var(--text);
 }
-#listing.mosaic .item[aria-selected="true"] .name {
+#listing.mosaic .item[data-selected="true"] .name {
   color: var(--text);
 }
 
@@ -872,11 +872,11 @@ html[dir="rtl"] #listing {
 }
 
 /* ---- Selection (base for all views) ---- */
-#listing .item[aria-selected="true"] {
+#listing .item[data-selected="true"] {
   background: var(--sel);
 }
-#listing.list .item[aria-selected="true"],
-#listing.list .item[aria-selected="true"]:hover {
+#listing.list .item[data-selected="true"],
+#listing.list .item[data-selected="true"]:hover {
   background: var(--sel);
 }
 
@@ -969,6 +969,30 @@ html[dir="rtl"] #listing {
   top: 50%;
   transform: translateY(-50%);
   right: 14px;
+}
+
+/* ============================================================
+   Rubber-band (marquee) selection overlay
+   ============================================================ */
+
+#listing {
+  position: relative;
+}
+
+.fb-marquee {
+  position: absolute;
+  z-index: 8;
+  border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* While dragging a marquee, never let the pointer select text/native drag. */
+body.fb-marquee-dragging {
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
 }
 
 /* ============================================================

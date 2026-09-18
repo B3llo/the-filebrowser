@@ -246,7 +246,7 @@
           <div class="share__box__header" v-if="req.isDir">
             {{ t("files.files") }}
           </div>
-          <div id="listing" class="list file-icons">
+          <div id="listing" ref="listing" class="list file-icons">
             <item
               v-for="item in req.items.slice(0, showLimit)"
               :key="base64(item.name)"
@@ -319,6 +319,7 @@ import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { StatusError } from "@/api/utils";
 import { copy } from "@/utils/clipboard";
+import { useMarqueeSelection } from "@/composables/useMarqueeSelection";
 
 const error = ref<StatusError | null>(null);
 const showLimit = ref<number>(100);
@@ -337,6 +338,9 @@ const { t } = useI18n({});
 const route = useRoute();
 const fileStore = useFileStore();
 const layoutStore = useLayoutStore();
+
+const listing = ref<HTMLElement | null>(null);
+useMarqueeSelection(listing);
 
 watch(route, () => {
   showLimit.value = 100;

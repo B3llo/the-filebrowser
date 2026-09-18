@@ -7,6 +7,7 @@ export const useFileStore = defineStore("file", {
     oldReq: Resource | null;
     reload: boolean;
     selected: number[];
+    selectionAnchor: number | null;
     multiple: boolean;
     isFiles: boolean;
     preselect: string | null;
@@ -15,6 +16,7 @@ export const useFileStore = defineStore("file", {
     oldReq: null,
     reload: false,
     selected: [],
+    selectionAnchor: null,
     multiple: false,
     isFiles: false,
     preselect: null,
@@ -42,6 +44,11 @@ export const useFileStore = defineStore("file", {
       this.oldReq = this.req;
       this.req = value;
       this.selected = [];
+      this.selectionAnchor = null;
+    },
+    clearSelection() {
+      this.selected = [];
+      this.selectionAnchor = null;
     },
     removeSelected(value: any) {
       const i = this.selected.indexOf(value);

@@ -28,6 +28,8 @@
     "
     :data-dotfile="isDotfile ? 'true' : 'false'"
     :data-path="path"
+    :data-index="index"
+    :data-selected="isSelected ? 'true' : 'false'"
     :aria-label="name"
     :aria-pressed="isSelected"
     :data-ext="getExtension(name).toLowerCase()"
@@ -203,6 +205,7 @@ import {
   watch,
 } from "vue";
 import { loadThumbnail } from "@/utils/thumbnailCache";
+import { isIndexRendered, rangeIndices } from "@/utils/selection";
 import {
   officeThumbKind,
   fetchDocxText,
@@ -749,48 +752,48 @@ const click = (event: Event | KeyboardEvent) => {
     open();
   }
 
+  const keyboard = event as KeyboardEvent;
+  const ctrl = !!(keyboard.ctrlKey || keyboard.metaKey);
+
+  // Shift-click: (re)build the visual range from the anchor. Recomputed from
+  // scratch on every shift-click, so the range both grows and shrinks, and
+  // never depends on the clicked item being unselected first.
+  if (keyboard.shiftKey) {
+    let anchor = fileStore.selectionAnchor;
+    if (anchor === null || !isIndexRendered(anchor)) {
+      anchor = fileStore.selected[0] ?? null;
+    }
+
+    if (anchor === null || anchor === props.index) {
+      fileStore.selected = [props.index];
+    } else {
+      const range = rangeIndices(anchor, props.index);
+      if (ctrl) {
+        fileStore.selected = Array.from(
+          new Set([...fileStore.selected, ...range])
+        ).sort((a, b) => a - b);
+      } else {
+        fileStore.selected = range;
+      }
+    }
+    return;
+  }
+
   if (fileStore.selected.indexOf(props.index) !== -1) {
-    if (
-      (event as KeyboardEvent).ctrlKey ||
-      (event as KeyboardEvent).metaKey ||
-      fileStore.multiple
-    ) {
+    if (ctrl || fileStore.multiple) {
       fileStore.removeSelected(props.index);
     } else {
       fileStore.selected = [props.index];
     }
+    fileStore.selectionAnchor = props.index;
     return;
   }
 
-  if ((event as KeyboardEvent).shiftKey && fileStore.selected.length > 0) {
-    let fi = 0;
-    let la = 0;
-
-    if (props.index > fileStore.selected[0]) {
-      fi = fileStore.selected[0] + 1;
-      la = props.index;
-    } else {
-      fi = props.index;
-      la = fileStore.selected[0] - 1;
-    }
-
-    for (; fi <= la; fi++) {
-      if (fileStore.selected.indexOf(fi) == -1) {
-        fileStore.selected.push(fi);
-      }
-    }
-
-    return;
-  }
-
-  if (
-    !(event as KeyboardEvent).ctrlKey &&
-    !(event as KeyboardEvent).metaKey &&
-    !fileStore.multiple
-  ) {
+  if (!ctrl && !fileStore.multiple) {
     fileStore.selected = [];
   }
   fileStore.selected.push(props.index);
+  fileStore.selectionAnchor = props.index;
 };
 
 const open = () => {

@@ -900,6 +900,7 @@ import { useRoute, useRouter, onBeforeRouteUpdate } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { removePrefix } from "@/api/utils";
+import { useMarqueeSelection } from "@/composables/useMarqueeSelection";
 
 const props = defineProps<{
   isTrash?: boolean;
@@ -974,6 +975,8 @@ const { t } = useI18n();
 const listing = ref<HTMLElement | null>(null);
 const searchRef = ref<InstanceType<typeof Search> | null>(null);
 const sortMenuWrap = ref<HTMLElement | null>(null);
+
+useMarqueeSelection(listing);
 
 const nameSorted = computed(() =>
   props.isTrash
@@ -1223,7 +1226,7 @@ watch(
   () => layoutStore.showDetails,
   (isOpen, wasOpen) => {
     if (wasOpen && !isOpen) {
-      fileStore.selected = [];
+      fileStore.clearSelection();
     }
   }
 );
@@ -1315,7 +1318,7 @@ const keyEvent = (event: KeyboardEvent) => {
       return;
     }
     // Reset files selection.
-    fileStore.selected = [];
+    fileStore.clearSelection();
   }
 
   if (event.key === "Delete") {
@@ -2078,7 +2081,7 @@ const showContextMenu = (event: MouseEvent) => {
       fileStore.selected = [found.index];
     }
   } else if (!isContextMenuOnItem.value) {
-    fileStore.selected = [];
+    fileStore.clearSelection();
     isContextMenuOnFolder.value = false;
   }
   isContextMenuVisible.value = true;
@@ -2341,7 +2344,7 @@ const handleEmptyAreaClick = (e: MouseEvent) => {
   if (!(target instanceof HTMLElement)) return;
 
   if (target.dataset.clearOnClick === "true") {
-    fileStore.selected = [];
+    fileStore.clearSelection();
   }
 };
 

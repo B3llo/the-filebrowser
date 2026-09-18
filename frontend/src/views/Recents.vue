@@ -186,6 +186,7 @@
         <div
           v-else
           id="listing"
+          ref="listing"
           class="file-icons no-size-col"
           :class="currentViewMode"
           data-clear-on-click="true"
@@ -266,11 +267,15 @@ import FbIcon from "@/components/FbIcon.vue";
 import Item from "@/components/files/ListingItem.vue";
 import SelectionBar from "@/components/SelectionBar.vue";
 import DetailsPanel from "@/components/DetailsPanel.vue";
+import { useMarqueeSelection } from "@/composables/useMarqueeSelection";
 
 const { t } = useI18n();
 const authStore = useAuthStore();
 const fileStore = useFileStore();
 const layoutStore = useLayoutStore();
+
+const listing = ref<HTMLElement | null>(null);
+useMarqueeSelection(listing);
 
 const allItems = ref<RecentFile[]>([]);
 const searchQuery = ref("");
@@ -405,7 +410,7 @@ const handleEmptyAreaClick = (e: MouseEvent) => {
   const target = e.target;
   if (!(target instanceof HTMLElement)) return;
   if (target.dataset.clearOnClick === "true") {
-    fileStore.selected = [];
+    fileStore.clearSelection();
   }
 };
 
