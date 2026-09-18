@@ -3,9 +3,37 @@ name: Deploy Docker Image
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
+  verify-ci:
+    name: Verify CI Green
+    runs-on: ubuntu-latest
+    steps:
+      # The image is published as `latest`, so refuse to build a commit that
+      # has no successful Continuous Integration run (CI must be green on the
+      # exact SHA being deployed).
+      - name: Require a successful CI run for this commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          successes=$(gh api \
+            "repos/$REPO/actions/workflows/ci.yaml/runs?head_sha=$SHA&status=completed" \
+            --jq '[.workflow_runs[] | select(.conclusion == "success")] | length')
+          if [ "$successes" -eq 0 ]; then
+            echo "::error::No successful CI run for commit $SHA - refusing to build."
+            exit 1
+          fi
+          echo "CI is green for $SHA."
+
   docker:
     name: Build & Push
+    needs: verify-ci
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
