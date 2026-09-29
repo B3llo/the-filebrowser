@@ -47,6 +47,9 @@ export default defineConfig({
         ...process.env,
         FB_PASSWORD: adminHash(),
         FB_DISABLE_THUMBNAILS: "true",
+        // The suite logs in dozens of times per minute from 127.0.0.1;
+        // the production default (20/min/IP) throttles it into 429s.
+        FB_AUTH_RATE_LIMIT: "1000",
       } as Record<string, string>,
       url: "http://127.0.0.1:8080/health",
       timeout: 240_000,
