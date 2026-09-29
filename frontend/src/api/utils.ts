@@ -43,9 +43,9 @@ export async function fetchURL(
   // (anonymous visit, e.g. a public share page) must NOT log out — there is
   // no session to expire, and logging out navigates away from public pages.
   const sentToken = Boolean(authStore.jwt);
-  let res;
-  try {
-    res = await fetch(`${baseURL}${url}`, {
+
+  const doFetch = () =>
+    fetch(`${baseURL}${url}`, {
       headers: {
         "X-Auth": authStore.jwt,
         ...headers,
@@ -53,6 +53,10 @@ export async function fetchURL(
       credentials: "include",
       ...rest,
     });
+
+  let res;
+  try {
+    res = await doFetch();
   } catch (e) {
     // Check if the error is an intentional cancellation
     if (e instanceof Error && e.name === "AbortError") {
@@ -65,16 +69,34 @@ export async function fetchURL(
     await renew();
   }
 
+  // A 401 with a token usually means the access token expired while the
+  // refresh cookie is still valid (long idle, laptop wake, a renew in
+  // another tab). Try renewing once and replay the request before dropping
+  // the session: logging out on the first 401 logged the user out of every
+  // tab, usually over a request that was about to succeed anyway.
+  if (auth && res.status == 401 && sentToken) {
+    let sessionGone = false;
+    try {
+      await renew();
+      res = await doFetch();
+      sessionGone = res.status === 401;
+    } catch (e) {
+      // Only a rejected refresh (401) means the session is gone; network
+      // failures and rate limits must not log the user out.
+      sessionGone = e instanceof StatusError && e.status === 401;
+    }
+
+    if (sessionGone) {
+      await logout();
+    }
+  }
+
   if (res.status < 200 || res.status > 299) {
     const body = await res.text();
     const error = new StatusError(
       body || `${res.status} ${res.statusText}`,
       res.status
     );
-
-    if (auth && res.status == 401 && sentToken) {
-      await logout();
-    }
 
     throw error;
   }
