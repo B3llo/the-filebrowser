@@ -21,15 +21,26 @@ import (
 const (
 	DefaultTokenExpirationTime = time.Hour * 2
 
-	// Short-lived access sessions (P1). DefaultTokenExpirationTime is kept
-	// for backwards compatibility, but any effective expiration above
-	// maxTokenTTL is clamped down to it.
-	accessTokenTTL = time.Minute * 10
-	maxTokenTTL    = time.Minute * 15
+	// Access sessions. DefaultTokenExpirationTime (2h) is kept for
+	// backwards compatibility, but any effective expiration above
+	// maxTokenTTL is clamped down to it. Non-positive values fall back to
+	// accessTokenTTL.
+	accessTokenTTL = time.Hour * 2
+	maxTokenTTL    = time.Hour * 24
 
 	// renewMaxAge bounds the refresh window: a token (even expired) can
-	// only be renewed within 7 days of its IssuedAt.
+	// only be renewed within 7 days of its IssuedAt. The HttpOnly cookie
+	// lives this long so reloads and deep links can restore the session;
+	// the JWT it carries stays short-lived.
 	renewMaxAge = time.Hour * 24 * 7
+
+	// refreshCookieTTL is the browser lifetime of the HttpOnly auth cookie.
+	// It outlives the access token on purpose: /api/renew accepts an expired
+	// token within renewMaxAge, so the SPA can recover from an expired access
+	// token instead of forcing a fresh login. Download URLs opened in a new
+	// tab (window.open) authenticate with this cookie only, so a cookie that
+	// expired together with the access token made every download 401.
+	refreshCookieTTL = renewMaxAge
 
 	authCookieName = "auth"
 
@@ -290,8 +301,11 @@ func renewHandler(tokenExpireTime time.Duration) handleFunc {
 func logoutHandler(w http.ResponseWriter, r *http.Request, d *data) (int, error) {
 	// Best effort: invalidate the presenting token by bumping the user's
 	// LastUpdate, so any copy of it fails the IssuedAt check in withUser
-	// and renewHandler. Signature is still verified; expiry is ignored so
-	// logout works even with an expired access token.
+	// and renewHandler. Signature is still verified so logout works with
+	// an expired token too — but an expired token is not revoked: it can
+	// no longer authenticate, and the SPA's inactivity timer calls this
+	// endpoint with whatever token it holds, which would otherwise kill
+	// fresh sessions in other tabs and devices.
 	if raw, err := (&extractor{}).ExtractToken(r); err == nil && raw != "" {
 		var tk authToken
 		keyFunc := func(_ *jwt.Token) (interface{}, error) {
@@ -302,29 +316,31 @@ func logoutHandler(w http.ResponseWriter, r *http.Request, d *data) (int, error)
 			jwt.WithoutClaimsValidation(),
 		)
 		if token, err := p.ParseWithClaims(raw, &tk, keyFunc); err == nil && token.Valid && tk.User.ID != 0 {
-			if user, err := d.store.Users.Get(d.server.Root, d.server.FollowExternalSymlinks, tk.User.ID); err == nil {
-				_ = d.store.Users.Update(user)
-				// LastUpdate has 1s resolution; guarantee it lands strictly
-				// after IssuedAt so the token is actually revoked.
-				if tk.IssuedAt != nil && d.store.Users.LastUpdate(user.ID) <= tk.IssuedAt.Unix() {
-					if wait := time.Until(tk.IssuedAt.Time.Add(time.Second + 50*time.Millisecond)); wait > 0 && wait < 2*time.Second {
-						time.Sleep(wait)
-					} else {
-						time.Sleep(time.Second)
-					}
+			if tk.ExpiresAt != nil && tk.ExpiresAt.After(time.Now()) {
+				if user, err := d.store.Users.Get(d.server.Root, d.server.FollowExternalSymlinks, tk.User.ID); err == nil {
 					_ = d.store.Users.Update(user)
+					// LastUpdate has 1s resolution; guarantee it lands strictly
+					// after IssuedAt so the token is actually revoked.
+					if tk.IssuedAt != nil && d.store.Users.LastUpdate(user.ID) <= tk.IssuedAt.Unix() {
+						if wait := time.Until(tk.IssuedAt.Add(time.Second + 50*time.Millisecond)); wait > 0 && wait < 2*time.Second {
+							time.Sleep(wait)
+						} else {
+							time.Sleep(time.Second)
+						}
+						_ = d.store.Users.Update(user)
+					}
 				}
 			}
 		}
 	}
 
-	clearAuthCookie(w)
+	clearAuthCookie(w, r)
 	return http.StatusOK, nil
 }
 
 // clampTokenExpiration keeps DefaultTokenExpirationTime for compatibility
-// but caps any effective expiration above maxTokenTTL (15min); non-positive
-// values fall back to the 10min access TTL.
+// but caps any effective expiration above maxTokenTTL (24h); non-positive
+// values fall back to the 2h access TTL.
 func clampTokenExpiration(d time.Duration) time.Duration {
 	if d <= 0 {
 		return accessTokenTTL
@@ -335,7 +351,16 @@ func clampTokenExpiration(d time.Duration) time.Duration {
 	return d
 }
 
-func setAuthCookie(w http.ResponseWriter, signed string, ttl time.Duration) {
+// secureCookie reports whether the auth cookie may require the Secure flag.
+// WebKit refuses to store Secure cookies from plain-HTTP origins (including
+// loopback), so hardcoding it locked Safari-style browsers out of sessions
+// when the server is not behind TLS. Trust the scheme plus the reverse proxy's
+// X-Forwarded-Proto.
+func secureCookie(r *http.Request) bool {
+	return r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
+}
+
+func setAuthCookie(w http.ResponseWriter, r *http.Request, signed string, ttl time.Duration) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     authCookieName,
 		Value:    signed,
@@ -343,12 +368,12 @@ func setAuthCookie(w http.ResponseWriter, signed string, ttl time.Duration) {
 		MaxAge:   int(ttl.Seconds()),
 		Expires:  time.Now().Add(ttl),
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   secureCookie(r),
 		SameSite: http.SameSiteStrictMode,
 	})
 }
 
-func clearAuthCookie(w http.ResponseWriter) {
+func clearAuthCookie(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     authCookieName,
 		Value:    "",
@@ -356,12 +381,12 @@ func clearAuthCookie(w http.ResponseWriter) {
 		MaxAge:   -1,
 		Expires:  time.Unix(0, 0),
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   secureCookie(r),
 		SameSite: http.SameSiteStrictMode,
 	})
 }
 
-func printToken(w http.ResponseWriter, _ *http.Request, d *data, user *users.User, tokenExpirationTime time.Duration) (int, error) {
+func printToken(w http.ResponseWriter, r *http.Request, d *data, user *users.User, tokenExpirationTime time.Duration) (int, error) {
 	tokenExpirationTime = clampTokenExpiration(tokenExpirationTime)
 	claims := &authToken{
 		User: userInfo{
@@ -396,7 +421,7 @@ func printToken(w http.ResponseWriter, _ *http.Request, d *data, user *users.Use
 		return http.StatusInternalServerError, err
 	}
 
-	setAuthCookie(w, signed, tokenExpirationTime)
+	setAuthCookie(w, r, signed, refreshCookieTTL)
 	w.Header().Set("Content-Type", "text/plain")
 	if _, err := w.Write([]byte(signed)); err != nil {
 		return http.StatusInternalServerError, err
