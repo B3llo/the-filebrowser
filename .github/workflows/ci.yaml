@@ -95,7 +95,9 @@ jobs:
           cache: "pnpm"
           cache-dependency-path: "frontend/pnpm-lock.yaml"
       - working-directory: frontend
-        run: pnpm audit --audit-level=high
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm audit --audit-level=high
 
   dependency-review:
     name: Dependency Review
