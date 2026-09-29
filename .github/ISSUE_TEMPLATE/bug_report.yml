@@ -1,53 +1,67 @@
 name: Bug Report
 description: Report a bug in FileBrowser.
-labels: [bug, 'waiting: triage']
+labels: [bug]
 body:
   - type: checkboxes
     attributes:
       label: Checklist
       description: Please verify that you've followed these steps
       options:
-        - label: This is a bug report, not a question.
+        - label: This is a bug report, not a question or a feature request.
           required: true
-        - label: I have searched on the [issue tracker](https://github.com/filebrowser/filebrowser/issues?q=is%3Aissue) for my bug.
+        - label: I searched the issue tracker and this is not a duplicate.
           required: true
-        - label: I am running the latest [FileBrowser version](https://github.com/filebrowser/filebrowser/releases) or have an issue updating.
+        - label: I am running a recent build (latest release or master).
           required: true
-  - type: textarea
+  - type: input
     id: version
     attributes:
       label: Version
+      description: Output of `filebrowser version`, or the Docker image tag you run.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, browser, and how it runs (binary, Docker, reverse proxy, …).
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happened
+      description: Only what you observed. Keep diagnosis out of this field.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected to happen
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps someone starting from scratch can follow.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnosis
+    attributes:
+      label: Your diagnosis (optional)
+      description: If you investigated, separate what you observed from what you infer.
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
       render: Text
-      description: |
-        Enter the version of FileBrowser you are using.
     validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: Description
-      description: |
-        A clear and concise description of what the issue is about. What are you trying to do?
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: What did you expect to happen?
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: What actually happened?
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: Reproduction Steps
-      description: |
-        Tell us how to reproduce this issue. How can someone who is starting from scratch reproduce this behavior as minimally as possible?
-    validations:
-      required: true
-  - type: textarea
-    attributes:
-      label: Files
-      description: |
-        A list of relevant files for this issue. Large files can be uploaded one-by-one or in a tarball/zipfile.
+      required: false

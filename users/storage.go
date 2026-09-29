@@ -1,6 +1,7 @@
 package users
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -72,7 +73,41 @@ func (s *Storage) Gets(baseScope string, followExternalSymlinks bool) ([]*User, 
 	return users, err
 }
 
-// Update updates a user in the database.
+// sessionRevokingFields lists the user fields whose change must invalidate
+// every outstanding session token. Preference and profile fields (Theme,
+// ViewMode, Sorting, FolderColors, Avatar, ...) are persisted through the
+// same endpoint, and revoking on those logged the user out of their own
+// session on the next request.
+var sessionRevokingFields = map[string]bool{
+	"username":     true,
+	"password":     true,
+	"scope":        true,
+	"sources":      true,
+	"perm":         true,
+	"lockpassword": true,
+	"commands":     true,
+	"rules":        true,
+}
+
+// revokesSessions reports whether an update touching fields must invalidate
+// outstanding tokens. An empty field list means a full update, which may
+// include credentials or permissions.
+func revokesSessions(fields []string) bool {
+	if len(fields) == 0 {
+		return true
+	}
+
+	for _, field := range fields {
+		if sessionRevokingFields[strings.ToLower(field)] {
+			return true
+		}
+	}
+	return false
+}
+
+// Update updates a user in the database. Sessions are only revoked when the
+// update touches a security-sensitive field; profile updates keep the
+// caller's session valid.
 func (s *Storage) Update(user *User, fields ...string) error {
 	err := user.Clean("", false, fields...)
 	if err != nil {
@@ -82,6 +117,10 @@ func (s *Storage) Update(user *User, fields ...string) error {
 	err = s.back.Update(user, fields...)
 	if err != nil {
 		return err
+	}
+
+	if !revokesSessions(fields) {
+		return nil
 	}
 
 	s.mux.Lock()

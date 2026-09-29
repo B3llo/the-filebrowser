@@ -1,6 +1,8 @@
 module github.com/B3llo/the-filebrowser
 
-go 1.25.0
+go 1.26.0
+
+toolchain go1.26.6
 
 require (
 	github.com/asdine/storm/v3 v3.2.1
@@ -28,7 +30,8 @@ require (
 	go.etcd.io/bbolt v1.5.0
 	golang.org/x/crypto v0.53.0
 	golang.org/x/image v0.43.0
-	golang.org/x/text v0.38.0
+	golang.org/x/sync v0.23.0
+	golang.org/x/text v0.42.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -77,7 +80,6 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	go4.org v0.0.0-20260112195520-a5071408f32f // indirect
 	golang.org/x/net v0.56.0 // indirect
-	golang.org/x/sync v0.21.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

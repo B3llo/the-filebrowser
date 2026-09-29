@@ -1,16 +1,32 @@
 ## Description
 
-<!-- Please explain the changes you made here. -->
+<!-- What changed, why, and which issue it closes. -->
 
-## Additional Information
+Closes #
 
-<!-- If it is a relatively large or complex change, please add more information to explain what you did, how you did it, if you considered any alternatives, etc. -->
+## Evidence
+
+<!-- Evidence over narrative: paste the command(s) you ran and the observed
+     result. "Tested locally" without a command and output does not count. -->
+
+- Command:
+- Result:
+
+## Change Category
+
+<!-- The changelog category decides the release version:
+     fix => patch, feat => minor, breaking change => major. -->
+
+- [ ] `fix` (patch)
+- [ ] `feat` (minor)
+- [ ] breaking change (major)
+- [ ] internal only (`chore`, `test`, `ci`, `docs`, refactor without behavior change)
 
 ## Checklist
 
-Before submitting your PR, please indicate which issues are either fixed or closed by this PR. See [GitHub Help: Closing issues using keywords](https://help.github.com/articles/closing-issues-via-commit-messages/).
-
-- [ ] I am aware the project is currently in **maintenance-only** mode and new feature requests won't be accepted. See [README](https://github.com/filebrowser/community/blob/master/README.md)
-- [ ] I am aware that translations MUST be made through [Transifex](https://app.transifex.com/file-browser/file-browser/) and that this PR is NOT a translation update
-- [ ] I am making a PR against the `master` branch.
-- [ ] I am sure File Browser can be successfully built. See [builds](https://github.com/filebrowser/community/blob/master/builds.md) and [development](https://github.com/filebrowser/community/blob/master/development.md).
+- [ ] PR title follows [Conventional Commits](https://www.conventionalcommits.org/).
+- [ ] Regression test added for the bug (or the reason it cannot be tested is written below).
+- [ ] No speculative abstraction, unused code, TODO, or drive-by refactor.
+- [ ] No secrets, credentials, tokens, personal or infrastructure data in the diff.
+- [ ] New dependency (if any) has a one-line justification above.
+- [ ] `go test ./...` and `pnpm test` were run locally.
