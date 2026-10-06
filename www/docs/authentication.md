@@ -26,6 +26,16 @@ filebrowser config set --recaptcha.host https://recaptcha.net
 
 Where `https://recaptcha.net` is any provider you want.
 
+## Browser sessions
+
+Access tokens default to **2 hours**, with a configurable maximum of **24 hours**. The frontend keeps the access token in memory, not localStorage. A separate HttpOnly, SameSite=Strict authentication cookie lasts **7 days** and is Secure when served over HTTPS (including a trusted HTTPS reverse proxy).
+
+The cookie can renew an expired access token within 7 days of issuance. Each successful renewal issues a new token and cookie, restarting that window. Closing and reopening a tab restores the session through this cookie; it does not store your password in the browser.
+
+Open pages renew automatically before access-token expiration, including while playing media. Temporary network errors or rate limits retry without logging out. Only a rejected renewal ends the local session; automatic failures do not revoke sessions in other tabs or devices. Clicking **Logout** explicitly clears the cookie and revokes the user's outstanding sessions.
+
+Profile and display-preference changes preserve sessions. Credential, scope and permission changes still invalidate outstanding tokens.
+
 ## Proxy Header
 
 If you have a reverse proxy you want to use to login your users, you do it via our `proxy` authentication method. To configure this method, your proxy must send an HTTP header containing the username of the logged in user:

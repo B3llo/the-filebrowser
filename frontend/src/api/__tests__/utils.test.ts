@@ -63,8 +63,39 @@ describe("api/utils fetchURL session recovery", () => {
     await expect(fetchURL("/api/resources/", {})).rejects.toMatchObject({
       status: 401,
     });
-    expect(authUtils.logout).toHaveBeenCalledTimes(1);
+    expect(authUtils.logout).toHaveBeenCalledWith(undefined, false);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not log out on a resource 401 after successful renewal", async () => {
+    fetchMock.mockResolvedValue(response("Unauthorized", 401));
+    vi.mocked(authUtils.renew).mockResolvedValue(undefined);
+    await expect(fetchURL("/api/resources/", {})).rejects.toMatchObject({
+      status: 401,
+    });
+    expect(authUtils.logout).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns a successful response even if proactive renewal is offline", async () => {
+    const res = response("ok");
+    res.headers.set("X-Renew-Token", "true");
+    fetchMock.mockResolvedValue(res);
+    vi.mocked(authUtils.renew).mockRejectedValue(new TypeError("offline"));
+    expect((await fetchURL("/api/resources/", {})).status).toBe(200);
+    expect(authUtils.logout).not.toHaveBeenCalled();
+  });
+
+  it("preserves cancellation when the replayed request is aborted", async () => {
+    fetchMock
+      .mockResolvedValueOnce(response("Unauthorized", 401))
+      .mockRejectedValueOnce(new DOMException("Aborted", "AbortError"));
+    vi.mocked(authUtils.renew).mockResolvedValue(undefined);
+    await expect(fetchURL("/api/resources/", {})).rejects.toMatchObject({
+      status: 0,
+      is_canceled: true,
+    });
+    expect(authUtils.logout).not.toHaveBeenCalled();
   });
 
   it("keeps the session on transient renew failures", async () => {

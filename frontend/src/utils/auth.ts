@@ -6,6 +6,32 @@ import { authMethod, baseURL, noAuth, logoutPage } from "./constants";
 import { StatusError } from "@/api/utils";
 import { setSafeTimeout } from "@/api/utils";
 
+let sessionEpoch = 0;
+let pendingRenew: Promise<void> | null = null;
+
+function scheduleRenew(delay: number) {
+  const authStore = useAuthStore();
+  const epoch = sessionEpoch;
+  authStore.setLogoutTimer(
+    setSafeTimeout(
+      () => {
+        if (epoch !== sessionEpoch || !authStore.jwt) return;
+        void renew().catch(async (error: unknown) => {
+          if (epoch !== sessionEpoch || !authStore.jwt) return;
+          if (error instanceof StatusError && error.status === 401) {
+            // Automatic expiration must not revoke sessions in other tabs/devices.
+            await logout("inactivity", false);
+          } else {
+            // Offline, waking from sleep or rate limited: retain the session.
+            scheduleRenew(30_000);
+          }
+        });
+      },
+      Math.max(1000, delay)
+    )
+  );
+}
+
 // Only same-origin relative paths are allowed as logout destinations.
 // Rejects protocol-relative ("//evil"), schemes ("http:", "javascript:"),
 // backslashes and anything that escapes the origin.
@@ -18,8 +44,7 @@ export function isSafeLogoutPage(page: unknown): page is string {
   try {
     const url = new URL(page, window.location.origin);
     if (url.origin !== window.location.origin) return false;
-    if (url.protocol !== "http:" && url.protocol !== "https:")
-      return false;
+    if (url.protocol !== "http:" && url.protocol !== "https:") return false;
   } catch {
     return false;
   }
@@ -58,12 +83,9 @@ export function parseToken(token: string) {
   }
 
   const expiresAt = new Date(data.exp! * 1000);
-  const timeout = expiresAt.getTime() - Date.now();
-  authStore.setLogoutTimer(
-    setSafeTimeout(() => {
-      void logout("inactivity");
-    }, timeout)
-  );
+  // Media requests cannot use X-Auth or retry through fetchURL. Keep the
+  // shared cookie fresh even while watching a video without API activity.
+  scheduleRenew(expiresAt.getTime() - Date.now() - 60_000);
 }
 
 export async function validateLogin() {
@@ -76,6 +98,8 @@ export async function login(
   password: string,
   recaptcha: string
 ) {
+  const epoch = ++sessionEpoch;
+  pendingRenew = null;
   const data = { username, password, recaptcha };
 
   const res = await fetch(`${baseURL}/api/login`, {
@@ -89,6 +113,7 @@ export async function login(
 
   const body = await res.text();
 
+  if (epoch !== sessionEpoch) return;
   if (res.status === 200) {
     parseToken(body);
   } else {
@@ -99,28 +124,34 @@ export async function login(
   }
 }
 
-export async function renew(jwt?: string) {
-  const authStore = useAuthStore();
-  const token = jwt ?? authStore.jwt;
-
-  const res = await fetch(`${baseURL}/api/renew`, {
-    method: "POST",
-    headers: {
-      ...(token ? { "X-Auth": token } : {}),
-    },
-    credentials: "include",
-  });
-
-  const body = await res.text();
-
-  if (res.status === 200) {
+export function renew(jwt?: string): Promise<void> {
+  if (pendingRenew) return pendingRenew;
+  const epoch = sessionEpoch;
+  const request = (async () => {
+    // Another tab may have refreshed the shared cookie since this tab's JWT
+    // was issued. Prefer that cookie over an old in-memory access token.
+    const res = await fetch(`${baseURL}/api/renew`, {
+      method: "POST",
+      headers: jwt ? { "X-Auth": jwt } : {},
+      credentials: "include",
+    });
+    const body = await res.text();
+    if (epoch !== sessionEpoch) {
+      throw new StatusError("Session changed", 0, true);
+    }
+    if (res.status !== 200) {
+      throw new StatusError(
+        body || `${res.status} ${res.statusText}`,
+        res.status
+      );
+    }
     parseToken(body);
-  } else {
-    throw new StatusError(
-      body || `${res.status} ${res.statusText}`,
-      res.status
-    );
-  }
+  })();
+  const pending = request.finally(() => {
+    if (pendingRenew === pending) pendingRenew = null;
+  });
+  pendingRenew = pending;
+  return pending;
 }
 
 export async function signup(username: string, password: string) {
@@ -143,29 +174,28 @@ export async function signup(username: string, password: string) {
   }
 }
 
-export async function logout(reason?: string) {
+export async function logout(reason?: string, revokeSession = true) {
   const authStore = useAuthStore();
+  const token = authStore.jwt;
   const timer = authStore.logoutTimer;
-
-  // Best effort: invalidate the server session (LastUpdate bump + cookie
-  // clear) before dropping local state.
-  try {
-    await fetch(`${baseURL}/api/logout`, {
-      method: "POST",
-      headers: {
-        ...(authStore.jwt ? { "X-Auth": authStore.jwt } : {}),
-      },
-      credentials: "include",
-    });
-  } catch {
-    /* offline — still clear local state */
-  }
-
-  if (timer) {
-    clearTimeout(timer);
-  }
-
+  ++sessionEpoch;
+  pendingRenew = null;
+  if (timer) clearTimeout(timer);
   authStore.clearUser();
+
+  // Only an explicit logout revokes server sessions and clears the shared
+  // cookie. An automatic failure in one tab must not log out every device.
+  if (revokeSession) {
+    try {
+      await fetch(`${baseURL}/api/logout`, {
+        method: "POST",
+        headers: token ? { "X-Auth": token } : {},
+        credentials: "include",
+      });
+    } catch {
+      /* offline — local state is already cleared */
+    }
+  }
 
   // Drop any legacy token copies from older versions.
   try {
