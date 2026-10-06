@@ -662,10 +662,17 @@ const videoOptions = computed(() => {
   return { autoplay: autoPlay.value };
 });
 
-watch(route, () => {
-  updatePreview();
-  toggleNavigation();
-});
+// Route changes start an asynchronous resource fetch in Files.vue. Rendering
+// immediately on the route reads the previous file's content and leaves text
+// previews empty/stale. Update only after the new resource reaches the store.
+watch(
+  () => fileStore.req,
+  () => {
+    if (!fileStore.req || fileStore.req.isDir) return;
+    updatePreview();
+    toggleNavigation();
+  }
+);
 
 // Specify hooks
 onMounted(async () => {
@@ -676,6 +683,9 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
+  ++previewVersion;
+  toggleNavigation.cancel();
+  if (navTimeout.value) clearTimeout(navTimeout.value);
   window.removeEventListener("keydown", key);
   document.removeEventListener("fullscreenchange", onFullscreenChange);
 });
@@ -742,7 +752,9 @@ const key = (event: KeyboardEvent) => {
     close();
   }
 };
+let previewVersion = 0;
 const updatePreview = async () => {
+  const version = ++previewVersion;
   if (player.value && player.value.paused && !player.value.ended) {
     autoPlay.value = false;
   }
@@ -789,7 +801,9 @@ const updatePreview = async () => {
         : (fileStore.req.content ?? "");
     try {
       const stripped = raw.replace(/^---\n[\s\S]*?\n---\n?/, "");
-      markdownContent.value = DOMPurify.sanitize(await marked(stripped));
+      const rendered = DOMPurify.sanitize(await marked(stripped));
+      if (version !== previewVersion) return;
+      markdownContent.value = rendered;
     } catch (e) {
       console.error("Failed to render markdown:", e);
       markdownContent.value = "";
@@ -837,8 +851,10 @@ const updatePreview = async () => {
     try {
       const path = url.removeLastDir(route.path);
       const res = await api.fetch(path);
+      if (version !== previewVersion) return;
       listing.value = res.items;
     } catch (e: any) {
+      if (version !== previewVersion) return;
       $showError(e);
     }
   }

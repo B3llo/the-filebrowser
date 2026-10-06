@@ -44,29 +44,40 @@ export async function fetchURL(
   // no session to expire, and logging out navigates away from public pages.
   const sentToken = Boolean(authStore.jwt);
 
-  const doFetch = () =>
-    fetch(`${baseURL}${url}`, {
-      headers: {
-        "X-Auth": authStore.jwt,
-        ...headers,
-      },
-      credentials: "include",
-      ...rest,
-    });
-
-  let res;
-  try {
-    res = await doFetch();
-  } catch (e) {
-    // Check if the error is an intentional cancellation
-    if (e instanceof Error && e.name === "AbortError") {
-      throw new StatusError("000 No connection", 0, true);
+  const doFetch = async () => {
+    try {
+      return await fetch(`${baseURL}${url}`, {
+        headers: {
+          "X-Auth": authStore.jwt,
+          ...headers,
+        },
+        credentials: "include",
+        ...rest,
+      });
+    } catch (e) {
+      throw new StatusError(
+        "000 No connection",
+        0,
+        typeof e === "object" &&
+          e !== null &&
+          "name" in e &&
+          e.name === "AbortError"
+      );
     }
-    throw new StatusError("000 No connection", 0);
-  }
+  };
 
-  if (auth && res.headers.get("X-Renew-Token") === "true") {
-    await renew();
+  let res = await doFetch();
+
+  if (auth && res.ok && res.headers.get("X-Renew-Token") === "true") {
+    // Renewal is proactive here: a temporary failure must not discard a
+    // response that already succeeded. The timer will retry in the background.
+    try {
+      await renew();
+    } catch (e) {
+      if (e instanceof StatusError && e.status === 401) {
+        await logout(undefined, false);
+      }
+    }
   }
 
   // A 401 with a token usually means the access token expired while the
@@ -75,19 +86,21 @@ export async function fetchURL(
   // the session: logging out on the first 401 logged the user out of every
   // tab, usually over a request that was about to succeed anyway.
   if (auth && res.status == 401 && sentToken) {
-    let sessionGone = false;
+    let renewed = false;
     try {
       await renew();
-      res = await doFetch();
-      sessionGone = res.status === 401;
+      renewed = true;
     } catch (e) {
       // Only a rejected refresh (401) means the session is gone; network
       // failures and rate limits must not log the user out.
-      sessionGone = e instanceof StatusError && e.status === 401;
+      if (e instanceof StatusError && e.status === 401) {
+        await logout(undefined, false);
+      }
     }
-
-    if (sessionGone) {
-      await logout();
+    if (renewed) {
+      // Preserve cancellation/network errors on replay. A resource-level
+      // 401 after successful renewal is not proof of an invalid session.
+      res = await doFetch();
     }
   }
 
