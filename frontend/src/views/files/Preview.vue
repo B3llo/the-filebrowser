@@ -245,6 +245,7 @@
 
     <button
       v-if="hasPrevious"
+      class="fb-preview-nav fb-preview-nav--prev"
       @click="prev"
       @mouseover="hoverNav = true"
       @mouseleave="hoverNav = false"
@@ -257,6 +258,7 @@
     </button>
     <button
       v-if="hasNext"
+      class="fb-preview-nav fb-preview-nav--next"
       @click="next"
       @mouseover="hoverNav = true"
       @mouseleave="hoverNav = false"

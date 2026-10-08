@@ -386,11 +386,14 @@ main .spinner .bounce2 {
   padding: 0.4em;
 }
 
-#previewer > button:first-of-type {
+/* Position arrows by direction, not by sibling order. With a single arrow
+   (first or last file) `:first-of-type` and `:last-of-type` both matched it,
+   so it got left and right offsets and stretched across the viewport. */
+#previewer > .fb-preview-nav--prev {
   left: 0.5em;
 }
 
-#previewer > button:last-of-type {
+#previewer > .fb-preview-nav--next {
   right: 0.5em;
 }
 
