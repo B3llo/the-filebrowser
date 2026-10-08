@@ -1,7 +1,16 @@
 name: Deploy Docker Image
 
+# Publishes a test image of one commit under an explicit tag, from any branch.
+# `latest` is never written here: releases own it (GoReleaser publishes it on
+# v* tags), so a branch build cannot silently replace the stable image.
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image tag to publish. Empty = sha-<short commit>. 'latest' is refused."
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -12,9 +21,8 @@ jobs:
     name: Verify CI Green
     runs-on: ubuntu-latest
     steps:
-      # The image is published as `latest`, so refuse to build a commit that
-      # has no successful Continuous Integration run (CI must be green on the
-      # exact SHA being deployed).
+      # Only publish a commit that has a successful Continuous Integration run
+      # (CI must be green on the exact SHA being deployed).
       - name: Require a successful CI run for this commit
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -38,6 +46,25 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Resolve image tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          tag="${INPUT_TAG:-sha-${GITHUB_SHA::7}}"
+          if [ "$tag" = "latest" ]; then
+            echo "::error::'latest' is owned by releases; pick another tag."
+            exit 1
+          fi
+          # Docker tag grammar: [A-Za-z0-9_][A-Za-z0-9_.-]{0,127}
+          if ! [[ "$tag" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
+            echo "::error::Invalid image tag: $tag"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Image tag: $tag" >> "$GITHUB_STEP_SUMMARY"
+
       - uses: actions/setup-go@v6
         with:
           go-version: "1.26.x"
@@ -59,7 +86,10 @@ jobs:
           pnpm run build
 
       - name: Build backend
-        run: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-s -w' -o filebrowser .
+        run: |
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+            -ldflags="-s -w -X github.com/B3llo/the-filebrowser/version.CommitSHA=${GITHUB_SHA::7}" \
+            -o filebrowser .
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -76,6 +106,6 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/the-filebrowser:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/the-filebrowser:${{ steps.tag.outputs.tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
