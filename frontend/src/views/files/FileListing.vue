@@ -901,6 +901,12 @@ import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import { removePrefix } from "@/api/utils";
 import { useMarqueeSelection } from "@/composables/useMarqueeSelection";
+import {
+  captureListingScroll,
+  listingScrollKey,
+  listingScroller,
+  restoreListingScroll,
+} from "@/utils/listingScroll";
 
 const props = defineProps<{
   isTrash?: boolean;
@@ -1204,22 +1210,55 @@ const isMobile = computed(() => {
   return width.value <= 736;
 });
 
-watch(req, () => {
-  // Reset the show value
-  showLimit.value = 50;
+const scrollPositions = inject(listingScrollKey, new Map());
+let displayedDirectory = "";
+let listingRevision = 0;
 
-  nextTick(() => {
-    // Ensures that the listing is displayed
-    // How much every listing item affects the window height
-    setItemWeight();
+const rememberScroll = () => {
+  if (!listing.value || !displayedDirectory) return;
+  // Bound the per-view cache when browsing many directories.
+  scrollPositions.delete(displayedDirectory);
+  scrollPositions.set(
+    displayedDirectory,
+    captureListingScroll(listing.value, showLimit.value)
+  );
+  if (scrollPositions.size > 50) {
+    scrollPositions.delete(scrollPositions.keys().next().value!);
+  }
+};
 
-    // Scroll to the item opened previously
-    if (!revealPreviousItem()) {
-      // Fill and fit the window with listing items
-      fillWindow(true);
-    }
-  });
-});
+// Capture before the loading skeleton removes the list and clamps scrollTop.
+watch(
+  () => layoutStore.loading,
+  (loading) => {
+    if (loading) rememberScroll();
+  },
+  { flush: "sync" }
+);
+
+const initializeListing = async () => {
+  const revision = ++listingRevision;
+  if (layoutStore.loading || !req.value?.isDir) return;
+  displayedDirectory = JSON.stringify([
+    props.isTrash ? "trash" : "files",
+    props.sourceId ?? route.params.sourceId ?? sourceStore.activeId,
+    req.value.path,
+    props.flatView ?? false,
+  ]);
+  const position = scrollPositions.get(displayedDirectory);
+  showLimit.value = position?.showLimit ?? 50;
+  await nextTick();
+  if (revision !== listingRevision || !listing.value) return;
+  setItemWeight();
+  if (position) {
+    restoreListingScroll(listing.value, position);
+  } else {
+    listingScroller(listing.value).scrollTop = 0;
+    if (!revealPreviousItem()) fillWindow(true);
+  }
+};
+
+watch([req, () => layoutStore.loading], initializeListing, { flush: "post" });
 
 // Clear selection when details panel closes
 watch(
@@ -1235,14 +1274,7 @@ onMounted(() => {
   // Check the columns size for the first time.
   columnsResize();
 
-  // How much every listing item affects the window height
-  setItemWeight();
-
-  // Scroll to the item opened previously
-  if (!revealPreviousItem()) {
-    // Fill and fit the window with listing items
-    fillWindow(true);
-  }
+  initializeListing();
 
   // Add the needed event listeners to the window and document.
   window.addEventListener("keydown", keyEvent);
@@ -1262,6 +1294,9 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  // Loading already captured the directory before its DOM was replaced.
+  if (req.value?.isDir && !layoutStore.loading) rememberScroll();
+  ++listingRevision;
   // Remove event listeners before destroying this page.
   window.removeEventListener("keydown", keyEvent);
   window.removeEventListener("scroll", scrollEvent, true);

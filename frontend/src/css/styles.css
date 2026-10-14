@@ -363,6 +363,11 @@ main .spinner .bounce2 {
 }
 
 #previewer > button {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
   position: fixed;
   top: 50%;
@@ -391,10 +396,12 @@ main .spinner .bounce2 {
    so it got left and right offsets and stretched across the viewport. */
 #previewer > .fb-preview-nav--prev {
   left: 0.5em;
+  right: auto;
 }
 
 #previewer > .fb-preview-nav--next {
   right: 0.5em;
+  left: auto;
 }
 
 #previewer .spinner {

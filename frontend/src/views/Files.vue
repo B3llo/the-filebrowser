@@ -32,6 +32,7 @@ import {
   onBeforeUnmount,
   onMounted,
   onUnmounted,
+  provide,
   ref,
   watch,
 } from "vue";
@@ -48,6 +49,7 @@ import { useRoute } from "vue-router";
 import FileListing from "@/views/files/FileListing.vue";
 import { StatusError } from "@/api/utils";
 import { name } from "../utils/constants";
+import { listingScrollKey } from "@/utils/listingScroll";
 
 const Editor = defineAsyncComponent(() => import("@/views/files/Editor.vue"));
 const Preview = defineAsyncComponent(() => import("@/views/files/Preview.vue"));
@@ -116,6 +118,7 @@ const isPreviewableText = (extension: string, type: string) => {
 
 const layoutStore = useLayoutStore();
 const fileStore = useFileStore();
+provide(listingScrollKey, new Map());
 
 const { reload } = storeToRefs(fileStore);
 
