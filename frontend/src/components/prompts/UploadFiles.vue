@@ -1,6 +1,6 @@
 <template>
   <Transition name="fb-upload-toast">
-    <div v-if="uploadStore.activeUploads.size > 0" class="fb-upload-toast">
+    <div v-if="uploads.length > 0 && !dismissed" class="fb-upload-toast">
       <!-- Header -->
       <div class="fb-upload-toast-header">
         <!-- Spinner while uploading -->
@@ -88,7 +88,7 @@
 <script setup lang="ts">
 import { useFileStore } from "@/stores/file";
 import { useUploadStore } from "@/stores/upload";
-import { computed, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import buttons from "@/utils/buttons";
 import { useI18n } from "vue-i18n";
 
@@ -104,7 +104,16 @@ interface UploadDisplay {
   done: boolean;
 }
 
+// Uploads that already finished stay in this list until the whole batch is
+// done. Rebuilding it from `activeUploads` alone made each completed file
+// vanish from the toast as soon as the next one started.
 const uploads = ref<UploadDisplay[]>([]);
+const dismissed = ref(false);
+let autoCloseTimer: number | null = null;
+
+// The toast is a short summary, not a full transfer log. Keep the list
+// bounded on very large batches (active uploads are always the newest ones).
+const MAX_DISPLAYED_UPLOADS = 100;
 
 const uploadsBusy = computed(() => uploadStore.activeUploads.size > 0);
 
@@ -114,56 +123,109 @@ const uploadsDone = computed(
 
 const uploadTitle = computed(() => {
   if (uploadsDone.value) return "Upload complete";
-  const count = uploadStore.activeUploads.size;
+  // `pendingUploadCount` includes queued files that have not started yet,
+  // unlike `activeUploads.size` (capped by the concurrency limit).
+  const count = Math.max(0, uploadStore.pendingUploadCount);
   return `Uploading ${count} item${count !== 1 ? "s" : ""}`;
 });
 
-// Sync active uploads to display array
+const cancelAutoClose = () => {
+  if (autoCloseTimer !== null) {
+    window.clearTimeout(autoCloseTimer);
+    autoCloseTimer = null;
+  }
+};
+
+const scheduleAutoClose = () => {
+  cancelAutoClose();
+  autoCloseTimer = window.setTimeout(() => {
+    autoCloseTimer = null;
+    uploads.value = [];
+  }, 2000);
+};
+
+// Sync the current upload state into the display array, keeping entries that
+// have already completed.
 const syncUploads = () => {
-  const newUploads: UploadDisplay[] = [];
-  for (const upload of uploadStore.activeUploads) {
+  const active = Array.from(uploadStore.activeUploads);
+  const activePaths = new Set(active.map((upload) => upload.path));
+  const known = new Map(uploads.value.map((upload) => [upload.path, upload]));
+
+  for (const upload of active) {
     const pct =
       upload.totalBytes > 0
         ? Math.round((upload.sentBytes / upload.totalBytes) * 100)
         : 0;
-    newUploads.push({
-      path: upload.path,
-      name: upload.name,
-      pct,
-      done: pct >= 100,
-    });
+    const display = known.get(upload.path);
+
+    if (display) {
+      display.pct = pct;
+      display.done = pct >= 100;
+    } else {
+      uploads.value.push({
+        path: upload.path,
+        name: upload.name,
+        pct,
+        done: pct >= 100,
+      });
+    }
   }
-  uploads.value = newUploads;
+
+  // Anything that left the active set has finished (or was aborted).
+  for (const display of uploads.value) {
+    if (!activePaths.has(display.path)) {
+      display.done = true;
+      display.pct = 100;
+    }
+  }
+
+  if (uploads.value.length > MAX_DISPLAYED_UPLOADS) {
+    uploads.value.splice(0, uploads.value.length - MAX_DISPLAYED_UPLOADS);
+  }
 };
 
-// Watch for upload progress changes
-watch(
-  () => uploadStore.sentBytes,
-  () => syncUploads()
-);
+// Watch for upload progress changes and for memberships changing (a file
+// finishing while another queued file starts keeps the same active count).
+watch(() => uploadStore.sentBytes, syncUploads);
+watch(() => Array.from(uploadStore.activeUploads), syncUploads);
 
-// Watch for active uploads set changes
+// Start a fresh list for a new batch and auto-close once the batch is done.
 watch(
   () => uploadStore.activeUploads.size,
-  () => {
-    syncUploads();
-    if (uploadStore.activeUploads.size === 0) {
-      // Auto-close after a brief delay when done
-      setTimeout(() => {
+  (size, previous) => {
+    if (size > 0) {
+      cancelAutoClose();
+      if (previous === 0) {
         uploads.value = [];
-      }, 2000);
+        dismissed.value = false;
+      }
+      syncUploads();
+      return;
     }
+
+    syncUploads();
+    scheduleAutoClose();
   }
 );
 
 const closeToast = () => {
-  if (confirm(t("upload.abortUpload"))) {
+  cancelAutoClose();
+
+  if (uploadsBusy.value) {
+    if (!confirm(t("upload.abortUpload"))) return;
+
     buttons.done("upload");
     uploadStore.abort();
-    uploads.value = [];
+    fileStore.resetScroll = true;
     fileStore.reload = true;
+    dismissed.value = true;
+    return;
   }
+
+  uploads.value = [];
 };
+
+onBeforeUnmount(cancelAutoClose);
 </script>
 
 <style scoped>

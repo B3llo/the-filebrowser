@@ -1245,6 +1245,14 @@ const initializeListing = async () => {
     req.value.path,
     props.flatView ?? false,
   ]);
+  // A finished upload must land on the refreshed contents (like a page
+  // refresh) instead of restoring a viewport anchored above/below the files
+  // that were just added. Drop the cached position for this directory so the
+  // normal "first visit" path runs: scroll to the top and fill the viewport.
+  if (fileStore.resetScroll) {
+    fileStore.resetScroll = false;
+    scrollPositions.delete(displayedDirectory);
+  }
   const position = scrollPositions.get(displayedDirectory);
   showLimit.value = position?.showLimit ?? 50;
   await nextTick();

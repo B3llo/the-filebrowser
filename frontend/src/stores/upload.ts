@@ -99,6 +99,7 @@ export const useUploadStore = defineStore("upload", () => {
       window.removeEventListener("beforeunload", beforeUnload);
       buttons.success("upload");
       reset();
+      fileStore.resetScroll = true;
       fileStore.reload = true;
     }
 

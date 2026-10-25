@@ -6,6 +6,9 @@ export const useFileStore = defineStore("file", {
     req: Resource | null;
     oldReq: Resource | null;
     reload: boolean;
+    // Uploads must reveal the new contents instead of restoring the scroll
+    // position captured before the listing was reloaded.
+    resetScroll: boolean;
     selected: number[];
     selectionAnchor: number | null;
     multiple: boolean;
@@ -15,6 +18,7 @@ export const useFileStore = defineStore("file", {
     req: null,
     oldReq: null,
     reload: false,
+    resetScroll: false,
     selected: [],
     selectionAnchor: null,
     multiple: false,
