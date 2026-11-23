@@ -100,7 +100,7 @@
       "vite@>=8.0.0 <=8.1.5": "8.1.6"
     },
     "auditConfig": {
-      "ignoreGhsas": ["GHSA-vfj7-8cjw-p6xm"]
+      "ignoreGhsas": []
     }
   }
 }
