@@ -1,4 +1,9 @@
-import { test, expect } from "@playwright/test";
+import {
+  test,
+  expect,
+  type Page,
+  type APIRequestContext,
+} from "@playwright/test";
 import { BACKEND, apiLogin, bootstrapSession } from "./helpers";
 import { ADMIN } from "./global-setup";
 
@@ -11,7 +16,12 @@ const EXISTING = Array.from(
 // item the viewport was anchored on.
 const UPLOADED = ["000-upload.txt", "001-upload.txt", "002-upload.txt"];
 
-test.beforeEach(async ({ page, request }) => {
+async function openFolder(
+  page: Page,
+  request: APIRequestContext,
+  filenames: string[],
+  viewMode: "list" | "mosaic"
+) {
   const token = await apiLogin(request, ADMIN.username, ADMIN.password);
   const headers = { "X-Auth": token };
 
@@ -31,7 +41,7 @@ test.beforeEach(async ({ page, request }) => {
           data: {
             id: admin.id,
             singleClick: false,
-            viewMode: "list",
+            viewMode,
             sorting: { by: "name", asc: true },
           },
         },
@@ -53,7 +63,7 @@ test.beforeEach(async ({ page, request }) => {
     ).ok()
   ).toBeTruthy();
   await Promise.all(
-    EXISTING.map(async (filename) => {
+    filenames.map(async (filename) => {
       expect(
         (
           await request.post(`${BACKEND}/api/resources/${FOLDER}/${filename}`, {
@@ -68,12 +78,16 @@ test.beforeEach(async ({ page, request }) => {
   await bootstrapSession(page, request, ADMIN.username, ADMIN.password);
   await page.goto(`/files/0/${FOLDER}/`);
   await expect(page.locator("#listing")).toBeVisible();
-  await expect(page.locator("#listing .item")).toHaveCount(EXISTING.length);
-});
+  await expect(page.locator(`#listing.${viewMode} .item`)).toHaveCount(
+    filenames.length
+  );
+}
 
 test("uploading keeps completed items in the toast and reveals the new files", async ({
   page,
+  request,
 }) => {
+  await openFolder(page, request, EXISTING, "list");
   const scroller = page.locator(".fb-content-main");
   await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBe(0);
 
@@ -116,5 +130,32 @@ test("uploading keeps completed items in the toast and reveals the new files", a
     await expect(
       page.locator(`#listing .item[data-path$="/${name}"]`)
     ).toHaveCount(1);
+  }
+});
+
+test("adding a third document in grid view keeps both existing cards", async ({
+  page,
+  request,
+}) => {
+  const existing = ["certidao.txt", "fatura.txt"];
+  const added = "aditivo.txt";
+  await openFolder(page, request, existing, "mosaic");
+
+  await page.locator("#upload-input").setInputFiles({
+    name: added,
+    mimeType: "text/plain",
+    buffer: Buffer.from("new document"),
+  });
+
+  // The upload sorts first; the previous render limit of two must not hide
+  // the last card when the refreshed directory grows to three items.
+  const cards = page.locator("#listing.mosaic .fb-items--files .item");
+  await expect(cards).toHaveCount(3);
+  for (const [index, name] of [added, ...existing].entries()) {
+    await expect(cards.nth(index)).toHaveAttribute(
+      "data-path",
+      `/${FOLDER}/${name}`
+    );
+    await expect(cards.nth(index)).toBeInViewport();
   }
 });
